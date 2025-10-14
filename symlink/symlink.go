@@ -7,6 +7,8 @@ import (
 	"syscall"
 )
 
+const notALink = syscall.EINVAL // https://www.man7.org/linux/man-pages/man2/readlink.2.html#ERRORS
+
 // A symlink or simple file.
 //   - Source, Target != "", Err == nil -> Symlink
 //   - Source != "", Target == "", Err == nil -> File
@@ -24,7 +26,6 @@ func New(source string) Symlink {
 	}
 
 	target, err := os.Readlink(source)
-	notALink := syscall.EINVAL // https://www.man7.org/linux/man-pages/man2/readlink.2.html#ERRORS
 	if errors.Is(err, notALink) {
 		return Symlink{source, "", nil}
 	}
