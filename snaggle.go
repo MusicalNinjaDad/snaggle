@@ -32,3 +32,20 @@ func NewSymlink(source string) Symlink {
 	target, err := os.Readlink(source)
 	return Symlink{source, target, err}
 }
+
+func SymlinkChain(path string) []Symlink {
+	link := NewSymlink(path)
+	chain := []Symlink{link}
+	return extendSymlinkChain(chain)
+}
+
+func extendSymlinkChain(chain []Symlink) []Symlink {
+	lastLink := chain[len(chain)-1]
+	if lastLink.Target == "" {
+		return chain
+	} else {
+		nextLink := NewSymlink(lastLink.Target)
+		chain = append(chain, nextLink)
+		return extendSymlinkChain(chain)
+	}
+}
