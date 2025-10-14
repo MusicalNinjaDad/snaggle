@@ -1,10 +1,11 @@
 package snaggle
 
 import (
-	"github.com/stretchr/testify/assert"
 	"path/filepath"
 	"slices"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLddSingleBinary(t *testing.T) {
@@ -25,12 +26,10 @@ func TestSymlinkedBinary(t *testing.T) {
 	Assert.Equal(libs, expectedLibs)
 }
 
-func TestSymlinkTree(t *testing.T) {
+func TestNewSymlink(t *testing.T) {
 	Assert := assert.New(t)
-	expectedTree := make(map[string]string)
-	link, _ := filepath.Abs("test/assets/which")
-	expectedTree[link] = "/usr/sbin/which"
-	tree, err := SymlinkTree("test/assets/which")
-	Assert.NoError(err)
-	Assert.Equal(tree, expectedTree)
+	source, _ := filepath.Abs("test/assets/which")
+	expectedLink := Symlink{Source: source, Target: "/usr/sbin/which", Err: nil}
+	link := NewSymlink("test/assets/which")
+	Assert.Equal(link, expectedLink)
 }
