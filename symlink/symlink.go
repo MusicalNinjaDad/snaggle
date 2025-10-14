@@ -9,16 +9,21 @@ import (
 
 const notALink = syscall.EINVAL // https://www.man7.org/linux/man-pages/man2/readlink.2.html#ERRORS
 
-// A symlink or simple file.
-//   - Source, Target != "", Err == nil -> Symlink
-//   - Source != "", Target == "", Err == nil -> File
-//   - Err != nil -> Something else
+// A symlink (or other filesystem entry - use `Symlink.IsNotLink()` to identify these cases)
+//
+// Do not construct this manually, use `symlink.New()` or you risk breaking semantics
 type Symlink struct {
-	Source string
-	Target string
-	Err    error
+	Source string // The source path
+	Target string // Target path (`""` if it's not a link, and maybe also on error)
+	Err    error  // If we got an error when trying to identify the target
 }
 
+// Accurately identify when a Symlink Source is not _actually_ refering to a symlink
+func (s Symlink) IsNotLink() bool {
+	return s.Err == nil && s.Target == ""
+}
+
+// Construct a Symlink from a source path
 func New(source string) Symlink {
 	source, err := filepath.Abs(source)
 	if err != nil {
@@ -33,19 +38,29 @@ func New(source string) Symlink {
 	return Symlink{source, target, err}
 }
 
-func Chain(path string) []Symlink {
-	link := New(path)
-	chain := []Symlink{link}
-	return extendSymlinkChain(chain)
-}
-
-func extendSymlinkChain(chain []Symlink) []Symlink {
-	lastLink := chain[len(chain)-1]
-	if lastLink.Target == "" {
-		return chain
-	} else {
-		nextLink := New(lastLink.Target)
-		chain = append(chain, nextLink)
-		return extendSymlinkChain(chain)
+// Chain follows a sequence of symbolic links starting at path and returns
+// the full chain as a slice of Symlink values.
+//
+// - The returned slice always contains at least one element for the initial path.
+// - If a link cannot be resolved, Chain appends that Symlink with its Err set
+// and returns the partial chain along with the error.
+// - When Chain reaches a path which is not symlink, the chain ends with a Symlink
+// whose Target is "" and Err is nil.
+func Chain(path string) ([]Symlink, error) {
+	source := path
+	var chain []Symlink
+	for {
+		link := New(source)
+		chain = append(chain, link)
+		if link.Err != nil {
+			// Something went wrong
+			return chain, link.Err
+		}
+		if link.IsNotLink() {
+			// We're done here
+			return chain, nil
+		}
+		// keep going with the next link in the chain ...
+		source = link.Target
 	}
 }

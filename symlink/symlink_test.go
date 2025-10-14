@@ -20,9 +20,8 @@ func TestNewSymlink(t *testing.T) {
 
 func TestNewSymlinkNotALink(t *testing.T) {
 	Assert := assert.New(t)
-	expectedLink := Symlink{Source: "/usr/sbin/which", Target: "", Err: nil}
 	link := symlink.New("/usr/sbin/which")
-	Assert.Equal(expectedLink, link)
+	Assert.True(link.IsNotLink())
 }
 
 func TestSymlinkChain(t *testing.T) {
@@ -32,6 +31,7 @@ func TestSymlinkChain(t *testing.T) {
 		{Source: source, Target: "/usr/sbin/which", Err: nil},
 		{Source: "/usr/sbin/which", Target: "", Err: nil},
 	}
-	chain := symlink.Chain("testdata/which")
+	chain, err := symlink.Chain("testdata/which")
+	Assert.NoError(err)
 	Assert.Equal(expectedChain, chain)
 }
