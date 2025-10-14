@@ -1,9 +1,11 @@
 package snaggle
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"slices"
+	"syscall"
 
 	"github.com/u-root/u-root/pkg/ldd"
 )
@@ -29,7 +31,13 @@ func NewSymlink(source string) Symlink {
 	if err != nil {
 		return Symlink{source, "", err}
 	}
+
 	target, err := os.Readlink(source)
+	notALink := syscall.EINVAL // https://www.man7.org/linux/man-pages/man2/readlink.2.html#ERRORS
+	if errors.Is(err, notALink) {
+		return Symlink{source, "", nil}
+	}
+
 	return Symlink{source, target, err}
 }
 

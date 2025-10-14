@@ -34,6 +34,13 @@ func TestNewSymlink(t *testing.T) {
 	Assert.Equal(link, expectedLink)
 }
 
+func TestNewSymlinkNotALink(t *testing.T) {
+	Assert := assert.New(t)
+	expectedLink := Symlink{Source: "/usr/sbin/which", Target: "", Err: nil}
+	link := NewSymlink("/usr/sbin/which")
+	Assert.Equal(link, expectedLink)
+}
+
 func TestSymlinkChain(t *testing.T) {
 	Assert := assert.New(t)
 	source, _ := filepath.Abs("test/assets/which")
