@@ -12,6 +12,5 @@ func TestLddSingleBinary(t *testing.T) {
 	slices.Sort(expectedLibs)
 	libs, err := LibPaths("/usr/sbin/which")
 	Assert.NoError(err)
-	slices.Sort(libs)
 	Assert.Equal(libs, expectedLibs)
 }
