@@ -13,7 +13,7 @@ func TestLddSingleBinary(t *testing.T) {
 	slices.Sort(expectedLibs)
 	libs, err := LibPaths("/usr/sbin/which")
 	Assert.NoError(err)
-	Assert.Equal(libs, expectedLibs)
+	Assert.Equal(expectedLibs, libs)
 }
 
 func TestSymlinkedBinary(t *testing.T) {
@@ -22,5 +22,5 @@ func TestSymlinkedBinary(t *testing.T) {
 	slices.Sort(expectedLibs)
 	libs, err := LibPaths("symlink/testdata/which")
 	Assert.NoError(err)
-	Assert.Equal(libs, expectedLibs)
+	Assert.Equal(expectedLibs, libs)
 }
