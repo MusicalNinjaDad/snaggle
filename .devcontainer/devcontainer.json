@@ -1,0 +1,39 @@
+{
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+
+    "containerEnv": {
+        "GOPATH": "${containerWorkspaceFolder}/.go",
+        "WORKSPACEDIR": "${containerWorkspaceFolder}"
+    },
+
+    "remoteEnv": {
+        "PATH": "${containerEnv:GOPATH}/bin:${containerEnv:PATH}"
+    },
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                // Go
+                "golang.Go",
+                // configs, docs, etc.
+                "DavidAnson.vscode-markdownlint",
+                "tamasfe.even-better-toml",
+                // Docker (for devcontainer DockerFile)
+                "ms-azuretools.vscode-containers",
+                // Coverage
+                "codecov.codecov"
+            ],
+            "settings": {
+                // shell
+                "terminal.integrated.defaultProfile.linux": "bash", 
+                "terminal.integrated.profiles.linux": {
+                    "bash": {
+                        "path": "/usr/bin/bash"
+                    }
+                }
+            }
+        }
+    }
+}
