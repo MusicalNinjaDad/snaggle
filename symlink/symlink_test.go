@@ -1,7 +1,6 @@
 package symlink_test
 
 import (
-	"path/filepath"
 	"testing"
 
 	"github.com/MusicalNinjaDad/snaggle/symlink"
@@ -12,8 +11,7 @@ type Symlink = symlink.Symlink
 
 func TestNewSymlink(t *testing.T) {
 	Assert := assert.New(t)
-	source, _ := filepath.Abs("testdata/which")
-	expectedLink := Symlink{Source: source, Target: "/usr/sbin/which", Err: nil}
+	expectedLink := Symlink{Source: "testdata/which", Target: "/usr/sbin/which", Err: nil}
 	link := symlink.New("testdata/which")
 	Assert.Equal(expectedLink, link)
 }
@@ -26,9 +24,8 @@ func TestNewSymlinkNotALink(t *testing.T) {
 
 func TestSymlinkChain(t *testing.T) {
 	Assert := assert.New(t)
-	source, _ := filepath.Abs("testdata/which")
 	expectedChain := []Symlink{
-		{Source: source, Target: "/usr/sbin/which", Err: nil},
+		{Source: "testdata/which", Target: "/usr/sbin/which", Err: nil},
 		{Source: "/usr/sbin/which", Target: "", Err: nil},
 	}
 	chain, err := symlink.Chain("testdata/which")

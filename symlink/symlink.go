@@ -3,7 +3,6 @@ package symlink
 import (
 	"errors"
 	"os"
-	"path/filepath"
 	"syscall"
 )
 
@@ -25,11 +24,6 @@ func (s Symlink) IsNotLink() bool {
 
 // Construct a Symlink from a source path
 func New(source string) Symlink {
-	source, err := filepath.Abs(source)
-	if err != nil {
-		return Symlink{source, "", err}
-	}
-
 	target, err := os.Readlink(source)
 	if errors.Is(err, notALink) {
 		return Symlink{source, "", nil}
