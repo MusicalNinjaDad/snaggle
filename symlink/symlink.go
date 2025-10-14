@@ -17,7 +17,7 @@ type Symlink struct {
 	Err    error
 }
 
-func NewSymlink(source string) Symlink {
+func New(source string) Symlink {
 	source, err := filepath.Abs(source)
 	if err != nil {
 		return Symlink{source, "", err}
@@ -32,8 +32,8 @@ func NewSymlink(source string) Symlink {
 	return Symlink{source, target, err}
 }
 
-func SymlinkChain(path string) []Symlink {
-	link := NewSymlink(path)
+func Chain(path string) []Symlink {
+	link := New(path)
 	chain := []Symlink{link}
 	return extendSymlinkChain(chain)
 }
@@ -43,7 +43,7 @@ func extendSymlinkChain(chain []Symlink) []Symlink {
 	if lastLink.Target == "" {
 		return chain
 	} else {
-		nextLink := NewSymlink(lastLink.Target)
+		nextLink := New(lastLink.Target)
 		chain = append(chain, nextLink)
 		return extendSymlinkChain(chain)
 	}
