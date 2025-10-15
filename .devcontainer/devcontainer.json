@@ -12,8 +12,8 @@
         "PATH": "${containerEnv:GOPATH}/bin:${containerEnv:PATH}"
     },
 
-    // installing here due to dns lookup errors when running in Dockerfile
     "postCreateCommand": "pre-commit install",
+    "postStartCommand": "pre-commit autoupdate",
 
     "customizations": {
         "vscode": {
