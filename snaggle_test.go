@@ -49,7 +49,7 @@ func workspaceTempDir(t *testing.T) string {
 	if err != nil {
 		t.Fatal("Failed to create", tmp, "Error:", err)
 	}
-	t.Cleanup(func() { os.RemoveAll(tmp) })
+	t.Cleanup(func() { _ = os.RemoveAll(tmp) })
 	return tmp
 }
 
