@@ -1,3 +1,6 @@
+// This is not designed work on non-linux systems - don't try it unless you want to have fun with unexpected
+// and unhandled os error types.
+
 package snaggle
 
 import (
@@ -21,7 +24,7 @@ func LibPaths(bin string) ([]string, error) {
 //
 // Note: the _absolute_ `path` will be used, even if a relative path is provided.
 // 
-// Errors may be propogated from `filepath.Join`, `os.MkdirAll` and `os.Link`, sadly a complete
+// Errors may be propogated from `filepath.Abs`, `os.MkdirAll` and `os.Link`, sadly a complete
 // lack of meaningful documentation on stdlib errors means the author of this code can't give
 // any guidance on what they may be.
 // PRs are always welcome to improve error handling or documentation.
@@ -30,6 +33,7 @@ func LinkFile(path string, newRoot string) (string, error) {
 	path, err := filepath.Abs(path)
 	target := filepath.Join(newRoot, path)
 	if err != nil {
+		// propogate err from filepath.Abs, with maybe some sort of target
 		return target, err
 	}
 
