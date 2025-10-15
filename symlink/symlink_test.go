@@ -11,7 +11,7 @@ type Symlink = symlink.Symlink
 
 func TestNewSymlink(t *testing.T) {
 	Assert := assert.New(t)
-	expectedLink := Symlink{Source: "testdata/which", Target: "/usr/sbin/which", Err: nil}
+	expectedLink := Symlink{Source: "testdata/which", Target: "../../testdata/which", Err: nil}
 	link := symlink.New("testdata/which")
 	Assert.Equal(expectedLink, link)
 }
