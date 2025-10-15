@@ -12,7 +12,7 @@
         "PATH": "${containerEnv:GOPATH}/bin:${containerEnv:PATH}"
     },
 
-    "postCreateCommand": "pre-commit install",
+    "postCreateCommand": "pre-commit install && go install github.com/hexira/go-ignore-cov@latest",
     "postStartCommand": "pre-commit autoupdate",
 
     "customizations": {

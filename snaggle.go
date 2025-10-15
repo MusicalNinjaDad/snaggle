@@ -25,11 +25,13 @@ import (
 func LibPaths(elfpath string) ([]string, error) {
 	elffile, err := elf.Open(elfpath)
 	if err != nil {
+		// coverage:ignore
 		return nil, err
 	}
 
 	libs, err := elffile.ImportedLibraries()
 	if err != nil {
+		// coverage:ignore
 		return libs, err
 	}
 	slices.Sort(libs)
@@ -40,6 +42,7 @@ func LibPaths(elfpath string) ([]string, error) {
 			p := make([]byte, size)
 			read, err := prog.Open().Read(p)
 			if err != nil {
+				// coverage:ignore
 				return libs, err
 			}
 			libs = append(libs, string(p))
@@ -69,11 +72,13 @@ func LinkFile(path string, newRoot string) (string, error) {
 	target := filepath.Join(newRoot, path)
 	if err != nil {
 		// propogate err from filepath.Abs, with maybe some sort of target
+		// coverage:ignore
 		return target, err
 	}
 
 	err = os.MkdirAll(filepath.Dir(target), os.ModePerm)
 	if err != nil {
+		// coverage:ignore
 		return target, err
 	}
 
