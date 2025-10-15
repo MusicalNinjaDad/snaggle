@@ -60,7 +60,8 @@ RUN uv tool install pre-commit
 
 # Go
 RUN dnf -y install \
-    golang
+    golang \
+    golangci-lint
 
 # ---
 # Final setup steps
