@@ -12,7 +12,7 @@ import (
 func TestLddSingleBinary(t *testing.T) {
 	Assert := assert.New(t)
 	expectedLibs := []string{"libc.so.6", "/lib64/ld-linux-x86-64.so.2"}
-	libs, err := LibPaths("/usr/sbin/which")
+	libs, err := LibPaths("testdata/which")
 	Assert.NoError(err)
 	Assert.Equal(expectedLibs, libs)
 }
