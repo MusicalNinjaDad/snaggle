@@ -35,7 +35,12 @@
                     "bash": {
                         "path": "/usr/bin/bash"
                     }
-                }
+                },
+                // show pre-commit output from pre-push hooks too
+                "git.commandsToLog": [
+                    "commit",
+                    "push"
+                ]
             }
         }
     }

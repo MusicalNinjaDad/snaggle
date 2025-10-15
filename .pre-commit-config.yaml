@@ -15,3 +15,11 @@ repos:
   hooks:
     - id: go-fmt
     - id: go-mod-tidy
+- repo: local
+  hooks:
+    - id: debug
+      name: debug
+      entry: ./.pre-commit/fixups.sh
+      language: system
+      verbose: true
+      stages: [pre-push]
