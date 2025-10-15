@@ -4,7 +4,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,8 +11,7 @@ import (
 
 func TestLddSingleBinary(t *testing.T) {
 	Assert := assert.New(t)
-	expectedLibs := []string{"/lib64/libc.so.6", "/lib64/ld-linux-x86-64.so.2"}
-	slices.Sort(expectedLibs)
+	expectedLibs := []string{"libc.so.6", "/lib64/ld-linux-x86-64.so.2"}
 	libs, err := LibPaths("/usr/sbin/which")
 	Assert.NoError(err)
 	Assert.Equal(expectedLibs, libs)
@@ -21,8 +19,7 @@ func TestLddSingleBinary(t *testing.T) {
 
 func TestSymlinkedBinary(t *testing.T) {
 	Assert := assert.New(t)
-	expectedLibs := []string{"/lib64/libc.so.6", "/lib64/ld-linux-x86-64.so.2"}
-	slices.Sort(expectedLibs)
+	expectedLibs := []string{"libc.so.6", "/lib64/ld-linux-x86-64.so.2"}
 	libs, err := LibPaths("symlink/testdata/which")
 	Assert.NoError(err)
 	Assert.Equal(expectedLibs, libs)
