@@ -40,7 +40,7 @@ func pwd(t *testing.T) string {
 // Construct a TempDir under `./.tmp`
 //
 // This is (almost) guaranteed to be on the same filesystem as `./testdata` and therefore
-// allow for valid hardlinks. 
+// allow for valid hardlinks.
 func workspaceTempDir(t *testing.T) string {
 	t.Helper()
 	tmpRoot := filepath.Join(pwd(t), ".tmp")

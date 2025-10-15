@@ -20,21 +20,21 @@ if __name__ == "__main__":
         msg += f"Only got {sys.argv}\n"
         sys.stderr.write(msg)
         sys.exit(1)
-    
+
     bin_dir = destination / "bin"
-    bin_dir.mkdir(parents=True, exist_ok=True) 
+    bin_dir.mkdir(parents=True, exist_ok=True)
     target = bin_dir / binary.name
-    
+
     print(f"Linking {binary} -> {target}")
     target.hardlink_to(binary.resolve(strict=True))
-    
+
     deps = lddwrap.list_dependencies(path=binary)
     for dep in deps:
         if library := dep.path:
             target = destination / library.relative_to("/")
             lib_dir = target.parent
-            lib_dir.mkdir(parents=True, exist_ok=True) 
-            
+            lib_dir.mkdir(parents=True, exist_ok=True)
+
             print(f"Linking {library} -> {target}")
             with suppress(FileExistsError):
                 target.hardlink_to(library.resolve(strict=True))

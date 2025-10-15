@@ -23,7 +23,7 @@ func LibPaths(bin string) ([]string, error) {
 // E.g. `LinkFile(/usr/bin/which, /tmp)` will create a link at `/tmp/usr/bin/which`.
 //
 // Note: the _absolute_ `path` will be used, even if a relative path is provided.
-// 
+//
 // Errors may be propogated from `filepath.Abs`, `os.MkdirAll` and `os.Link`, sadly a complete
 // lack of meaningful documentation on stdlib errors means the author of this code can't give
 // any guidance on what they may be.

@@ -42,10 +42,21 @@ RUN dnf -y install \
 # Basic development tools
 RUN dnf -y install \
     bash-completion \
+    curl \
     gh \
     git \
     just \
+    ping \
     which
+
+# pre-commit via uv
+# uv needs something from either curl or ping to allow it to do dns resolution
+ENV UV_PYTHON_BIN_DIR=/bin
+ENV UV_PYTHON_INSTALL_DIR=/usr/share
+ENV UV_TOOL_BIN_DIR=/bin
+ENV UV_TOOL_DIR=/usr/share
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+RUN uv tool install pre-commit
 
 # Go
 RUN dnf -y install \

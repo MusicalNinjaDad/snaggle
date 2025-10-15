@@ -12,6 +12,9 @@
         "PATH": "${containerEnv:GOPATH}/bin:${containerEnv:PATH}"
     },
 
+    // installing here due to dns lookup errors when running in Dockerfile
+    "postCreateCommand": "pre-commit install",
+
     "customizations": {
         "vscode": {
             "extensions": [
@@ -27,7 +30,7 @@
             ],
             "settings": {
                 // shell
-                "terminal.integrated.defaultProfile.linux": "bash", 
+                "terminal.integrated.defaultProfile.linux": "bash",
                 "terminal.integrated.profiles.linux": {
                     "bash": {
                         "path": "/usr/bin/bash"
