@@ -28,7 +28,6 @@ func LibPaths(bin string) ([]string, error) {
 // lack of meaningful documentation on stdlib errors means the author of this code can't give
 // any guidance on what they may be.
 // PRs are always welcome to improve error handling or documentation.
-//
 func LinkFile(path string, newRoot string) (string, error) {
 	path, err := filepath.Abs(path)
 	target := filepath.Join(newRoot, path)
