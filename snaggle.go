@@ -14,9 +14,15 @@ func LibPaths(bin string) ([]string, error) {
 	return libs, err
 }
 
-func CopyBinary(bin string, newRoot string) (string, error) {
-	bin, err := filepath.Abs(bin)
-	target := filepath.Join(newRoot, bin)
+// LinkFile creates a hardlink to `path` under `newRoot`, preserving the full directory
+// structure similar to how `cp -r` does.
+//
+// E.g. `LinkFile(/usr/bin/which, /tmp)` will create a link at `/tmp/usr/bin/which`.
+//
+// Note: the _absolute_ `path` will be used, even if a relative path is provided.
+func LinkFile(path string, newRoot string) (string, error) {
+	path, err := filepath.Abs(path)
+	target := filepath.Join(newRoot, path)
 	if err != nil {
 		return target, err
 	}
@@ -25,6 +31,6 @@ func CopyBinary(bin string, newRoot string) (string, error) {
 
 	// TODO: handle err (e.g. "operation not permitted")
 	// TODO: what if bin is a symlink?
-	err = os.Link(bin, target)
+	err = os.Link(path, target)
 	return target, err
 }
