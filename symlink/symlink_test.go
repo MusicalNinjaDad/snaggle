@@ -30,7 +30,7 @@ func TestNewSymlink(t *testing.T) {
 
 func TestNewSymlinkNotALink(t *testing.T) {
 	Assert := assert.New(t)
-	link := symlink.New("/usr/sbin/which")
+	link := symlink.New("../testdata/which")
 	Assert.True(link.IsNotLink())
 }
 
