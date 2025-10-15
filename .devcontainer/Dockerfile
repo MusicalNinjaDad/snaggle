@@ -42,6 +42,7 @@ RUN dnf -y install \
 # Basic development tools
 RUN dnf -y install \
     bash-completion \
+    gh \
     git \
     just \
     which
