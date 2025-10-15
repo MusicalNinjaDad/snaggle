@@ -28,3 +28,5 @@ go.work
 
 # our in-container GOPATH (visible in workspace tree)
 .go
+
+.tmp
