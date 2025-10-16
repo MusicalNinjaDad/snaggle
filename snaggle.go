@@ -4,9 +4,11 @@
 package snaggle
 
 import (
+	"bytes"
 	"debug/elf"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"slices"
@@ -38,15 +40,15 @@ func LibPaths(elfpath string) ([]string, error) {
 
 	for _, prog := range elffile.Progs {
 		if prog.Type == elf.PT_INTERP {
-			size := prog.Filesz - 1 // -1 to strip `\x00` termination
-			p := make([]byte, size)
-			read, err := prog.Open().Read(p)
+			p := prog.Open()
+			interp, err := io.ReadAll(p)
 			if err != nil {
 				return libs, err
 			}
-			libs = append(libs, string(p))
-			if uint64(read) != size {
-				msg := fmt.Sprint("Did not read full interpreter path. Expected", size, ", read", read, "bytes")
+			interpreter := string(bytes.TrimRight(interp, "\x00")) // strip `\x00` termination
+			libs = append(libs, interpreter)
+			if len(interpreter) != int(prog.Filesz-1) { // have multi-byte chars or unexpected contents
+				msg := fmt.Sprint("Did not read full interpreter path. Expected", prog.Filesz-1, ", read", len(interpreter), "bytes")
 				err := errors.New(msg)
 				return libs, err
 			}
