@@ -90,7 +90,27 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 //   - Returns `Type(UNDEF), errors.ErrUnsupported` for types we don't recognise.
 func elftype(elffile *debug_elf.File) (Type, error) {
 	elftype := Type(UNDEF)
-	var err error
+	var retErr error
+
+	isPIE := func() (bool, error) {
+		dt_flags_1, err := elffile.DynValue(debug_elf.DynTag(debug_elf.DT_FLAGS_1))
+		if err != nil {
+			return false, fmt.Errorf("error getting DT_FLAGS_1: %w", err)
+		}
+		for _, flags := range dt_flags_1 {
+			// Bitmask against PIE Flag (0x08000000)
+			if flags&uint64(debug_elf.DF_1_PIE) != 0 {
+				return true, nil
+			}
+		}
+		return false, nil
+	}
+
+	pie, err := isPIE()
+	retErr = errors.Join(retErr, err)
+	if pie {
+		return Type(BIN), retErr
+	}
 
 	switch claimedtype := elffile.FileHeader.Type; claimedtype {
 	case debug_elf.ET_EXEC:
@@ -99,28 +119,16 @@ func elftype(elffile *debug_elf.File) (Type, error) {
 		elftype = Type(LIB)
 	}
 
-	dt_flags_1, err := elffile.DynValue(debug_elf.DynTag(debug_elf.DT_FLAGS_1))
-	if err != nil {
-		return elftype, err
-	}
-
-	for _, flags := range dt_flags_1 {
-		// Bitmask against PIE Flag (0x08000000)
-		if flags&uint64(debug_elf.DF_1_PIE) != 0 {
-			elftype = Type(BIN)
-			break
-		}
-	}
-
 	if elftype == Type(UNDEF) {
-		err = errors.ErrUnsupported
+		retErr = errors.Join(retErr, errors.ErrUnsupported)
 	}
-	return elftype, err
+	return elftype, retErr
 }
 
 func New(path string) (Elf, error) {
 	elf := Elf{path, EI_CLASS(ELFNONE), "", Type(UNDEF)}
 	var elffile *debug_elf.File
+	var retErr error
 	var err error
 
 	elf.Path, err = resolve(path)
@@ -136,17 +144,15 @@ func New(path string) (Elf, error) {
 	elf.Class = EI_CLASS(elffile.Class)
 
 	elf.Interpreter, err = interpreter(elffile)
-	if err != nil {
-		return elf, err
-	}
+	retErr = errors.Join(retErr, err)
 
 	elf.Type, err = elftype(elffile)
-	if err != nil {
-		return elf, err
-	}
+	retErr = errors.Join(retErr, err)
+
 	if elf.Type == Type(BIN) && elf.Interpreter == "" {
 		err = errors.New("binary without interpreter")
+		retErr = errors.Join(retErr, err)
 	}
 
-	return elf, err
+	return elf, retErr
 }
