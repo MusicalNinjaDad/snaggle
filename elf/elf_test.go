@@ -26,6 +26,7 @@ func TestWhich(t *testing.T) {
 		Path:        filepath.Join(pwd(t), "../testdata/which"),
 		Class:       elf.EI_CLASS(elf.ELF64),
 		Interpreter: "/lib64/ld-linux-x86-64.so.2",
+		Type:        elf.Type(elf.BIN),
 	}
 	whichElf, err := elf.New("../testdata/which")
 	Assert.NoError(err)

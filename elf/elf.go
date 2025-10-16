@@ -14,6 +14,7 @@ type Elf struct {
 	Path        string   // Absolute, fully resolved path to the file
 	Class       EI_CLASS // 32 or 64 bit? See https://man7.org/linux/man-pages/man5/elf.5.html#:~:text=.%20%20(3%3A%20%27F%27)-,EI_CLASS,-The%20fifth%20byte
 	Interpreter string   // Absolute path to the interpreter (if executable), "" if not executable. See https://gist.github.com/x0nu11byt3/bcb35c3de461e5fb66173071a2379779 for much more background
+	Type        Type     // Simplified based on ET_DYN & DynFlag1
 }
 
 type EI_CLASS byte
@@ -22,6 +23,15 @@ const (
 	ELFNONE = debug_elf.ELFCLASSNONE
 	ELF32   = debug_elf.ELFCLASS32
 	ELF64   = debug_elf.ELFCLASS64
+)
+
+type Type byte
+
+const (
+	UNDEF = 0
+	BIN   = 1
+	LIB   = 2
+	// PIE = 3 // Unused: LIB+BIN
 )
 
 // resolve resolves symlinks and returns an absolute path.
@@ -74,8 +84,42 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 	return "", nil
 }
 
+// Identifies the type of Elf (binary vs library) based upon a combination of `DT_FLAGS_1` & the claimed `e_type` in the header.
+//
+//   - Will consider anything that claims to be `PIE` via `DT_FLAGS_1` to be a `BIN`
+//   - Returns `Type(UNDEF), errors.ErrUnsupported` for types we don't recognise.
+func elftype(elffile *debug_elf.File) (Type, error) {
+	elftype := Type(UNDEF)
+	var err error
+
+	switch claimedtype := elffile.FileHeader.Type; claimedtype {
+	case debug_elf.ET_EXEC:
+		elftype = Type(BIN)
+	case debug_elf.ET_DYN:
+		elftype = Type(LIB)
+	}
+
+	dt_flags_1, err := elffile.DynValue(debug_elf.DynTag(debug_elf.DT_FLAGS_1))
+	if err != nil {
+		return elftype, err
+	}
+
+	for _, flags := range dt_flags_1 {
+		// Bitmask against PIE Flag (0x08000000)
+		if flags&uint64(debug_elf.DF_1_PIE) != 0 {
+			elftype = Type(BIN)
+			break
+		}
+	}
+
+	if elftype == Type(UNDEF) {
+		err = errors.ErrUnsupported
+	}
+	return elftype, err
+}
+
 func New(path string) (Elf, error) {
-	elf := Elf{path, EI_CLASS(ELFNONE), ""}
+	elf := Elf{path, EI_CLASS(ELFNONE), "", Type(UNDEF)}
 	var elffile *debug_elf.File
 	var err error
 
@@ -96,5 +140,13 @@ func New(path string) (Elf, error) {
 		return elf, err
 	}
 
-	return elf, nil
+	elf.Type, err = elftype(elffile)
+	if err != nil {
+		return elf, err
+	}
+	if elf.Type == Type(BIN) && elf.Interpreter == "" {
+		err = errors.New("binary without interpreter")
+	}
+
+	return elf, err
 }
