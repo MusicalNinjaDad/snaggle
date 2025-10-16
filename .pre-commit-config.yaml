@@ -1,0 +1,25 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+#
+# TODO add something like https://gist.github.com/jgosmann/003e52db6959365c0ffda264776e7e44 to catch fixups
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-added-large-files
+- repo: https://github.com/dnephin/pre-commit-golang
+  rev: v0.5.1
+  hooks:
+    - id: go-fmt
+    - id: go-mod-tidy
+- repo: local
+  hooks:
+    - id: debug
+      name: debug
+      entry: ./.pre-commit/fixups.sh
+      language: system
+      verbose: true
+      stages: [pre-push]

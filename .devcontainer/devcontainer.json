@@ -12,6 +12,9 @@
         "PATH": "${containerEnv:GOPATH}/bin:${containerEnv:PATH}"
     },
 
+    "postCreateCommand": "pre-commit install",
+    "postStartCommand": "pre-commit autoupdate",
+
     "customizations": {
         "vscode": {
             "extensions": [
@@ -27,12 +30,17 @@
             ],
             "settings": {
                 // shell
-                "terminal.integrated.defaultProfile.linux": "bash", 
+                "terminal.integrated.defaultProfile.linux": "bash",
                 "terminal.integrated.profiles.linux": {
                     "bash": {
                         "path": "/usr/bin/bash"
                     }
-                }
+                },
+                // show pre-commit output from pre-push hooks too
+                "git.commandsToLog": [
+                    "commit",
+                    "push"
+                ]
             }
         }
     }

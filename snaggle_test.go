@@ -4,7 +4,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,17 +11,15 @@ import (
 
 func TestLddSingleBinary(t *testing.T) {
 	Assert := assert.New(t)
-	expectedLibs := []string{"/lib64/libc.so.6", "/lib64/ld-linux-x86-64.so.2"}
-	slices.Sort(expectedLibs)
-	libs, err := LibPaths("/usr/sbin/which")
+	expectedLibs := []string{"libc.so.6", "/lib64/ld-linux-x86-64.so.2"}
+	libs, err := LibPaths("testdata/which")
 	Assert.NoError(err)
 	Assert.Equal(expectedLibs, libs)
 }
 
 func TestSymlinkedBinary(t *testing.T) {
 	Assert := assert.New(t)
-	expectedLibs := []string{"/lib64/libc.so.6", "/lib64/ld-linux-x86-64.so.2"}
-	slices.Sort(expectedLibs)
+	expectedLibs := []string{"libc.so.6", "/lib64/ld-linux-x86-64.so.2"}
 	libs, err := LibPaths("symlink/testdata/which")
 	Assert.NoError(err)
 	Assert.Equal(expectedLibs, libs)
@@ -40,7 +37,7 @@ func pwd(t *testing.T) string {
 // Construct a TempDir under `./.tmp`
 //
 // This is (almost) guaranteed to be on the same filesystem as `./testdata` and therefore
-// allow for valid hardlinks. 
+// allow for valid hardlinks.
 func workspaceTempDir(t *testing.T) string {
 	t.Helper()
 	tmpRoot := filepath.Join(pwd(t), ".tmp")
@@ -52,7 +49,7 @@ func workspaceTempDir(t *testing.T) string {
 	if err != nil {
 		t.Fatal("Failed to create", tmp, "Error:", err)
 	}
-	t.Cleanup(func() { os.RemoveAll(tmp) })
+	t.Cleanup(func() { _ = os.RemoveAll(tmp) })
 	return tmp
 }
 

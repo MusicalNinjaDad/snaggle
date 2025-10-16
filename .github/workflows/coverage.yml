@@ -1,0 +1,29 @@
+name: Coverage
+
+on:
+  push:
+    branches:
+      main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: Install dependencies
+        run: go get .
+      - name: Test
+        run: go test -v -coverprofile=coverage.out ./...
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 #v5.5.1
+        with:
+          use_oidc: true
+          files: coverage.out
