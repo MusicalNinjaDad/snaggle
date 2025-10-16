@@ -14,8 +14,8 @@ type Elf struct {
 	Name        string   // The filename
 	Path        string   // Absolute, fully resolved path to the file
 	Class       EI_CLASS // 32 or 64 bit? See https://man7.org/linux/man-pages/man5/elf.5.html#:~:text=.%20%20(3%3A%20%27F%27)-,EI_CLASS,-The%20fifth%20byte
-	Interpreter string   // Absolute path to the interpreter (if executable), "" if not executable. See https://gist.github.com/x0nu11byt3/bcb35c3de461e5fb66173071a2379779 for much more background
 	Type        Type     // Simplified based on ET_DYN & DynFlag1
+	Interpreter string   // Absolute path to the interpreter (if executable), "" if not executable. See https://gist.github.com/x0nu11byt3/bcb35c3de461e5fb66173071a2379779 for much more background
 }
 
 type EI_CLASS byte
@@ -129,7 +129,13 @@ func elftype(elffile *debug_elf.File) (Type, error) {
 }
 
 func New(path string) (Elf, error) {
-	elf := Elf{"", path, EI_CLASS(ELFNONE), "", Type(UNDEF)}
+	elf := Elf{
+		Name:        "",
+		Path:        path,
+		Class:       EI_CLASS(ELFNONE),
+		Type:        Type(UNDEF),
+		Interpreter: "",
+	}
 	var elffile *debug_elf.File
 	var retErr error
 	var err error
