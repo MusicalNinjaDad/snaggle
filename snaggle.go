@@ -18,9 +18,11 @@ import (
 // Note:
 //   - The interpreter will always be the last entry and will have a full, absolute path.
 //     See https://gist.github.com/x0nu11byt3/bcb35c3de461e5fb66173071a2379779 for much more background
-//   - The libraries will, hopefully, not include paths. See [man ld.so(8)](https://man7.org/linux/man-pages/man8/ld.so.8.html)
-//     for information on how the interpreter searches for the actual files.
-//   - An error, containing the phrase "Did not read full interpreter path." will be provided if we are not confident of the interpreter path.
+//   - The libraries will, hopefully, not include paths.
+//     See [man ld.so(8)](https://man7.org/linux/man-pages/man8/ld.so.8.html) for information on how
+//     the interpreter searches for the actual files.
+//   - An error, containing the phrase "Did not read full interpreter path." will be provided if we are not
+//     confident of the interpreter path.
 //   - Other errors from `debug.elf` will be propogated as is and a best-effort set of libraries returned.
 func LibPaths(elfpath string) ([]string, error) {
 	elffile, err := elf.Open(elfpath)
