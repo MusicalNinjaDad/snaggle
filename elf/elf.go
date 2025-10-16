@@ -7,15 +7,17 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"slices"
 )
 
 // A parsed Elf binary
 type Elf struct {
-	Name        string   // The filename
-	Path        string   // Absolute, fully resolved path to the file
-	Class       EI_CLASS // 32 or 64 bit? See https://man7.org/linux/man-pages/man5/elf.5.html#:~:text=.%20%20(3%3A%20%27F%27)-,EI_CLASS,-The%20fifth%20byte
-	Type        Type     // Simplified based on ET_DYN & DynFlag1
-	Interpreter string   // Absolute path to the interpreter (if executable), "" if not executable. See https://gist.github.com/x0nu11byt3/bcb35c3de461e5fb66173071a2379779 for much more background
+	Name         string   // The filename
+	Path         string   // Absolute, fully resolved path to the file
+	Class        EI_CLASS // 32 or 64 bit? See https://man7.org/linux/man-pages/man5/elf.5.html#:~:text=.%20%20(3%3A%20%27F%27)-,EI_CLASS,-The%20fifth%20byte
+	Type         Type     // Simplified based on ET_DYN & DynFlag1
+	Interpreter  string   // Absolute path to the interpreter (if executable), "" if not executable. See https://gist.github.com/x0nu11byt3/bcb35c3de461e5fb66173071a2379779 for much more background
+	Dependencies []string // Names of all requested libraries
 }
 
 type EI_CLASS byte
@@ -130,11 +132,12 @@ func elftype(elffile *debug_elf.File) (Type, error) {
 
 func New(path string) (Elf, error) {
 	elf := Elf{
-		Name:        "",
-		Path:        path,
-		Class:       EI_CLASS(ELFNONE),
-		Type:        Type(UNDEF),
-		Interpreter: "",
+		Name:         "",
+		Path:         path,
+		Class:        EI_CLASS(ELFNONE),
+		Type:         Type(UNDEF),
+		Interpreter:  "",
+		Dependencies: make([]string, 0),
 	}
 	var elffile *debug_elf.File
 	var retErr error
@@ -164,6 +167,10 @@ func New(path string) (Elf, error) {
 		err = errors.New("binary without interpreter")
 		retErr = errors.Join(retErr, err)
 	}
+
+	elf.Dependencies, err = elffile.ImportedLibraries()
+	retErr = errors.Join(retErr, err)
+	slices.Sort(elf.Dependencies)
 
 	return elf, retErr
 }
