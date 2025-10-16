@@ -86,7 +86,6 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 
 // Identifies the type of Elf (binary vs library) based upon a combination of `DT_FLAGS_1` & the claimed `e_type` in the header.
 //
-//   - Will consider anything that claims to be `PIE` via `DT_FLAGS_1` to be a `BIN`
 //   - Returns `Type(UNDEF), errors.ErrUnsupported` for types we don't recognise.
 func elftype(elffile *debug_elf.File) (Type, error) {
 	elftype := Type(UNDEF)
@@ -106,22 +105,25 @@ func elftype(elffile *debug_elf.File) (Type, error) {
 		return false, nil
 	}
 
-	pie, err := isPIE()
-	retErr = errors.Join(retErr, err)
-	if pie {
-		return Type(BIN), retErr
-	}
-
-	switch claimedtype := elffile.FileHeader.Type; claimedtype {
+	switch claimedtype := elffile.Type; claimedtype {
 	case debug_elf.ET_EXEC:
 		elftype = Type(BIN)
 	case debug_elf.ET_DYN:
-		elftype = Type(LIB)
+		pie, err := isPIE()
+		retErr = errors.Join(retErr, err)
+		if pie {
+			elftype = Type(BIN)
+		} else {
+			elftype = Type(LIB)
+		}
+	default:
+		// don't change existing value
 	}
 
 	if elftype == Type(UNDEF) {
 		retErr = errors.Join(retErr, errors.ErrUnsupported)
 	}
+
 	return elftype, retErr
 }
 
