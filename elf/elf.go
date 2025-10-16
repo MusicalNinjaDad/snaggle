@@ -19,20 +19,30 @@ const (
 	ELF64   = debug_elf.ELFCLASS64
 )
 
-func New(path string) (Elf, error) {
-	elf := Elf{path, EI_CLASS(ELFNONE)}
+// resolve resolves symlinks and returns an absolute path.
+func resolve(path string) (string, error) {
 	path, err := filepath.EvalSymlinks(path)
-	elf.Path = path
 	if err != nil {
-		return elf, err
+		return path, err
 	}
 	path, err = filepath.Abs(path)
-	elf.Path = path
+	if err != nil {
+		return path, err
+	}
+	return path, nil
+}
+
+func New(path string) (Elf, error) {
+	elf := Elf{path, EI_CLASS(ELFNONE)}
+	var elffile *debug_elf.File
+	var err error
+
+	elf.Path, err = resolve(path)
 	if err != nil {
 		return elf, err
 	}
 
-	elffile, err := debug_elf.Open(path)
+	elffile, err = debug_elf.Open(path)
 	if err != nil {
 		return elf, err
 	}
