@@ -200,13 +200,10 @@ func New(path string) (Elf, error) {
 		errs = append(errs, err)
 	}
 
-	// // TODO: static linked binaries (ET_EXEC) don't need interpreter.
-	// //   - add Type.PIE
-	// //   - add IsBinary(self *Elf) bool and bitmask self.Type&Type.BIN
-	// if elf.Type == Type(BIN) && elf.Interpreter == "" {
-	// 	err = errors.New("binary without interpreter")
-	// 	errs = append(errs, err)
-	// }
+	if elf.Type == Type(PIE) && elf.Interpreter == "" {
+		err = errors.New("PIE without interpreter")
+		errs = append(errs, err)
+	}
 
 	elf.Dependencies, err = elffile.ImportedLibraries()
 	if err != nil {
