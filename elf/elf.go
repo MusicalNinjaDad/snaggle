@@ -124,11 +124,11 @@ func New(path string) (Elf, error) {
 
 // resolve resolves symlinks and returns an absolute path.
 func resolve(path string) (string, error) {
-	path, err := filepath.EvalSymlinks(path)
+	path, err := filepath.Abs(path)
 	if err != nil {
 		return path, err
 	}
-	path, err = filepath.Abs(path)
+	path, err = filepath.EvalSymlinks(path)
 	if err != nil {
 		return path, err
 	}
