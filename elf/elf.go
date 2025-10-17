@@ -67,6 +67,57 @@ func (e *Elf) IsDyn() bool {
 	return e.Type&Type(DYN) != 0
 }
 
+func New(path string) (Elf, error) {
+	elf := Elf{Path: path}
+	var elffile *debug_elf.File
+	var errs []error
+	var err error
+
+	elf.Name = filepath.Base(path)
+
+	elf.Path, err = resolve(path)
+	if err != nil {
+		return elf, err
+	}
+
+	elffile, err = debug_elf.Open(elf.Path)
+	if err != nil {
+		return elf, err
+	}
+	defer func() {
+		closing_err := elffile.Close()
+		if closing_err != nil {
+			msg := fmt.Errorf("error closing %s: %w", elf.Path, closing_err)
+			log.Println(msg)
+		}
+	}()
+
+	elf.Class = EI_CLASS(elffile.Class)
+
+	elf.Interpreter, err = interpreter(elffile)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	elf.Type, err = elftype(elffile)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	if elf.Type == Type(PIE) && elf.Interpreter == "" {
+		err = errors.New("PIE without interpreter")
+		errs = append(errs, err)
+	}
+
+	elf.Dependencies, err = elffile.ImportedLibraries()
+	if err != nil {
+		errs = append(errs, err)
+	}
+	slices.Sort(elf.Dependencies)
+
+	return elf, errors.Join(errs...)
+}
+
 // resolve resolves symlinks and returns an absolute path.
 func resolve(path string) (string, error) {
 	path, err := filepath.EvalSymlinks(path)
@@ -78,6 +129,31 @@ func resolve(path string) (string, error) {
 		return path, err
 	}
 	return path, nil
+}
+
+// Identifies the type of Elf (binary vs library) based upon a combination of `DT_FLAGS_1` & the claimed `e_type` in the header.
+//
+//   - Returns `Type(UNDEF), errors.ErrUnsupported` for types we don't recognise.
+func elftype(elffile *debug_elf.File) (Type, error) {
+	switch claimedtype := elffile.Type; claimedtype {
+
+	case debug_elf.ET_EXEC:
+		return Type(EXE), nil
+
+	case debug_elf.ET_DYN:
+		pie, err := hasDT_FLAGS_1(elffile, debug_elf.DF_1_PIE)
+		if err != nil {
+			return Type(DYN), err
+		}
+		if pie {
+			return Type(PIE), nil
+		} else {
+			return Type(DYN), nil
+		}
+
+	default:
+		return Type(UNDEF), fmt.Errorf("unsupported elf type: %w", errors.ErrUnsupported)
+	}
 }
 
 // Identify the interpreter requested by the ELF, based upon the `PT_INTERP` Program header.
@@ -129,80 +205,4 @@ func hasDT_FLAGS_1(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, erro
 		}
 	}
 	return false, nil
-}
-
-// Identifies the type of Elf (binary vs library) based upon a combination of `DT_FLAGS_1` & the claimed `e_type` in the header.
-//
-//   - Returns `Type(UNDEF), errors.ErrUnsupported` for types we don't recognise.
-func elftype(elffile *debug_elf.File) (Type, error) {
-	switch claimedtype := elffile.Type; claimedtype {
-
-	case debug_elf.ET_EXEC:
-		return Type(EXE), nil
-
-	case debug_elf.ET_DYN:
-		pie, err := hasDT_FLAGS_1(elffile, debug_elf.DF_1_PIE)
-		if err != nil {
-			return Type(DYN), err
-		}
-		if pie {
-			return Type(PIE), nil
-		} else {
-			return Type(DYN), nil
-		}
-
-	default:
-		return Type(UNDEF), fmt.Errorf("unsupported elf type: %w", errors.ErrUnsupported)
-	}
-}
-
-func New(path string) (Elf, error) {
-	elf := Elf{Path: path}
-	var elffile *debug_elf.File
-	var errs []error
-	var err error
-
-	elf.Name = filepath.Base(path)
-
-	elf.Path, err = resolve(path)
-	if err != nil {
-		return elf, err
-	}
-
-	elffile, err = debug_elf.Open(elf.Path)
-	if err != nil {
-		return elf, err
-	}
-	defer func() {
-		closing_err := elffile.Close()
-		if closing_err != nil {
-			msg := fmt.Errorf("error closing %s: %w", elf.Path, closing_err)
-			log.Println(msg)
-		}
-	}()
-
-	elf.Class = EI_CLASS(elffile.Class)
-
-	elf.Interpreter, err = interpreter(elffile)
-	if err != nil {
-		errs = append(errs, err)
-	}
-
-	elf.Type, err = elftype(elffile)
-	if err != nil {
-		errs = append(errs, err)
-	}
-
-	if elf.Type == Type(PIE) && elf.Interpreter == "" {
-		err = errors.New("PIE without interpreter")
-		errs = append(errs, err)
-	}
-
-	elf.Dependencies, err = elffile.ImportedLibraries()
-	if err != nil {
-		errs = append(errs, err)
-	}
-	slices.Sort(elf.Dependencies)
-
-	return elf, errors.Join(errs...)
 }
