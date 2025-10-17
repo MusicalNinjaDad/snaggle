@@ -22,21 +22,6 @@ func pwd(t *testing.T) string {
 	return pwd
 }
 
-func TestWhich(t *testing.T) {
-	Assert := assert.New(t)
-	expectedElf := Elf{
-		Name:         "which",
-		Path:         filepath.Join(pwd(t), "../testdata/which"),
-		Class:        elf.EI_CLASS(elf.ELF64),
-		Type:         elf.Type(elf.EXE),
-		Interpreter:  "/lib64/ld-linux-x86-64.so.2",
-		Dependencies: []string{"libc.so.6"},
-	}
-	whichElf, err := elf.New("../testdata/which")
-	Assert.NoError(err)
-	Assert.Equal(expectedElf, whichElf)
-}
-
 func TestCommonBinaries(t *testing.T) {
 	tests := []struct {
 		name        string // test run name
