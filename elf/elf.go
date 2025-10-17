@@ -23,9 +23,9 @@ type Elf struct {
 type EI_CLASS byte
 
 const (
-	ELFNONE = debug_elf.ELFCLASSNONE
-	ELF32   = debug_elf.ELFCLASS32
-	ELF64   = debug_elf.ELFCLASS64
+	ELFNONE = debug_elf.ELFCLASSNONE // 0
+	ELF32   = debug_elf.ELFCLASS32   // 1
+	ELF64   = debug_elf.ELFCLASS64   // 2
 )
 
 type Type byte
@@ -131,14 +131,7 @@ func elftype(elffile *debug_elf.File) (Type, error) {
 }
 
 func New(path string) (Elf, error) {
-	elf := Elf{
-		Name:         "",
-		Path:         path,
-		Class:        EI_CLASS(ELFNONE),
-		Type:         Type(UNDEF),
-		Interpreter:  "",
-		Dependencies: make([]string, 0),
-	}
+	elf := Elf{Path: path}
 	var elffile *debug_elf.File
 	var retErr error
 	var err error
