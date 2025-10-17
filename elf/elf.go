@@ -92,7 +92,7 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 //   - Returns `Type(UNDEF), errors.ErrUnsupported` for types we don't recognise.
 func elftype(elffile *debug_elf.File) (Type, error) {
 	elftype := Type(UNDEF)
-	var retErr error
+	var errs []error
 
 	isPIE := func() (bool, error) {
 		dt_flags_1, err := elffile.DynValue(debug_elf.DynTag(debug_elf.DT_FLAGS_1))
@@ -113,7 +113,9 @@ func elftype(elffile *debug_elf.File) (Type, error) {
 		elftype = Type(BIN)
 	case debug_elf.ET_DYN:
 		pie, err := isPIE()
-		retErr = errors.Join(retErr, err)
+		if err != nil {
+			errs = append(errs, err)
+		}
 		if pie {
 			elftype = Type(BIN)
 		} else {
@@ -124,16 +126,17 @@ func elftype(elffile *debug_elf.File) (Type, error) {
 	}
 
 	if elftype == Type(UNDEF) {
-		retErr = errors.Join(retErr, errors.ErrUnsupported)
+		err := fmt.Errorf("unsupported elf type: %w", errors.ErrUnsupported)
+		errs = append(errs, err)
 	}
 
-	return elftype, retErr
+	return elftype, errors.Join(errs...)
 }
 
 func New(path string) (Elf, error) {
 	elf := Elf{Path: path}
 	var elffile *debug_elf.File
-	var retErr error
+	var errs []error
 	var err error
 
 	elf.Name = filepath.Base(path)
@@ -151,19 +154,25 @@ func New(path string) (Elf, error) {
 	elf.Class = EI_CLASS(elffile.Class)
 
 	elf.Interpreter, err = interpreter(elffile)
-	retErr = errors.Join(retErr, err)
+	if err != nil {
+		errs = append(errs, err)
+	}
 
 	elf.Type, err = elftype(elffile)
-	retErr = errors.Join(retErr, err)
+	if err != nil {
+		errs = append(errs, err)
+	}
 
 	if elf.Type == Type(BIN) && elf.Interpreter == "" {
 		err = errors.New("binary without interpreter")
-		retErr = errors.Join(retErr, err)
+		errs = append(errs, err)
 	}
 
 	elf.Dependencies, err = elffile.ImportedLibraries()
-	retErr = errors.Join(retErr, err)
+	if err != nil {
+		errs = append(errs, err)
+	}
 	slices.Sort(elf.Dependencies)
 
-	return elf, retErr
+	return elf, errors.Join(errs...)
 }
