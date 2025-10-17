@@ -28,7 +28,7 @@ func TestWhich(t *testing.T) {
 		Name:         "which",
 		Path:         filepath.Join(pwd(t), "../testdata/which"),
 		Class:        elf.EI_CLASS(elf.ELF64),
-		Type:         elf.Type(elf.BIN),
+		Type:         elf.Type(elf.EXE),
 		Interpreter:  "/lib64/ld-linux-x86-64.so.2",
 		Dependencies: []string{"libc.so.6"},
 	}
@@ -42,6 +42,7 @@ func TestCommonBinaries(t *testing.T) {
 		name        string // test run name
 		path        string
 		expectedElf Elf
+		dynamic     bool
 	}{
 		{
 			name: "PIE no dependencies",
@@ -49,21 +50,23 @@ func TestCommonBinaries(t *testing.T) {
 				Name:         "hello_pie",
 				Path:         filepath.Join(pwd(t), "../testdata/hello_pie"),
 				Class:        elf.EI_CLASS(elf.ELF64),
-				Type:         elf.Type(elf.BIN),
+				Type:         elf.Type(elf.PIE),
 				Interpreter:  "/lib64/ld-linux-x86-64.so.2",
 				Dependencies: nil,
 			},
+			dynamic: true,
 		},
 		{
-			name: "Static linked binary",
+			name: "Static linked executable",
 			expectedElf: elf.Elf{
 				Name:         "hello_static",
 				Path:         filepath.Join(pwd(t), "../testdata/hello_static"),
 				Class:        elf.EI_CLASS(elf.ELF64),
-				Type:         elf.Type(elf.BIN),
+				Type:         elf.Type(elf.EXE),
 				Interpreter:  "",
 				Dependencies: nil,
 			},
+			dynamic: false,
 		},
 		{
 			name: "PIE 1 dependency",
@@ -71,10 +74,11 @@ func TestCommonBinaries(t *testing.T) {
 				Name:         "which",
 				Path:         filepath.Join(pwd(t), "../testdata/which"),
 				Class:        elf.EI_CLASS(elf.ELF64),
-				Type:         elf.Type(elf.BIN),
+				Type:         elf.Type(elf.PIE),
 				Interpreter:  "/lib64/ld-linux-x86-64.so.2",
 				Dependencies: []string{"libc.so.6"},
 			},
+			dynamic: true,
 		},
 		{
 			name: "PIE nested dependencies",
@@ -82,11 +86,12 @@ func TestCommonBinaries(t *testing.T) {
 				Name:        "id",
 				Path:        filepath.Join(pwd(t), "../testdata/id"),
 				Class:       elf.EI_CLASS(elf.ELF64),
-				Type:        elf.Type(elf.BIN),
+				Type:        elf.Type(elf.PIE),
 				Interpreter: "/lib64/ld-linux-x86-64.so.2",
 				// ldd lists "libpcre2-8.so.0", which is requested by "libselinux.so.1"
 				Dependencies: []string{"libc.so.6", "libselinux.so.1"},
 			},
+			dynamic: true,
 		},
 	}
 
@@ -101,6 +106,8 @@ func TestCommonBinaries(t *testing.T) {
 			Assert := assert.New(t)
 			parsed, err := elf.New(path)
 			Assert.NoError(err)
+			Assert.True(parsed.IsExe(), "IsExe()")
+			Assert.Equal(tt.dynamic, parsed.IsDyn())
 			Assert.Equal(tt.expectedElf, parsed)
 		})
 	}

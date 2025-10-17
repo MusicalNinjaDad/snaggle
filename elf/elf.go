@@ -42,15 +42,30 @@ const (
 	ELF64   = debug_elf.ELFCLASS64   // 2
 )
 
+// Think before directly comparing to bitmask (2^n) values. See value description for individual hints.
 type Type byte
 
 const (
-	UNDEF = 0
-	BIN   = 1
-	LIB   = 2
-	// PIE = 3 // LIB+BIN
-	// - Would allow specific check (PIE && !Interpreter) vs current expectation that all bins have interpreters
+	// Bitmask values
+	// --------------
+
+	UNDEF = 0 // Undefined
+	EXE   = 1 // Executable: Use Elf.IsExe() to catch _any_ type of executable
+	DYN   = 2 // Dynamic: Use Elf.IsDyn() to catch _any_ type of dynamically linked binary
+
+	// Meaningful combination values
+	// -----------------------------
+
+	PIE = 3 // EXE + DYN
 )
+
+func (e *Elf) IsExe() bool {
+	return e.Type&Type(EXE) != 0
+}
+
+func (e *Elf) IsDyn() bool {
+	return e.Type&Type(DYN) != 0
+}
 
 // resolve resolves symlinks and returns an absolute path.
 func resolve(path string) (string, error) {
@@ -125,16 +140,16 @@ func elftype(elffile *debug_elf.File) (Type, error) {
 
 	switch claimedtype := elffile.Type; claimedtype {
 	case debug_elf.ET_EXEC:
-		elftype = Type(BIN)
+		elftype = Type(EXE)
 	case debug_elf.ET_DYN:
 		pie, err := isPIE()
 		if err != nil {
 			errs = append(errs, err)
 		}
 		if pie {
-			elftype = Type(BIN)
+			elftype = Type(PIE)
 		} else {
-			elftype = Type(LIB)
+			elftype = Type(DYN)
 		}
 	default:
 		// don't change existing value
