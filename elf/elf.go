@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"path/filepath"
 	"slices"
 )
@@ -73,6 +72,11 @@ func New(path string) (Elf, error) {
 	var errs []error
 	var err error
 
+	appenderr := func(err error, message string) {
+		err = fmt.Errorf("%s %s: %w", message, elf.Path, err)
+		errs = append(errs, err)
+	}
+
 	elf.Name = filepath.Base(path)
 
 	elf.Path, err = resolve(path)
@@ -85,10 +89,9 @@ func New(path string) (Elf, error) {
 		return elf, err
 	}
 	defer func() {
-		closing_err := elffile.Close()
-		if closing_err != nil {
-			msg := fmt.Errorf("error closing %s: %w", elf.Path, closing_err)
-			log.Println(msg)
+		err := elffile.Close()
+		if err != nil {
+			appenderr(err, "error closing")
 		}
 	}()
 
@@ -96,22 +99,23 @@ func New(path string) (Elf, error) {
 
 	elf.Interpreter, err = interpreter(elffile)
 	if err != nil {
-		errs = append(errs, err)
+		appenderr(err, "error getting interpreter for")
 	}
 
 	elf.Type, err = elftype(elffile)
 	if err != nil {
-		errs = append(errs, err)
+		appenderr(err, "error getting type of")
 	}
 
 	if elf.Type == Type(PIE) && elf.Interpreter == "" {
-		err = errors.New("PIE without interpreter")
+		msg := fmt.Sprint(elf.Path, " is a PIE without interpreter")
+		err = errors.New(msg)
 		errs = append(errs, err)
 	}
 
 	elf.Dependencies, err = elffile.ImportedLibraries()
 	if err != nil {
-		errs = append(errs, err)
+		appenderr(err, "error getting dependecies for")
 	}
 	slices.Sort(elf.Dependencies)
 
