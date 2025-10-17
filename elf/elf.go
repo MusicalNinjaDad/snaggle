@@ -108,8 +108,7 @@ func New(path string) (Elf, error) {
 	}
 
 	if elf.Type == Type(PIE) && elf.Interpreter == "" {
-		msg := fmt.Sprint(elf.Path, " is a PIE without interpreter")
-		err = errors.New(msg)
+		err = fmt.Errorf("%s is a PIE without interpreter", elf.Path)
 		errs = append(errs, err)
 	}
 
@@ -182,13 +181,11 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 			}
 			interpreter := string(bytes.TrimRight(interp, "\x00")) // strip `\x00` termination
 			if len(interpreter) != int(prog.Filesz-1) {            // have multi-byte chars or unexpected contents
-				msg := fmt.Sprint("did not read full interpreter path. Expected", prog.Filesz-1, ", read", len(interpreter), "bytes")
-				err := errors.New(msg)
+				err := fmt.Errorf("did not read full interpreter path: expected %v bytes, read %v bytes", prog.Filesz-1, len(interpreter))
 				return string(interp), err
 			}
 			if len(interpreter) == 0 {
-				msg := "zero-length interpreter"
-				err := errors.New(msg)
+				err := errors.New("zero-length interpreter")
 				return string(interp), err
 			}
 			return interpreter, nil
