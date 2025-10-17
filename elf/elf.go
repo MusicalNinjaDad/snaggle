@@ -117,50 +117,43 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 	return "", nil
 }
 
+func hasDT_FLAGS_1(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, error) {
+	dt_flags_1, err := elffile.DynValue(debug_elf.DynTag(debug_elf.DT_FLAGS_1))
+	if err != nil {
+		return false, fmt.Errorf("error getting DT_FLAGS_1: %w", err)
+	}
+	for _, flags := range dt_flags_1 {
+		// Bitmask against PIE Flag (0x08000000)
+		if flags&uint64(flag) != 0 {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // Identifies the type of Elf (binary vs library) based upon a combination of `DT_FLAGS_1` & the claimed `e_type` in the header.
 //
 //   - Returns `Type(UNDEF), errors.ErrUnsupported` for types we don't recognise.
 func elftype(elffile *debug_elf.File) (Type, error) {
-	elftype := Type(UNDEF)
-	var errs []error
-
-	isPIE := func() (bool, error) {
-		dt_flags_1, err := elffile.DynValue(debug_elf.DynTag(debug_elf.DT_FLAGS_1))
-		if err != nil {
-			return false, fmt.Errorf("error getting DT_FLAGS_1: %w", err)
-		}
-		for _, flags := range dt_flags_1 {
-			// Bitmask against PIE Flag (0x08000000)
-			if flags&uint64(debug_elf.DF_1_PIE) != 0 {
-				return true, nil
-			}
-		}
-		return false, nil
-	}
-
 	switch claimedtype := elffile.Type; claimedtype {
+
 	case debug_elf.ET_EXEC:
-		elftype = Type(EXE)
+		return Type(EXE), nil
+
 	case debug_elf.ET_DYN:
-		pie, err := isPIE()
+		pie, err := hasDT_FLAGS_1(elffile, debug_elf.DF_1_PIE)
 		if err != nil {
-			errs = append(errs, err)
+			return Type(DYN), err
 		}
 		if pie {
-			elftype = Type(PIE)
+			return Type(PIE), nil
 		} else {
-			elftype = Type(DYN)
+			return Type(DYN), nil
 		}
+
 	default:
-		// don't change existing value
+		return Type(UNDEF), fmt.Errorf("unsupported elf type: %w", errors.ErrUnsupported)
 	}
-
-	if elftype == Type(UNDEF) {
-		err := fmt.Errorf("unsupported elf type: %w", errors.ErrUnsupported)
-		errs = append(errs, err)
-	}
-
-	return elftype, errors.Join(errs...)
 }
 
 func New(path string) (Elf, error) {
