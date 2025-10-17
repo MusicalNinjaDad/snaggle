@@ -13,12 +13,25 @@ import (
 
 // A parsed Elf binary
 type Elf struct {
-	Name         string   // The filename
-	Path         string   // Absolute, fully resolved path to the file
-	Class        EI_CLASS // 32 or 64 bit? See https://man7.org/linux/man-pages/man5/elf.5.html#:~:text=.%20%20(3%3A%20%27F%27)-,EI_CLASS,-The%20fifth%20byte
-	Type         Type     // Simplified based on ET_DYN & DynFlag1
-	Interpreter  string   // Absolute path to the interpreter (if executable), "" if not executable. See https://gist.github.com/x0nu11byt3/bcb35c3de461e5fb66173071a2379779 for much more background
-	Dependencies []string // Names of all requested libraries
+	// The filename
+	Name string
+
+	// Absolute, fully resolved path to the file
+	Path string
+
+	// 32 or 64 bit?
+	//  - See https://man7.org/linux/man-pages/man5/elf.5.html#:~:text=.%20%20(3%3A%20%27F%27)-,EI_CLASS,-The%20fifth%20byte
+	Class EI_CLASS
+
+	// Simplified based on ET_DYN & DynFlag1
+	Type Type
+
+	// Absolute path to the interpreter (if executable), "" if not executable.
+	//  - See https://gist.github.com/x0nu11byt3/bcb35c3de461e5fb66173071a2379779 for much more background
+	Interpreter string
+
+	// Names of all requested libraries
+	Dependencies []string
 }
 
 type EI_CLASS byte
@@ -35,7 +48,8 @@ const (
 	UNDEF = 0
 	BIN   = 1
 	LIB   = 2
-	// PIE = 3 // Unused: LIB+BIN
+	// PIE = 3 // LIB+BIN
+	// - Would allow specific check (PIE && !Interpreter) vs current expectation that all bins have interpreters
 )
 
 // resolve resolves symlinks and returns an absolute path.
