@@ -1,6 +1,8 @@
 package elf_test
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -33,4 +35,73 @@ func TestWhich(t *testing.T) {
 	whichElf, err := elf.New("../testdata/which")
 	Assert.NoError(err)
 	Assert.Equal(expectedElf, whichElf)
+}
+
+func TestCommonBinaries(t *testing.T) {
+	tests := []struct {
+		name        string // test run name
+		path        string
+		expectedElf Elf
+	}{
+		{
+			name: "PIE no dependencies",
+			expectedElf: elf.Elf{
+				Name:         "hello_pie",
+				Path:         filepath.Join(pwd(t), "../testdata/hello_pie"),
+				Class:        elf.EI_CLASS(elf.ELF64),
+				Type:         elf.Type(elf.BIN),
+				Interpreter:  "/lib64/ld-linux-x86-64.so.2",
+				Dependencies: nil,
+			},
+		},
+		{
+			name: "Static linked binary",
+			expectedElf: elf.Elf{
+				Name:         "hello_static",
+				Path:         filepath.Join(pwd(t), "../testdata/hello_static"),
+				Class:        elf.EI_CLASS(elf.ELF64),
+				Type:         elf.Type(elf.BIN),
+				Interpreter:  "",
+				Dependencies: nil,
+			},
+		},
+		{
+			name: "PIE 1 dependency",
+			expectedElf: elf.Elf{
+				Name:         "which",
+				Path:         filepath.Join(pwd(t), "../testdata/which"),
+				Class:        elf.EI_CLASS(elf.ELF64),
+				Type:         elf.Type(elf.BIN),
+				Interpreter:  "/lib64/ld-linux-x86-64.so.2",
+				Dependencies: []string{"libc.so.6"},
+			},
+		},
+		{
+			name: "PIE nested dependencies",
+			expectedElf: elf.Elf{
+				Name:        "id",
+				Path:        filepath.Join(pwd(t), "../testdata/id"),
+				Class:       elf.EI_CLASS(elf.ELF64),
+				Type:        elf.Type(elf.BIN),
+				Interpreter: "/lib64/ld-linux-x86-64.so.2",
+				// ldd lists "libpcre2-8.so.0", which is requested by "libselinux.so.1"
+				Dependencies: []string{"libc.so.6", "libselinux.so.1"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := tt.expectedElf.Path
+			if _, err := os.Stat(path); errors.Is(err, fs.ErrNotExist) {
+				t.Fatalf("Skipping %s as %s not present", tt.name, path)
+				return
+			}
+
+			Assert := assert.New(t)
+			parsed, err := elf.New(path)
+			Assert.NoError(err)
+			Assert.Equal(tt.expectedElf, parsed)
+		})
+	}
 }
