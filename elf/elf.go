@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"path/filepath"
 	"slices"
 )
@@ -146,10 +147,17 @@ func New(path string) (Elf, error) {
 		return elf, err
 	}
 
-	elffile, err = debug_elf.Open(path)
+	elffile, err = debug_elf.Open(elf.Path)
 	if err != nil {
 		return elf, err
 	}
+	defer func() {
+		closing_err := elffile.Close()
+		if closing_err != nil {
+			msg := fmt.Errorf("error closing %s: %w", elf.Path, closing_err)
+			log.Println(msg)
+		}
+	}()
 
 	elf.Class = EI_CLASS(elffile.Class)
 
