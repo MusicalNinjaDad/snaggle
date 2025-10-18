@@ -6,9 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"slices"
+	"strings"
 )
 
 // A parsed Elf binary
@@ -164,6 +166,19 @@ func New(path string) (Elf, error) {
 	if err != nil {
 		appenderr(err, "error getting dependecies for")
 	}
+
+	ldso := exec.Command("/lib64/ld-linux-x86-64.so.2", elf.Path)
+	ldso.Env = append(ldso.Env, "LD_TRACE_LOADED_OBJECTS=1")
+	stdout, err := ldso.Output()
+	if err != nil {
+		appenderr(err, "error calling ldso on")
+	}
+	for line := range strings.Lines(string(stdout)) {
+		if strings.Contains(line, "=>") {
+			println(line)
+		}
+	}
+
 	slices.Sort(Dependencies)
 	for _, dep := range Dependencies {
 		depPath := filepath.Join("/lib64", dep)
