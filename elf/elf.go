@@ -58,8 +58,18 @@ const (
 	PIE = 3 // EXE + DYN
 )
 
+// Whether this is **primarily** an executable.
+//
+//   - This will return `false` in cases such as `/lib64/ld-linux-x86-64.so.2` which has an entry point
+//     and _may_ be `exec()`'ed but is not `ET_EXEC` or `PIE`
 func (e *Elf) IsExe() bool {
 	return e.Type&Type(EXE) != 0
+}
+
+// If it's not **primarily** an executable, then it's a library.
+// (Slightly simplified but good enough for our case)
+func (e *Elf) IsLib() bool {
+	return e.Type&Type(EXE) == 0
 }
 
 func (e *Elf) IsDyn() bool {

@@ -20,6 +20,24 @@ func pwd(t *testing.T) string {
 	return pwd
 }
 
+func TestLibselinux(t *testing.T) {
+	expectedElf := elf.Elf{
+		Name:         "libselinux.so.1",
+		Path:         "/lib64/libselinux.so.1",
+		Class:        elf.EI_CLASS(elf.ELF64),
+		Type:         elf.Type(elf.DYN),
+		Interpreter:  "",
+		Dependencies: []string{"libc.so.6", "libpcre2-8.so.0"},
+	}
+	Assert := assert.New(t)
+	parsed, err := elf.New(expectedElf.Path)
+	Assert.NoError(err)
+	Assert.False(parsed.IsExe(), "IsExe()")
+	Assert.True(parsed.IsLib(), "IsLib()")
+	Assert.True(parsed.IsDyn(), "IsDyn()")
+	// Assert.Equal(expectedElf, parsed)
+}
+
 func TestCommonBinaries(t *testing.T) {
 	tests := []struct {
 		name        string // test run name
