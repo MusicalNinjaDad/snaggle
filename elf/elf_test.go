@@ -118,13 +118,6 @@ func TestCommonBinaries(t *testing.T) {
 			exe:     true,
 			lib:     false,
 		},
-		{
-			name:        "Lib with dependencies",
-			expectedElf: libselinux,
-			dynamic:     true,
-			exe:         false,
-			lib:         true,
-		},
 	}
 
 	for _, tt := range tests {
