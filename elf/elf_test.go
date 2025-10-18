@@ -11,8 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type Elf = elf.Elf
-
 func pwd(t *testing.T) string {
 	t.Helper()
 	pwd, err := os.Getwd()
@@ -26,7 +24,7 @@ func TestCommonBinaries(t *testing.T) {
 	tests := []struct {
 		name        string // test run name
 		path        string
-		expectedElf Elf
+		expectedElf elf.Elf
 		dynamic     bool
 	}{
 		{
