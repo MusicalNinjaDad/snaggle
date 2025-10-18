@@ -21,15 +21,38 @@ func pwd(t *testing.T) string {
 }
 
 func TestCommonBinaries(t *testing.T) {
+	ldso := elf.Elf{
+		Name:         "ld-linux-x86-64.so.2",
+		Path:         "/lib64/ld-linux-x86-64.so.2",
+		Class:        elf.EI_CLASS(elf.ELF64),
+		Type:         elf.Type(elf.DYN),
+		Interpreter:  "",
+		Dependencies: nil,
+	}
+	libc := elf.Elf{
+		Name:         "libc.so.6",
+		Path:         "/lib64/libc.so.6",
+		Class:        elf.EI_CLASS(elf.ELF64),
+		Type:         elf.Type(elf.DYN),
+		Interpreter:  "/lib64/ld-linux-x86-64.so.2",
+		Dependencies: []elf.Elf{ldso},
+	}
+	libpcre2_8 := elf.Elf{
+		Name:         "libpcre2-8.so.0",
+		Path:         "/lib64/libpcre2-8.so.0.14.0",
+		Class:        elf.EI_CLASS(elf.ELF64),
+		Type:         elf.Type(elf.DYN),
+		Interpreter:  "",
+		Dependencies: []elf.Elf{libc},
+	}
 	libselinux := elf.Elf{
 		Name:         "libselinux.so.1",
 		Path:         "/lib64/libselinux.so.1",
 		Class:        elf.EI_CLASS(elf.ELF64),
 		Type:         elf.Type(elf.DYN),
 		Interpreter:  "",
-		Dependencies: []string{"libc.so.6", "libpcre2-8.so.0"},
+		Dependencies: []elf.Elf{libc, libpcre2_8},
 	}
-
 	tests := []struct {
 		name        string // test run name
 		path        string
@@ -74,7 +97,7 @@ func TestCommonBinaries(t *testing.T) {
 				Class:        elf.EI_CLASS(elf.ELF64),
 				Type:         elf.Type(elf.PIE),
 				Interpreter:  "/lib64/ld-linux-x86-64.so.2",
-				Dependencies: []string{"libc.so.6"},
+				Dependencies: []elf.Elf{libc},
 			},
 			dynamic: true,
 			exe:     true,
@@ -89,7 +112,7 @@ func TestCommonBinaries(t *testing.T) {
 				Type:        elf.Type(elf.PIE),
 				Interpreter: "/lib64/ld-linux-x86-64.so.2",
 				// ldd lists "libpcre2-8.so.0", which is requested by "libselinux.so.1"
-				Dependencies: []string{"libc.so.6", "libselinux.so.1"},
+				Dependencies: []elf.Elf{libc, libselinux},
 			},
 			dynamic: true,
 			exe:     true,

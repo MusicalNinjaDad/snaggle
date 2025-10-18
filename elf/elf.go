@@ -30,8 +30,8 @@ type Elf struct {
 	//  - See https://gist.github.com/x0nu11byt3/bcb35c3de461e5fb66173071a2379779 for much more background
 	Interpreter string
 
-	// Names of all requested libraries
-	Dependencies []string
+	// All requested libraries
+	Dependencies []Elf
 }
 
 type EI_CLASS byte
@@ -97,7 +97,17 @@ func (e Elf) Diff(o Elf) []string {
 			}
 		}
 
-		if !reflect.DeepEqual(selfVal, otherVal) {
+		if field.Name == "Dependencies" {
+			selfDeps := self.FieldByIndex(field.Index).Interface().([]Elf)
+			otherDeps := other.FieldByIndex(field.Index).Interface().([]Elf)
+			if len(selfDeps) != len(otherDeps) {
+				diffs = append(diffs, fmt.Sprintf("%s has %v dependencies in left, %v dependencies in right", self.FieldByName("Name"), len(selfDeps), len(otherDeps)))
+			} else {
+				for idx, dep := range selfDeps {
+					diffs = append(diffs, dep.Diff(otherDeps[idx])...)
+				}
+			}
+		} else if !reflect.DeepEqual(selfVal, otherVal) {
 			diffs = append(diffs, fmt.Sprintf("%s differs for %s: %v != %v", field.Name, self.FieldByName("Name"), selfVal, otherVal))
 		}
 	}
@@ -150,11 +160,19 @@ func New(path string) (Elf, error) {
 		errs = append(errs, err)
 	}
 
-	elf.Dependencies, err = elffile.ImportedLibraries()
+	Dependencies, err := elffile.ImportedLibraries()
 	if err != nil {
 		appenderr(err, "error getting dependecies for")
 	}
-	slices.Sort(elf.Dependencies)
+	slices.Sort(Dependencies)
+	for _, dep := range Dependencies {
+		depPath := filepath.Join("/lib64", dep)
+		depElf, err := New(depPath)
+		if err != nil {
+			appenderr(err, "error generating dependency for")
+		}
+		elf.Dependencies = append(elf.Dependencies, depElf)
+	}
 
 	return elf, errors.Join(errs...)
 }
