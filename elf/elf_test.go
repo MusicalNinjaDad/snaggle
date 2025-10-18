@@ -35,7 +35,7 @@ func TestLibselinux(t *testing.T) {
 	Assert.False(parsed.IsExe(), "IsExe()")
 	Assert.True(parsed.IsLib(), "IsLib()")
 	Assert.True(parsed.IsDyn(), "IsDyn()")
-	// Assert.Equal(expectedElf, parsed)
+	Assert.Nil(parsed.Diff(expectedElf))
 }
 
 func TestCommonBinaries(t *testing.T) {
@@ -109,7 +109,7 @@ func TestCommonBinaries(t *testing.T) {
 			Assert.NoError(err)
 			Assert.True(parsed.IsExe(), "IsExe()")
 			Assert.Equal(tt.dynamic, parsed.IsDyn())
-			Assert.Equal(tt.expectedElf, parsed)
+			Assert.Nil(parsed.Diff(tt.expectedElf))
 		})
 	}
 }

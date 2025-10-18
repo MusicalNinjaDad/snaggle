@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"reflect"
 	"slices"
 )
 
@@ -74,6 +75,33 @@ func (e *Elf) IsLib() bool {
 
 func (e *Elf) IsDyn() bool {
 	return e.Type&Type(DYN) != 0
+}
+
+// Deeply check for diffs between two `Elf`s. Ignores differences in the Path, as long as:
+//  1. Both `Path`s are absolute
+//  2. Both `Path`s end in the same filename
+func (e Elf) Diff(o Elf) []string {
+	var diffs []string
+	elf := reflect.TypeOf(e)
+	self := reflect.ValueOf(e)
+	other := reflect.ValueOf(o)
+
+	for _, field := range reflect.VisibleFields(elf) {
+		selfVal := self.FieldByIndex(field.Index).Interface()
+		otherVal := other.FieldByIndex(field.Index).Interface()
+
+		if field.Name == "Path" {
+			if filepath.IsAbs(selfVal.(string)) && filepath.IsAbs(otherVal.(string)) {
+				selfVal = filepath.Base(selfVal.(string))
+				otherVal = filepath.Base(otherVal.(string))
+			}
+		}
+
+		if !reflect.DeepEqual(selfVal, otherVal) {
+			diffs = append(diffs, fmt.Sprintf("%s differs for %s: %v != %v", field.Name, self.FieldByName("Name"), selfVal, otherVal))
+		}
+	}
+	return diffs
 }
 
 func New(path string) (Elf, error) {
