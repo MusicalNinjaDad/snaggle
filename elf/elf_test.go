@@ -20,8 +20,8 @@ func pwd(t *testing.T) string {
 	return pwd
 }
 
-func TestLibselinux(t *testing.T) {
-	expectedElf := elf.Elf{
+func TestCommonBinaries(t *testing.T) {
+	libselinux := elf.Elf{
 		Name:         "libselinux.so.1",
 		Path:         "/lib64/libselinux.so.1",
 		Class:        elf.EI_CLASS(elf.ELF64),
@@ -29,21 +29,14 @@ func TestLibselinux(t *testing.T) {
 		Interpreter:  "",
 		Dependencies: []string{"libc.so.6", "libpcre2-8.so.0"},
 	}
-	Assert := assert.New(t)
-	parsed, err := elf.New(expectedElf.Path)
-	Assert.NoError(err)
-	Assert.False(parsed.IsExe(), "IsExe()")
-	Assert.True(parsed.IsLib(), "IsLib()")
-	Assert.True(parsed.IsDyn(), "IsDyn()")
-	Assert.Nil(parsed.Diff(expectedElf))
-}
 
-func TestCommonBinaries(t *testing.T) {
 	tests := []struct {
 		name        string // test run name
 		path        string
 		expectedElf elf.Elf
 		dynamic     bool
+		exe         bool
+		lib         bool
 	}{
 		{
 			name: "PIE no dependencies",
@@ -56,6 +49,8 @@ func TestCommonBinaries(t *testing.T) {
 				Dependencies: nil,
 			},
 			dynamic: true,
+			exe:     true,
+			lib:     false,
 		},
 		{
 			name: "Static linked executable",
@@ -68,6 +63,8 @@ func TestCommonBinaries(t *testing.T) {
 				Dependencies: nil,
 			},
 			dynamic: false,
+			exe:     true,
+			lib:     false,
 		},
 		{
 			name: "PIE 1 dependency",
@@ -80,6 +77,8 @@ func TestCommonBinaries(t *testing.T) {
 				Dependencies: []string{"libc.so.6"},
 			},
 			dynamic: true,
+			exe:     true,
+			lib:     false,
 		},
 		{
 			name: "PIE nested dependencies",
@@ -93,6 +92,15 @@ func TestCommonBinaries(t *testing.T) {
 				Dependencies: []string{"libc.so.6", "libselinux.so.1"},
 			},
 			dynamic: true,
+			exe:     true,
+			lib:     false,
+		},
+		{
+			name:        "Lib with dependencies",
+			expectedElf: libselinux,
+			dynamic:     true,
+			exe:         false,
+			lib:         true,
 		},
 	}
 
@@ -107,7 +115,8 @@ func TestCommonBinaries(t *testing.T) {
 			Assert := assert.New(t)
 			parsed, err := elf.New(path)
 			Assert.NoError(err)
-			Assert.True(parsed.IsExe(), "IsExe()")
+			Assert.Equal(tt.exe, parsed.IsExe())
+			Assert.Equal(tt.lib, parsed.IsLib())
 			Assert.Equal(tt.dynamic, parsed.IsDyn())
 			Assert.Nil(parsed.Diff(tt.expectedElf))
 		})
