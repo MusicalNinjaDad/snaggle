@@ -9,74 +9,74 @@ import (
 
 	"github.com/MusicalNinjaDad/snaggle/elf"
 	"github.com/stretchr/testify/assert"
+
+	. "github.com/MusicalNinjaDad/snaggle/internal"
 )
-
-type Elf = elf.Elf
-
-func pwd(t *testing.T) string {
-	t.Helper()
-	pwd, err := os.Getwd()
-	if err != nil {
-		t.Fatal("Failed to get pwd. Error:", err)
-	}
-	return pwd
-}
 
 func TestCommonBinaries(t *testing.T) {
 	tests := []struct {
 		name        string // test run name
 		path        string
-		expectedElf Elf
+		expectedElf elf.Elf
 		dynamic     bool
+		exe         bool
+		lib         bool
 	}{
 		{
 			name: "PIE no dependencies",
 			expectedElf: elf.Elf{
 				Name:         "hello_pie",
-				Path:         filepath.Join(pwd(t), "../testdata/hello_pie"),
+				Path:         filepath.Join(Pwd(t), "../testdata/hello_pie"),
 				Class:        elf.EI_CLASS(elf.ELF64),
 				Type:         elf.Type(elf.PIE),
-				Interpreter:  "/lib64/ld-linux-x86-64.so.2",
+				Interpreter:  P_ld_linux,
 				Dependencies: nil,
 			},
 			dynamic: true,
+			exe:     true,
+			lib:     false,
 		},
 		{
 			name: "Static linked executable",
 			expectedElf: elf.Elf{
 				Name:         "hello_static",
-				Path:         filepath.Join(pwd(t), "../testdata/hello_static"),
+				Path:         filepath.Join(Pwd(t), "../testdata/hello_static"),
 				Class:        elf.EI_CLASS(elf.ELF64),
 				Type:         elf.Type(elf.EXE),
 				Interpreter:  "",
 				Dependencies: nil,
 			},
 			dynamic: false,
+			exe:     true,
+			lib:     false,
 		},
 		{
 			name: "PIE 1 dependency",
 			expectedElf: elf.Elf{
 				Name:         "which",
-				Path:         filepath.Join(pwd(t), "../testdata/which"),
+				Path:         filepath.Join(Pwd(t), "../testdata/which"),
 				Class:        elf.EI_CLASS(elf.ELF64),
 				Type:         elf.Type(elf.PIE),
-				Interpreter:  "/lib64/ld-linux-x86-64.so.2",
-				Dependencies: []string{"libc.so.6"},
+				Interpreter:  P_ld_linux,
+				Dependencies: []string{P_libc},
 			},
 			dynamic: true,
+			exe:     true,
+			lib:     false,
 		},
 		{
 			name: "PIE nested dependencies",
 			expectedElf: elf.Elf{
-				Name:        "id",
-				Path:        filepath.Join(pwd(t), "../testdata/id"),
-				Class:       elf.EI_CLASS(elf.ELF64),
-				Type:        elf.Type(elf.PIE),
-				Interpreter: "/lib64/ld-linux-x86-64.so.2",
-				// ldd lists "libpcre2-8.so.0", which is requested by "libselinux.so.1"
-				Dependencies: []string{"libc.so.6", "libselinux.so.1"},
+				Name:         "id",
+				Path:         filepath.Join(Pwd(t), "../testdata/id"),
+				Class:        elf.EI_CLASS(elf.ELF64),
+				Type:         elf.Type(elf.PIE),
+				Interpreter:  P_ld_linux,
+				Dependencies: []string{P_libc, P_libpcre2_8, P_libselinux},
 			},
 			dynamic: true,
+			exe:     true,
+			lib:     false,
 		},
 	}
 
@@ -91,9 +91,10 @@ func TestCommonBinaries(t *testing.T) {
 			Assert := assert.New(t)
 			parsed, err := elf.New(path)
 			Assert.NoError(err)
-			Assert.True(parsed.IsExe(), "IsExe()")
+			Assert.Equal(tt.exe, parsed.IsExe())
+			Assert.Equal(tt.lib, parsed.IsLib())
 			Assert.Equal(tt.dynamic, parsed.IsDyn())
-			Assert.Equal(tt.expectedElf, parsed)
+			Assert.Nil(parsed.Diff(tt.expectedElf))
 		})
 	}
 }

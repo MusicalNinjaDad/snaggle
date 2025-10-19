@@ -6,8 +6,23 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os/exec"
 	"path/filepath"
+	"reflect"
 	"slices"
+	"strings"
+
+	"github.com/MusicalNinjaDad/snaggle/internal"
+)
+
+// ErrElf is the base error type for this package.
+// All errors returned by this package can be checked with errors.Is(err, ErrElf)
+var ErrElf = errors.New("error from snaggle/elf")
+
+// Specific error conditions
+var (
+	// Error returned when calling `ld.so` (like `ldd`) to identify dependencies
+	ErrElfLdd = errors.Join(ErrElf, errors.New("ldd failed"))
 )
 
 // A parsed Elf binary
@@ -29,7 +44,7 @@ type Elf struct {
 	//  - See https://gist.github.com/x0nu11byt3/bcb35c3de461e5fb66173071a2379779 for much more background
 	Interpreter string
 
-	// Names of all requested libraries
+	// All requested libraries
 	Dependencies []string
 }
 
@@ -58,12 +73,62 @@ const (
 	PIE = 3 // EXE + DYN
 )
 
+// Whether this is **primarily** an executable.
+//
+//   - This will return `false` in cases such as `/lib64/ld-linux-x86-64.so.2` which has an entry point
+//     and _may_ be `exec()`'ed but is not `ET_EXEC` or `PIE`
 func (e *Elf) IsExe() bool {
 	return e.Type&Type(EXE) != 0
 }
 
+// If it's not **primarily** an executable, then it's a library.
+// (Slightly simplified but good enough for our case)
+func (e *Elf) IsLib() bool {
+	return e.Type&Type(EXE) == 0
+}
+
 func (e *Elf) IsDyn() bool {
 	return e.Type&Type(DYN) != 0
+}
+
+// Deeply check for diffs between two `Elf`s. Ignores differences in the Path, as long as:
+//  1. Both `Path`s are absolute
+//  2. Both `Path`s end in the same filename
+func (e Elf) Diff(o Elf) []string {
+	var diffs []string
+	elf := reflect.TypeOf(e)
+	self := reflect.ValueOf(e)
+	other := reflect.ValueOf(o)
+
+	for _, field := range reflect.VisibleFields(elf) {
+		selfVal := self.FieldByIndex(field.Index).Interface()
+		otherVal := other.FieldByIndex(field.Index).Interface()
+
+		switch field.Name {
+		case "Path":
+			if internal.Libpathcmp(selfVal.(string), otherVal.(string)) != 0 {
+				diffs = append(diffs, fmt.Sprintf("%s differs for %s: %v != %v", field.Name, self.FieldByName("Name"), selfVal, otherVal))
+			}
+		case "Dependencies":
+			selfDeps := self.FieldByIndex(field.Index).Interface().([]string)
+			otherDeps := other.FieldByIndex(field.Index).Interface().([]string)
+			if len(selfDeps) != len(otherDeps) {
+				diffs = append(diffs, fmt.Sprintf("%s has %v dependencies in left, %v dependencies in right", self.FieldByName("Name"), len(selfDeps), len(otherDeps)))
+			} else {
+				for idx, selfDep := range selfDeps {
+					otherDep := otherDeps[idx]
+					if internal.Libpathcmp(selfDep, otherDep) != 0 {
+						diffs = append(diffs, fmt.Sprintf("dependency %v differs for %s: %s != %s", idx, self.FieldByName("Name"), selfDep, otherDep))
+					}
+				}
+			}
+		default:
+			if !reflect.DeepEqual(selfVal, otherVal) {
+				diffs = append(diffs, fmt.Sprintf("%s differs for %s: %v != %v", field.Name, self.FieldByName("Name"), selfVal, otherVal))
+			}
+		}
+	}
+	return diffs
 }
 
 func New(path string) (Elf, error) {
@@ -112,11 +177,12 @@ func New(path string) (Elf, error) {
 		errs = append(errs, err)
 	}
 
-	elf.Dependencies, err = elffile.ImportedLibraries()
-	if err != nil {
-		appenderr(err, "error getting dependecies for")
+	if elf.IsDyn() && usesLd_linux_so(&elf) {
+		elf.Dependencies, err = ldd(elf.Path, elf.Interpreter)
+		if err != nil {
+			appenderr(err, "error getting dependencies for")
+		}
 	}
-	slices.Sort(elf.Dependencies)
 
 	return elf, errors.Join(errs...)
 }
@@ -194,6 +260,39 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 	return "", nil
 }
 
+// Does the same as `ldd` under the hood - calls the interpreter with `LD_TRACE_LOADED_OBJECTS=1`;
+// then parses the output to return ONLY dependencies which the interpreter had to find.
+//
+// Note:
+//   - Will not return any dependencies which contain a `/`
+//   - See: https://man7.org/linux/man-pages/man8/ld.so.8.html for full details of
+//     how the search is performed.
+//   - In case of error a ErrElfLdd is returned, along with the underlying error(s)
+//   - WARNING: does no sanity chacking on the input path - make sure what you are passing refers
+//     to a valid dynamically linked ELF, which `ld-linux.so*` can parse. E.g.: passing a statically
+//     linked ELF will lead to a segfault (which gets caught and returned as an error).
+//   - WARNING: Behaviour is *undefined* for interpreters except `ld-linux.so*`
+func ldd(path string, interpreter string) ([]string, error) {
+	ldso := exec.Command(interpreter, path)
+	ldso.Env = append(ldso.Env, "LD_TRACE_LOADED_OBJECTS=1")
+	stdout, err := ldso.Output()
+	if err != nil {
+		err = fmt.Errorf("failed to execute %s %s: %w", interpreter, path, err)
+		return nil, errors.Join(ErrElfLdd, err)
+	}
+
+	dependencies := make([]string, 0, strings.Count(string(stdout), "=>"))
+	lines := strings.Lines(string(stdout))
+	for line := range lines {
+		if strings.Contains(line, "=>") {
+			dependencies = append(dependencies, strings.Fields(line)[2])
+		}
+	}
+
+	slices.SortFunc(dependencies, internal.Libpathcmp)
+	return dependencies, nil
+}
+
 func hasDT_FLAGS_1(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, error) {
 	dt_flags_1, err := elffile.DynValue(debug_elf.DynTag(debug_elf.DT_FLAGS_1))
 	if err != nil {
@@ -206,4 +305,8 @@ func hasDT_FLAGS_1(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, erro
 		}
 	}
 	return false, nil
+}
+
+func usesLd_linux_so(elf *Elf) bool {
+	return internal.Ld_linux_64_RE.MatchString(elf.Interpreter)
 }
