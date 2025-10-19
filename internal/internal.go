@@ -3,6 +3,7 @@ package internal
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -43,3 +44,6 @@ const (
 	P_libpcre2_8 = "/lib64/libpcre2-8.so.0"
 	P_libselinux = "/lib64/libselinux.so.1"
 )
+
+// Regex to check if this is a 64-bit version of `ld-linux*.so`, matches /lib64(/more/directories)/ld-linux*.so(.*)
+var Ld_linux_64_RE = regexp.MustCompile(`^\/lib64(?:\/.+|)\/ld-linux.*\.so(?:\..+|)$`)
