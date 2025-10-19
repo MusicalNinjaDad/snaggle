@@ -37,8 +37,8 @@ func TestLdd_nested(t *testing.T) {
 
 func TestLdd_static(t *testing.T) {
 	Assert := assert.New(t)
-	id := filepath.Join(pwd(t), "../testdata/hello_static")
-	dependencies, err := ldd(id)
+	static := filepath.Join(pwd(t), "../testdata/hello_static")
+	dependencies, err := ldd(static)
 	Assert.ErrorIs(err, ErrElf)
 	Assert.ErrorIs(err, ErrElfLdd)
 	Assert.Nil(dependencies)
