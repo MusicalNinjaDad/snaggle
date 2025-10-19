@@ -100,14 +100,12 @@ func (e Elf) Diff(o Elf) []string {
 		selfVal := self.FieldByIndex(field.Index).Interface()
 		otherVal := other.FieldByIndex(field.Index).Interface()
 
-		if field.Name == "Path" {
-			if filepath.IsAbs(selfVal.(string)) && filepath.IsAbs(otherVal.(string)) {
-				selfVal = filepath.Base(selfVal.(string))
-				otherVal = filepath.Base(otherVal.(string))
+		switch field.Name {
+		case "Path":
+			if internal.Libpathcmp(selfVal.(string), otherVal.(string)) != 0 {
+				diffs = append(diffs, fmt.Sprintf("%s differs for %s: %v != %v", field.Name, self.FieldByName("Name"), selfVal, otherVal))
 			}
-		}
-
-		if field.Name == "Dependencies" {
+		case "Dependencies":
 			selfDeps := self.FieldByIndex(field.Index).Interface().([]string)
 			otherDeps := other.FieldByIndex(field.Index).Interface().([]string)
 			if len(selfDeps) != len(otherDeps) {
@@ -120,8 +118,10 @@ func (e Elf) Diff(o Elf) []string {
 					}
 				}
 			}
-		} else if !reflect.DeepEqual(selfVal, otherVal) {
-			diffs = append(diffs, fmt.Sprintf("%s differs for %s: %v != %v", field.Name, self.FieldByName("Name"), selfVal, otherVal))
+		default:
+			if !reflect.DeepEqual(selfVal, otherVal) {
+				diffs = append(diffs, fmt.Sprintf("%s differs for %s: %v != %v", field.Name, self.FieldByName("Name"), selfVal, otherVal))
+			}
 		}
 	}
 	return diffs
