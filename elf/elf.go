@@ -11,6 +11,8 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+
+	"github.com/MusicalNinjaDad/snaggle/internal"
 )
 
 // All errors returned will satisfy `errors.Is(err, ErrElf)`
@@ -297,7 +299,7 @@ func ldd(path string) ([]string, error) {
 			dependencies = append(dependencies, strings.Fields(line)[2])
 		}
 	}
-	slices.SortFunc(dependencies, Libpathcmp)
+	slices.SortFunc(dependencies, internal.Libpathcmp)
 	return dependencies, err
 }
 
@@ -313,12 +315,4 @@ func hasDT_FLAGS_1(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, erro
 		}
 	}
 	return false, nil
-}
-
-// If both paths are absolute: compares only the filename, otherwise compares the entire path.
-func Libpathcmp(path1 string, path2 string) int {
-	if filepath.IsAbs(path1) && filepath.IsAbs(path2) {
-		return strings.Compare(filepath.Base(path1), filepath.Base(path2))
-	}
-	return strings.Compare(path1, path2)
 }

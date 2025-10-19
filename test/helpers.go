@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/MusicalNinjaDad/snaggle/elf"
+	"github.com/MusicalNinjaDad/snaggle/internal"
 )
 
 func Pwd(t *testing.T) string {
@@ -21,6 +21,6 @@ func Pwd(t *testing.T) string {
 func AssertDependenciesEqual(t *testing.T, expected []string, actual []string) {
 	t.Helper()
 	for idx, dep := range expected {
-		assert.Zero(t, elf.Libpathcmp(dep, actual[idx]))
+		assert.Zero(t, internal.Libpathcmp(dep, actual[idx]))
 	}
 }

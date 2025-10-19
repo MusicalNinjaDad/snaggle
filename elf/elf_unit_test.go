@@ -5,6 +5,7 @@ import (
 	"slices"
 	"testing"
 
+	. "github.com/MusicalNinjaDad/snaggle/internal"
 	. "github.com/MusicalNinjaDad/snaggle/test"
 	"github.com/stretchr/testify/assert"
 )
