@@ -48,13 +48,13 @@ func TestLdd_static(t *testing.T) {
 func TestLibpathcmp(t *testing.T) {
 	fedora := "/lib64/libc.so.6"
 	ubuntu := "/lib/x86_64-linux-gnu/libc.so.6"
-	assert.True(t, libpathcmp(fedora, ubuntu))
+	assert.Zero(t, libpathcmp(fedora, ubuntu))
 }
 
 func TestSortByFilename(t *testing.T) {
 	unsorted := []string{"/lib64/libpcre2-8.so.0", "/lib64/x86_64-linux-gnu/libselinux.so.1", "/lib64/x86_64-linux-gnu/libc.so.6"}
 	sorted := []string{"/lib64/x86_64-linux-gnu/libc.so.6", "/lib64/libpcre2-8.so.0", "/lib64/x86_64-linux-gnu/libselinux.so.1"}
 	assert.NotEqual(t, sorted, unsorted)
-	slices.SortFunc(unsorted, sortByFilename)
+	slices.SortFunc(unsorted, libpathcmp)
 	assert.Equal(t, sorted, unsorted)
 }
