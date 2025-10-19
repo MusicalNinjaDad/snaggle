@@ -3,6 +3,7 @@ package elf
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -48,4 +49,12 @@ func TestLibpathcmp(t *testing.T) {
 	fedora := "/lib64/libc.so.6"
 	ubuntu := "/lib/x86_64-linux-gnu/libc.so.6"
 	assert.True(t, libpathcmp(fedora, ubuntu))
+}
+
+func TestSortByFilename(t *testing.T) {
+	unsorted := []string{"/lib64/libpcre2-8.so.0", "/lib64/x86_64-linux-gnu/libselinux.so.1", "/lib64/x86_64-linux-gnu/libc.so.6"}
+	sorted := []string{"/lib64/x86_64-linux-gnu/libc.so.6", "/lib64/libpcre2-8.so.0", "/lib64/x86_64-linux-gnu/libselinux.so.1"}
+	assert.NotEqual(t, sorted, unsorted)
+	slices.SortFunc(unsorted, sortByFilename)
+	assert.Equal(t, sorted, unsorted)
 }
