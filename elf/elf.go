@@ -16,11 +16,15 @@ import (
 	"github.com/MusicalNinjaDad/snaggle/internal"
 )
 
-// All errors returned will satisfy `errors.Is(err, ErrElf)`
+// ErrElf is the base error type for this package.
+// All errors returned by this package can be checked with errors.Is(err, ErrElf)
 var ErrElf = errors.New("error from snaggle/elf")
 
-// Error returned when calling `ld.so` (like `ldd`) to identify dependencies
-var ErrElfLdd error
+// Specific error conditions
+var (
+	// Error returned when calling `ld.so` (like `ldd`) to identify dependencies
+	ErrElfLdd = errors.Join(ErrElf, errors.New("ldd failed"))
+)
 
 // A parsed Elf binary
 type Elf struct {
@@ -270,13 +274,14 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 //     linked ELF will lead to a segfault (which gets caught and returned as an error).
 //   - WARNING: Behaviour is *undefined* for interpreters except `ld-linux.so*`
 func ldd(path string, interpreter string) ([]string, error) {
-	ErrElfLdd = errors.Join(ErrElf, fmt.Errorf("error calling ldso on %s", path))
 	ldso := exec.Command(interpreter, path)
 	ldso.Env = append(ldso.Env, "LD_TRACE_LOADED_OBJECTS=1")
 	stdout, err := ldso.Output()
 	if err != nil {
+		err = fmt.Errorf("failed to execute %s %s: %w", interpreter, path, err)
 		return nil, errors.Join(ErrElfLdd, err)
 	}
+
 	dependencies := make([]string, 0, strings.Count(string(stdout), "=>"))
 	lines := strings.Lines(string(stdout))
 	for line := range lines {
@@ -284,8 +289,9 @@ func ldd(path string, interpreter string) ([]string, error) {
 			dependencies = append(dependencies, strings.Fields(line)[2])
 		}
 	}
+
 	slices.SortFunc(dependencies, internal.Libpathcmp)
-	return dependencies, err
+	return dependencies, nil
 }
 
 func hasDT_FLAGS_1(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, error) {
