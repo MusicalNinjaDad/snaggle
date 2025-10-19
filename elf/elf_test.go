@@ -9,16 +9,9 @@ import (
 
 	"github.com/MusicalNinjaDad/snaggle/elf"
 	"github.com/stretchr/testify/assert"
-)
 
-func pwd(t *testing.T) string {
-	t.Helper()
-	pwd, err := os.Getwd()
-	if err != nil {
-		t.Fatal("Failed to get pwd. Error:", err)
-	}
-	return pwd
-}
+	. "github.com/MusicalNinjaDad/snaggle/test"
+)
 
 func TestCommonBinaries(t *testing.T) {
 	ldso := elf.Elf{
@@ -65,7 +58,7 @@ func TestCommonBinaries(t *testing.T) {
 			name: "PIE no dependencies",
 			expectedElf: elf.Elf{
 				Name:         "hello_pie",
-				Path:         filepath.Join(pwd(t), "../testdata/hello_pie"),
+				Path:         filepath.Join(Pwd(t), "../testdata/hello_pie"),
 				Class:        elf.EI_CLASS(elf.ELF64),
 				Type:         elf.Type(elf.PIE),
 				Interpreter:  "/lib64/ld-linux-x86-64.so.2",
@@ -79,7 +72,7 @@ func TestCommonBinaries(t *testing.T) {
 			name: "Static linked executable",
 			expectedElf: elf.Elf{
 				Name:         "hello_static",
-				Path:         filepath.Join(pwd(t), "../testdata/hello_static"),
+				Path:         filepath.Join(Pwd(t), "../testdata/hello_static"),
 				Class:        elf.EI_CLASS(elf.ELF64),
 				Type:         elf.Type(elf.EXE),
 				Interpreter:  "",
@@ -93,7 +86,7 @@ func TestCommonBinaries(t *testing.T) {
 			name: "PIE 1 dependency",
 			expectedElf: elf.Elf{
 				Name:         "which",
-				Path:         filepath.Join(pwd(t), "../testdata/which"),
+				Path:         filepath.Join(Pwd(t), "../testdata/which"),
 				Class:        elf.EI_CLASS(elf.ELF64),
 				Type:         elf.Type(elf.PIE),
 				Interpreter:  "/lib64/ld-linux-x86-64.so.2",
@@ -107,7 +100,7 @@ func TestCommonBinaries(t *testing.T) {
 			name: "PIE nested dependencies",
 			expectedElf: elf.Elf{
 				Name:        "id",
-				Path:        filepath.Join(pwd(t), "../testdata/id"),
+				Path:        filepath.Join(Pwd(t), "../testdata/id"),
 				Class:       elf.EI_CLASS(elf.ELF64),
 				Type:        elf.Type(elf.PIE),
 				Interpreter: "/lib64/ld-linux-x86-64.so.2",
