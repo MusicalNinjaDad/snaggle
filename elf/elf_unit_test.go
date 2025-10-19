@@ -9,20 +9,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func assertEqualDependencies(t *testing.T, expected []string, actual []string) {
-	t.Helper()
-	for idx, dep := range expected {
-		assert.Zero(t, libpathcmp(dep, actual[idx]))
-	}
-}
-
 func TestLdd_single_fedora(t *testing.T) {
 	Assert := assert.New(t)
 	which := filepath.Join(Pwd(t), "../testdata/which")
 	expectedDependencies := []string{"/lib64/libc.so.6"}
 	dependencies, err := ldd(which)
 	Assert.NoError(err)
-	assertEqualDependencies(t, expectedDependencies, dependencies)
+	AssertDependenciesEqual(t, expectedDependencies, dependencies)
 }
 
 func TestLdd_single_ubuntu(t *testing.T) {
@@ -31,7 +24,7 @@ func TestLdd_single_ubuntu(t *testing.T) {
 	expectedDependencies := []string{"/lib64/x86_64-linux-gnu/libc.so.6"}
 	dependencies, err := ldd(which)
 	Assert.NoError(err)
-	assertEqualDependencies(t, expectedDependencies, dependencies)
+	AssertDependenciesEqual(t, expectedDependencies, dependencies)
 }
 
 func TestLdd_nested(t *testing.T) {
@@ -40,7 +33,7 @@ func TestLdd_nested(t *testing.T) {
 	expectedDependencies := []string{"/lib64/libc.so.6", "/lib64/libpcre2-8.so.0", "/lib64/libselinux.so.1"}
 	dependencies, err := ldd(id)
 	Assert.NoError(err)
-	assertEqualDependencies(t, expectedDependencies, dependencies)
+	AssertDependenciesEqual(t, expectedDependencies, dependencies)
 }
 
 func TestLdd_static(t *testing.T) {
@@ -55,13 +48,13 @@ func TestLdd_static(t *testing.T) {
 func TestLibpathcmp(t *testing.T) {
 	fedora := "/lib64/libc.so.6"
 	ubuntu := "/lib64/x86_64-linux-gnu/libc.so.6"
-	assert.Zero(t, libpathcmp(fedora, ubuntu))
+	assert.Zero(t, Libpathcmp(fedora, ubuntu))
 }
 
 func TestSortByFilename(t *testing.T) {
 	unsorted := []string{"/lib64/libpcre2-8.so.0", "/lib64/x86_64-linux-gnu/libselinux.so.1", "/lib64/x86_64-linux-gnu/libc.so.6"}
 	sorted := []string{"/lib64/x86_64-linux-gnu/libc.so.6", "/lib64/libpcre2-8.so.0", "/lib64/x86_64-linux-gnu/libselinux.so.1"}
 	assert.NotEqual(t, sorted, unsorted)
-	slices.SortFunc(unsorted, libpathcmp)
+	slices.SortFunc(unsorted, Libpathcmp)
 	assert.Equal(t, sorted, unsorted)
 }

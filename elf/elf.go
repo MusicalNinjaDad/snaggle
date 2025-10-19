@@ -297,7 +297,7 @@ func ldd(path string) ([]string, error) {
 			dependencies = append(dependencies, strings.Fields(line)[2])
 		}
 	}
-	slices.SortFunc(dependencies, libpathcmp)
+	slices.SortFunc(dependencies, Libpathcmp)
 	return dependencies, err
 }
 
@@ -316,7 +316,7 @@ func hasDT_FLAGS_1(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, erro
 }
 
 // If both paths are absolute: compares only the filename, otherwise compares the entire path.
-func libpathcmp(path1 string, path2 string) int {
+func Libpathcmp(path1 string, path2 string) int {
 	if filepath.IsAbs(path1) && filepath.IsAbs(path2) {
 		return strings.Compare(filepath.Base(path1), filepath.Base(path2))
 	}
