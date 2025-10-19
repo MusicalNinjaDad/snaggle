@@ -260,7 +260,6 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 // then parses the output to return ONLY dependencies which `ld-linux.so*` had to find.
 //
 // Note:
-//   - Will additionally resolve any symlinks and return the underlying path
 //   - Will not return any dependencies which contain a `/`
 //   - See: https://man7.org/linux/man-pages/man8/ld.so.8.html for full details of
 //     how the search is performed.
@@ -280,11 +279,7 @@ func ldd(path string) ([]string, error) {
 	lines := strings.Lines(string(stdout))
 	for line := range lines {
 		if strings.Contains(line, "=>") {
-			dependency, err := filepath.EvalSymlinks(strings.Fields(line)[2])
-			if err != nil {
-				return dependencies, errors.Join(ErrElfLdd, err)
-			}
-			dependencies = append(dependencies, dependency)
+			dependencies = append(dependencies, strings.Fields(line)[2])
 		}
 	}
 	slices.SortFunc(dependencies, internal.Libpathcmp)
