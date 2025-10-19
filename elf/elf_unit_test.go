@@ -5,9 +5,9 @@ import (
 	"slices"
 	"testing"
 
-	. "github.com/MusicalNinjaDad/snaggle/internal"
-	. "github.com/MusicalNinjaDad/snaggle/test"
 	"github.com/stretchr/testify/assert"
+
+	. "github.com/MusicalNinjaDad/snaggle/internal"
 )
 
 func TestLdd_single_fedora(t *testing.T) {

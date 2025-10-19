@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	. "github.com/MusicalNinjaDad/snaggle/test"
+	. "github.com/MusicalNinjaDad/snaggle/internal"
 )
 
 func TestLddSingleBinary(t *testing.T) {
