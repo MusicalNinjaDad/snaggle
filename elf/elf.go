@@ -297,6 +297,7 @@ func ldd(path string) ([]string, error) {
 			dependencies = append(dependencies, strings.Fields(line)[2])
 		}
 	}
+	slices.Sort(dependencies)
 	return dependencies, err
 }
 
