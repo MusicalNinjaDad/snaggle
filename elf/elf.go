@@ -265,6 +265,23 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 	return "", nil
 }
 
+func ldd(path string) ([]string, error) {
+	ldso := exec.Command("/lib64/ld-linux-x86-64.so.2", path)
+	ldso.Env = append(ldso.Env, "LD_TRACE_LOADED_OBJECTS=1")
+	stdout, err := ldso.Output()
+	if err != nil {
+		return nil, fmt.Errorf("error calling ldso on %s: %w", path, err)
+	}
+	dependencies := make([]string, 0, strings.Count(string(stdout), "=>"))
+	lines := strings.Lines(string(stdout))
+	for line := range lines {
+		if strings.Contains(line, "=>") {
+			dependencies = append(dependencies, strings.Fields(line)[2])
+		}
+	}
+	return dependencies, err
+}
+
 func hasDT_FLAGS_1(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, error) {
 	dt_flags_1, err := elffile.DynValue(debug_elf.DynTag(debug_elf.DT_FLAGS_1))
 	if err != nil {
