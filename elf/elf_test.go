@@ -14,10 +14,6 @@ import (
 )
 
 func TestCommonBinaries(t *testing.T) {
-	ld_linux := "/lib64/ld-linux-x86-64.so.2"
-	libc := "/lib64/libc.so.6"
-	libpcre2_8 := "/lib64/libpcre2-8.so.0"
-	libselinux := "/lib64/libselinux.so.1"
 	tests := []struct {
 		name        string // test run name
 		path        string
@@ -33,7 +29,7 @@ func TestCommonBinaries(t *testing.T) {
 				Path:         filepath.Join(Pwd(t), "../testdata/hello_pie"),
 				Class:        elf.EI_CLASS(elf.ELF64),
 				Type:         elf.Type(elf.PIE),
-				Interpreter:  ld_linux,
+				Interpreter:  P_ld_linux,
 				Dependencies: nil,
 			},
 			dynamic: true,
@@ -61,8 +57,8 @@ func TestCommonBinaries(t *testing.T) {
 				Path:         filepath.Join(Pwd(t), "../testdata/which"),
 				Class:        elf.EI_CLASS(elf.ELF64),
 				Type:         elf.Type(elf.PIE),
-				Interpreter:  ld_linux,
-				Dependencies: []string{libc},
+				Interpreter:  P_ld_linux,
+				Dependencies: []string{P_libc},
 			},
 			dynamic: true,
 			exe:     true,
@@ -75,8 +71,8 @@ func TestCommonBinaries(t *testing.T) {
 				Path:         filepath.Join(Pwd(t), "../testdata/id"),
 				Class:        elf.EI_CLASS(elf.ELF64),
 				Type:         elf.Type(elf.PIE),
-				Interpreter:  ld_linux,
-				Dependencies: []string{libc, libpcre2_8, libselinux},
+				Interpreter:  P_ld_linux,
+				Dependencies: []string{P_libc, P_libpcre2_8, P_libselinux},
 			},
 			dynamic: true,
 			exe:     true,

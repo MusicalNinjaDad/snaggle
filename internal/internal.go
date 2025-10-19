@@ -35,3 +35,11 @@ func AssertDependenciesEqual(t *testing.T, expected []string, actual []string) {
 		assert.Zero(t, Libpathcmp(dep, actual[idx]))
 	}
 }
+
+// Paths to common libraries
+const (
+	P_ld_linux   = "/lib64/ld-linux-x86-64.so.2"
+	P_libc       = "/lib64/libc.so.6"
+	P_libpcre2_8 = "/lib64/libpcre2-8.so.0"
+	P_libselinux = "/lib64/libselinux.so.1"
+)
