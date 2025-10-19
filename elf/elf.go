@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -298,4 +299,10 @@ func hasDT_FLAGS_1(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, erro
 		}
 	}
 	return false, nil
+}
+
+func usesLd_linux_so(elf *Elf) bool {
+	// matches /lib64(/more/directories)/ld-linux*.so(.*)
+	path_pattern := regexp.MustCompile(`^\/lib64(?:\/.+|)\/ld-linux.*\.so(?:\..+|)$`)
+	return path_pattern.MatchString(elf.Interpreter)
 }
