@@ -297,12 +297,8 @@ func ldd(path string) ([]string, error) {
 			dependencies = append(dependencies, strings.Fields(line)[2])
 		}
 	}
-	slices.SortFunc(dependencies, sortByFilename)
+	slices.SortFunc(dependencies, libpathcmp)
 	return dependencies, err
-}
-
-func sortByFilename(a string, b string) int {
-	return strings.Compare(filepath.Base(a), filepath.Base(b))
 }
 
 func hasDT_FLAGS_1(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, error) {
