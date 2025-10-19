@@ -32,7 +32,7 @@ func Pwd(t *testing.T) string {
 func AssertDependenciesEqual(t *testing.T, expected []string, actual []string) {
 	t.Helper()
 	for idx, dep := range expected {
-		assert.Zero(t, Libpathcmp(dep, actual[idx]))
+		assert.Zerof(t, Libpathcmp(dep, actual[idx]), "dependency %v differs: %s != %s", idx, dep, actual[idx])
 	}
 }
 
