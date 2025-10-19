@@ -18,13 +18,29 @@ func pwd(t *testing.T) string {
 	return pwd
 }
 
-func TestLdd_single(t *testing.T) {
+func assertEqualDependencies(t *testing.T, expected []string, actual []string) {
+	t.Helper()
+	for idx, dep := range expected {
+		assert.Zero(t, libpathcmp(dep, actual[idx]))
+	}
+}
+
+func TestLdd_single_fedora(t *testing.T) {
 	Assert := assert.New(t)
 	which := filepath.Join(pwd(t), "../testdata/which")
 	expectedDependencies := []string{"/lib64/libc.so.6"}
 	dependencies, err := ldd(which)
 	Assert.NoError(err)
-	Assert.ElementsMatch(expectedDependencies, dependencies)
+	assertEqualDependencies(t, expectedDependencies, dependencies)
+}
+
+func TestLdd_single_ubuntu(t *testing.T) {
+	Assert := assert.New(t)
+	which := filepath.Join(pwd(t), "../testdata/which")
+	expectedDependencies := []string{"/lib64/x86_64-linux-gnu/libc.so.6"}
+	dependencies, err := ldd(which)
+	Assert.NoError(err)
+	assertEqualDependencies(t, expectedDependencies, dependencies)
 }
 
 func TestLdd_nested(t *testing.T) {
@@ -33,7 +49,7 @@ func TestLdd_nested(t *testing.T) {
 	expectedDependencies := []string{"/lib64/libc.so.6", "/lib64/libpcre2-8.so.0", "/lib64/libselinux.so.1"}
 	dependencies, err := ldd(id)
 	Assert.NoError(err)
-	Assert.ElementsMatch(expectedDependencies, dependencies)
+	assertEqualDependencies(t, expectedDependencies, dependencies)
 }
 
 func TestLdd_static(t *testing.T) {
