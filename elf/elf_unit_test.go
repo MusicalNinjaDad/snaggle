@@ -14,7 +14,7 @@ func TestLdd_single_fedora(t *testing.T) {
 	Assert := assert.New(t)
 	which := filepath.Join(Pwd(t), "../testdata/which")
 	expectedDependencies := []string{P_libc}
-	dependencies, err := ldd(which)
+	dependencies, err := ldd(which, P_ld_linux)
 	Assert.NoError(err)
 	AssertDependenciesEqual(t, expectedDependencies, dependencies)
 }
@@ -23,7 +23,7 @@ func TestLdd_single_ubuntu(t *testing.T) {
 	Assert := assert.New(t)
 	which := filepath.Join(Pwd(t), "../testdata/which")
 	expectedDependencies := []string{P_libc}
-	dependencies, err := ldd(which)
+	dependencies, err := ldd(which, P_ld_linux)
 	Assert.NoError(err)
 	AssertDependenciesEqual(t, expectedDependencies, dependencies)
 }
@@ -32,7 +32,7 @@ func TestLdd_nested(t *testing.T) {
 	Assert := assert.New(t)
 	id := filepath.Join(Pwd(t), "../testdata/id")
 	expectedDependencies := []string{P_libc, P_libpcre2_8, P_libselinux}
-	dependencies, err := ldd(id)
+	dependencies, err := ldd(id, P_ld_linux)
 	Assert.NoError(err)
 	AssertDependenciesEqual(t, expectedDependencies, dependencies)
 }
@@ -40,7 +40,7 @@ func TestLdd_nested(t *testing.T) {
 func TestLdd_static(t *testing.T) {
 	Assert := assert.New(t)
 	static := filepath.Join(Pwd(t), "../testdata/hello_static")
-	dependencies, err := ldd(static)
+	dependencies, err := ldd(static, P_ld_linux)
 	Assert.ErrorIs(err, ErrElf)
 	Assert.ErrorIs(err, ErrElfLdd)
 	Assert.Nil(dependencies)

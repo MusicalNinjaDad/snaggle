@@ -174,8 +174,8 @@ func New(path string) (Elf, error) {
 		errs = append(errs, err)
 	}
 
-	if elf.IsDyn() {
-		elf.Dependencies, err = ldd(elf.Path)
+	if elf.IsDyn() && usesLd_linux_so(&elf) {
+		elf.Dependencies, err = ldd(elf.Path, elf.Interpreter)
 		if err != nil {
 			appenderr(err, "error getting dependencies for")
 		}
@@ -257,8 +257,8 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 	return "", nil
 }
 
-// Does the same as `ldd` under the hood - calls `ld-linux.so*` with `LD_TRACE_LOADED_OBJECTS=1`;
-// then parses the output to return ONLY dependencies which `ld-linux.so*` had to find.
+// Does the same as `ldd` under the hood - calls the interpreter with `LD_TRACE_LOADED_OBJECTS=1`;
+// then parses the output to return ONLY dependencies which the interpreter had to find.
 //
 // Note:
 //   - Will not return any dependencies which contain a `/`
@@ -268,9 +268,10 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 //   - WARNING: does no sanity chacking on the input path - make sure what you are passing refers
 //     to a valid dynamically linked ELF, which `ld-linux.so*` can parse. E.g.: passing a statically
 //     linked ELF will lead to a segfault (which gets caught and returned as an error).
-func ldd(path string) ([]string, error) {
+//   - WARNING: Behaviour is *undefined* for interpreters except `ld-linux.so*`
+func ldd(path string, interpreter string) ([]string, error) {
 	ErrElfLdd = errors.Join(ErrElf, fmt.Errorf("error calling ldso on %s", path))
-	ldso := exec.Command("/lib64/ld-linux-x86-64.so.2", path)
+	ldso := exec.Command(interpreter, path)
 	ldso.Env = append(ldso.Env, "LD_TRACE_LOADED_OBJECTS=1")
 	stdout, err := ldso.Output()
 	if err != nil {
