@@ -13,6 +13,12 @@ import (
 	"strings"
 )
 
+// All errors returned will satisfy `errors.Is(err, ErrElf)`
+var ErrElf = errors.New("error from snaggle/elf")
+
+// Error returned when calling `ld.so` (like `ldd`) to identify dependencies
+var ErrElfLdd error
+
 // A parsed Elf binary
 type Elf struct {
 	// The filename
@@ -265,12 +271,24 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 	return "", nil
 }
 
+// Does the same as `ldd` under the hood - calls `ld-linux.so*` with `LD_TRACE_LOADED_OBJECTS=1`;
+// then parses the output to return ONLY dependencies which `ld-linux.so*` had to find.
+//
+// Note:
+//   - Will not return any dependencies which contain a `/`
+//   - See: https://man7.org/linux/man-pages/man8/ld.so.8.html for full details of
+//     how the search is performed.
+//   - In case of error a ErrElfLdd is returned, along with the underlying error(s)
+//   - WARNING: does no sanity chacking on the input path - make sure what you are passing refers
+//     to a valid dynamically linked ELF, which `ld-linux.so*` can parse. E.g.: passing a statically
+//     linked ELF will lead to a segfault (which gets caught and returned as an error).
 func ldd(path string) ([]string, error) {
+	ErrElfLdd = errors.Join(ErrElf, fmt.Errorf("error calling ldso on %s", path))
 	ldso := exec.Command("/lib64/ld-linux-x86-64.so.2", path)
 	ldso.Env = append(ldso.Env, "LD_TRACE_LOADED_OBJECTS=1")
 	stdout, err := ldso.Output()
 	if err != nil {
-		return nil, fmt.Errorf("error calling ldso on %s: %w", path, err)
+		return nil, errors.Join(ErrElfLdd, err)
 	}
 	dependencies := make([]string, 0, strings.Count(string(stdout), "=>"))
 	lines := strings.Lines(string(stdout))
