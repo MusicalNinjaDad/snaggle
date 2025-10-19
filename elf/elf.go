@@ -41,7 +41,7 @@ type Elf struct {
 	Interpreter string
 
 	// All requested libraries
-	Dependencies []Elf
+	Dependencies []string
 }
 
 type EI_CLASS byte
@@ -108,13 +108,16 @@ func (e Elf) Diff(o Elf) []string {
 		}
 
 		if field.Name == "Dependencies" {
-			selfDeps := self.FieldByIndex(field.Index).Interface().([]Elf)
-			otherDeps := other.FieldByIndex(field.Index).Interface().([]Elf)
+			selfDeps := self.FieldByIndex(field.Index).Interface().([]string)
+			otherDeps := other.FieldByIndex(field.Index).Interface().([]string)
 			if len(selfDeps) != len(otherDeps) {
 				diffs = append(diffs, fmt.Sprintf("%s has %v dependencies in left, %v dependencies in right", self.FieldByName("Name"), len(selfDeps), len(otherDeps)))
 			} else {
-				for idx, dep := range selfDeps {
-					diffs = append(diffs, dep.Diff(otherDeps[idx])...)
+				for idx, selfDep := range selfDeps {
+					otherDep := otherDeps[idx]
+					if internal.Libpathcmp(selfDep, otherDep) != 0 {
+						diffs = append(diffs, fmt.Sprintf("dependency %v differs for %s: %s != %s", idx, self.FieldByName("Name"), selfDep, otherDep))
+					}
 				}
 			}
 		} else if !reflect.DeepEqual(selfVal, otherVal) {
@@ -170,19 +173,11 @@ func New(path string) (Elf, error) {
 		errs = append(errs, err)
 	}
 
-	Dependencies, err := elffile.ImportedLibraries()
-	if err != nil {
-		appenderr(err, "error getting dependecies for")
-	}
-
-	slices.Sort(Dependencies)
-	for _, dep := range Dependencies {
-		depPath := filepath.Join("/lib64", dep)
-		depElf, err := New(depPath)
+	if elf.IsDyn() {
+		elf.Dependencies, err = ldd(elf.Path)
 		if err != nil {
-			appenderr(err, "error generating dependency for")
+			appenderr(err, "error getting dependencies for")
 		}
-		elf.Dependencies = append(elf.Dependencies, depElf)
 	}
 
 	return elf, errors.Join(errs...)
