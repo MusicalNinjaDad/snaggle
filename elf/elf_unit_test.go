@@ -47,7 +47,7 @@ func TestLdd_static(t *testing.T) {
 
 func TestLibpathcmp(t *testing.T) {
 	fedora := "/lib64/libc.so.6"
-	ubuntu := "/lib/x86_64-linux-gnu/libc.so.6"
+	ubuntu := "/lib64/x86_64-linux-gnu/libc.so.6"
 	assert.Zero(t, libpathcmp(fedora, ubuntu))
 }
 
