@@ -17,11 +17,20 @@ func pwd(t *testing.T) string {
 	return pwd
 }
 
-func TestLdd(t *testing.T) {
+func TestLdd_single(t *testing.T) {
 	Assert := assert.New(t)
 	which := filepath.Join(pwd(t), "../testdata/which")
 	expectedDependencies := []string{"/lib64/libc.so.6"}
 	dependencies, err := ldd(which)
+	Assert.NoError(err)
+	Assert.ElementsMatch(expectedDependencies, dependencies)
+}
+
+func TestLdd_nested(t *testing.T) {
+	Assert := assert.New(t)
+	id := filepath.Join(pwd(t), "../testdata/id")
+	expectedDependencies := []string{"/lib64/libc.so.6", "/lib64/libpcre2-8.so.0", "/lib64/libselinux.so.1"}
+	dependencies, err := ldd(id)
 	Assert.NoError(err)
 	Assert.ElementsMatch(expectedDependencies, dependencies)
 }
