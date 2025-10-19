@@ -43,3 +43,9 @@ func TestLdd_static(t *testing.T) {
 	Assert.ErrorIs(err, ErrElfLdd)
 	Assert.Nil(dependencies)
 }
+
+func TestLibpathcmp(t *testing.T) {
+	fedora := "/lib64/libc.so.6"
+	ubuntu := "/lib/x86_64-linux-gnu/libc.so.6"
+	assert.True(t, libpathcmp(fedora, ubuntu))
+}

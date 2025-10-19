@@ -313,3 +313,11 @@ func hasDT_FLAGS_1(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, erro
 	}
 	return false, nil
 }
+
+// If both paths are absolute: compares only the filename, otherwise returns false.
+func libpathcmp(path1 string, path2 string) bool {
+	if filepath.IsAbs(path1) && filepath.IsAbs(path2) {
+		return filepath.Base(path1) == filepath.Base(path2)
+	}
+	return false
+}
