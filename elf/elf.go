@@ -171,9 +171,8 @@ func (e Elf) Diff(o Elf) []string {
 func New(path string) (Elf, error) {
 	elf := Elf{Path: path}
 	var elffile *debug_elf.File
-	var errs []error
-	var err error
-	reterr := &ErrElf{path: path}
+	var err error                 // individual error returned by any functions called
+	reterr := &ErrElf{path: path} // error(s) returned from this function
 
 	elf.Name = filepath.Base(path)
 
@@ -227,7 +226,7 @@ func New(path string) (Elf, error) {
 		}
 	}
 
-	return elf, errors.Join(errs...)
+	return elf, reterr
 }
 
 // resolve resolves symlinks and returns an absolute path.
