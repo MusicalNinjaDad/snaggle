@@ -59,10 +59,3 @@ func TestSortByFilename(t *testing.T) {
 	slices.SortFunc(unsorted, Libpathcmp)
 	assert.Equal(t, sorted, unsorted)
 }
-
-func TestUsesLd_linux_so(t *testing.T) {
-	Assert := assert.New(t)
-	pie, err := New(filepath.Join(Pwd(t), "../testdata/hello_pie"))
-	Assert.NoError(err)
-	Assert.True(usesLd_linux_so(&pie))
-}

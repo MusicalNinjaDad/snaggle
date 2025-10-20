@@ -177,7 +177,7 @@ func New(path string) (Elf, error) {
 		errs = append(errs, err)
 	}
 
-	if elf.IsDyn() && usesLd_linux_so(&elf) {
+	if elf.IsDyn() {
 		elf.Dependencies, err = ldd(elf.Path, elf.Interpreter)
 		if err != nil {
 			appenderr(err, "error getting dependencies for")
@@ -310,8 +310,4 @@ func hasDT_FLAGS_1(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, erro
 		}
 	}
 	return false, nil
-}
-
-func usesLd_linux_so(elf *Elf) bool {
-	return internal.Ld_linux_64_RE.MatchString(elf.Interpreter)
 }
