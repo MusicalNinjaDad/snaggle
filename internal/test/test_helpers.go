@@ -1,5 +1,6 @@
 package test
 
+//nolint:staticcheck
 import (
 	"errors"
 	"os"
