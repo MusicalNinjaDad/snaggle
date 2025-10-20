@@ -13,7 +13,7 @@ func TestCopyBinary(t *testing.T) {
 	Assert := assert.New(t)
 	tmp := WorkspaceTempDir(t)
 	expectedFile := filepath.Join(tmp, Pwd(t), "/testdata/which")
-	path, err := LinkFile("testdata/which", tmp)
+	path, err := linkFile("testdata/which", tmp)
 	Assert.NoError(err)
 	Assert.Equal(expectedFile, path)
 	Assert.FileExists(expectedFile)
