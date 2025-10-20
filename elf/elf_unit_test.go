@@ -41,7 +41,6 @@ func TestLdd_static(t *testing.T) {
 	Assert := assert.New(t)
 	static := filepath.Join(Pwd(t), "../testdata/hello_static")
 	dependencies, err := ldd(static, P_ld_linux)
-	Assert.ErrorIs(err, ErrElf)
 	Assert.ErrorIs(err, ErrElfLdd)
 	Assert.Nil(dependencies)
 }

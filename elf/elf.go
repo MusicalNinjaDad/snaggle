@@ -22,7 +22,7 @@ var ErrElf = errors.New("error from snaggle/elf")
 // Specific error conditions
 var (
 	// Error returned when calling `ld.so` (like `ldd`) to identify dependencies
-	ErrElfLdd = errors.Join(ErrElf, errors.New("ldd failed"))
+	ErrElfLdd = errors.New("ldd failed")
 )
 
 // A parsed Elf binary
