@@ -49,17 +49,18 @@ func TestLdd_static(t *testing.T) {
 	static := filepath.Join(Pwd(t), "../testdata/hello_static")
 	dependencies, err := ldd(static, P_ld_linux)
 	Assert.ErrorIs(err, ErrLdd)
-	Assert.ErrorContains(err, "ldd failed to execute /lib64/ld-linux-x86-64.so.2 /workspaces/snaggle/testdata/hello_static: ")
+	Assert.ErrorContains(err, "ldd failed to execute /lib64/ld-linux-x86-64.so.2 "+static+": ")
 	Assert.Nil(dependencies)
 }
 
 func TestLdd_unsupported_interpreter(t *testing.T) {
 	Assert := assert.New(t)
 	static := filepath.Join(Pwd(t), "../testdata/hello_static")
-	dependencies, err := ldd(static, static)
+	interpreter := "/lib64/evil_interpreter.so"
+	dependencies, err := ldd(static, interpreter)
 	Assert.ErrorIs(err, ErrUnsupportedInterpreter)
 	Assert.ErrorIs(err, ErrInvalidElf)
 	Assert.ErrorIs(err, errors.ErrUnsupported)
-	Assert.ErrorContains(err, "invalid ELF file: unsupported operation (unsupported interpreter) '"+static+"'")
+	Assert.ErrorContains(err, "invalid ELF file: unsupported operation (unsupported interpreter) '"+interpreter+"'")
 	Assert.Nil(dependencies)
 }
