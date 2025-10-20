@@ -46,7 +46,9 @@ func (e *ErrElf) Unwrap() []error {
 }
 
 func (e *ErrElf) Join(err error) {
-	e.errs = append(e.errs, err)
+	if err != nil {
+		e.errs = append(e.errs, err)
+	}
 }
 
 func (e *ErrElf) Path() string {
