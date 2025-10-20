@@ -38,7 +38,7 @@ func (e *ErrElf) Error() string {
 }
 
 func (e *ErrElf) IsError() bool {
-	return e.errs != nil && len(e.errs) > 0
+	return len(e.errs) > 0
 }
 
 func (e *ErrElf) Unwrap() []error {
