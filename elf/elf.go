@@ -45,9 +45,10 @@ var ErrInvalidElf = errors.New("invalid ELF file")
 var (
 	// Error returned if the interpreter is not `ld-linux*.so`
 	ErrUnsupportedInterpreter = fmt.Errorf("%w: %w (unsupported interpreter)", ErrInvalidElf, errors.ErrUnsupported)
-	// Error returned when calling `ld.so` (like `ldd`) to identify dependencies
-	ErrElfLdd = errors.New("ldd failed to execute")
 )
+
+// Error wrapping a failure when calling `ld-linux*.so` (like `ldd`) to identify dependencies
+var ErrLdd = errors.New("ldd failed to execute")
 
 // A parsed Elf binary
 type Elf struct {
@@ -312,7 +313,7 @@ func ldd(path string, interpreter string) ([]string, error) {
 	ldso.Env = append(ldso.Env, "LD_TRACE_LOADED_OBJECTS=1")
 	stdout, err := ldso.Output()
 	if err != nil {
-		return nil, fmt.Errorf("%w %s %s: %w", ErrElfLdd, interpreter, path, err)
+		return nil, fmt.Errorf("%w %s %s: %w", ErrLdd, interpreter, path, err)
 	}
 
 	dependencies := make([]string, 0, strings.Count(string(stdout), "=>"))
