@@ -170,16 +170,16 @@ func (e Elf) Diff(o Elf) []string {
 
 func New(path string) (Elf, error) {
 	elf := Elf{Path: path}
-	var elffile *debug_elf.File
-	var err error                 // individual error returned by any functions called
 	reterr := &ErrElf{path: path} // error(s) returned from this function
+	var err error                 // individual error returned by any functions called
+	var elffile *debug_elf.File   // the opened File
 
 	elf.Name = filepath.Base(path)
 
 	elf.Path, err = resolve(path)
 	if err != nil {
 		if elf.Path == "" { // resolve may return "" on error
-			elf.Path = path
+			elf.Path = path // so we reset the path if that's happened
 		}
 		reterr.Join(err)
 		return elf, reterr
