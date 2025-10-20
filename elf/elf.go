@@ -221,8 +221,8 @@ func New(path string) (Elf, error) {
 	}
 
 	if elf.Type == Type(PIE) && elf.Interpreter == "" {
-		err = fmt.Errorf("%s is a PIE without interpreter", elf.Path)
-		errs = append(errs, err)
+		err = fmt.Errorf("%w (PIE without interpreter)", ErrBadInterpreter)
+		reterr.Join(err)
 	}
 
 	if elf.IsDyn() {
