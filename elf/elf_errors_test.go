@@ -17,9 +17,9 @@ func TestFileNotFound(t *testing.T) {
 	bad, err := New(path)
 	var errelf *ErrElf
 	Assert.Equal("path", bad.Name)
+	Assert.Equal(path, bad.Path)
 	Assert.ErrorIs(err, fs.ErrNotExist)
 	Assert.ErrorAs(err, &errelf)
-	Assert.Equal(path, bad.Path)
 	Assert.ErrorContains(err, "error(s) parsing /bad/path:")
 	Assert.ErrorContains(err, "no such file or directory")
 }
@@ -31,10 +31,10 @@ func TestNotElf(t *testing.T) {
 	var errelf *ErrElf
 	var errformat *elf.FormatError
 	Assert.Equal("ldd", bad.Name)
+	Assert.Equal(path, bad.Path)
 	Assert.ErrorAs(err, &errformat)
 	Assert.ErrorIs(err, ErrInvalidElf)
 	Assert.ErrorAs(err, &errelf)
-	Assert.Equal(path, bad.Path)
 	Assert.ErrorContains(err, "error(s) parsing "+path+":")
 	Assert.ErrorContains(err, "invalid ELF file")
 }
