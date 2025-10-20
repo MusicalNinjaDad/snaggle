@@ -16,4 +16,6 @@ func TestFileNotFound(t *testing.T) {
 	Assert.ErrorIs(err, fs.ErrNotExist)
 	Assert.ErrorAs(err, &errelf)
 	Assert.Equal(path, bad.Path)
+	Assert.ErrorContains(err, "error(s) parsing /bad/path:")
+	Assert.ErrorContains(err, "no such file or directory")
 }

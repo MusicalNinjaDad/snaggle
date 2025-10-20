@@ -15,22 +15,27 @@ import (
 	"github.com/MusicalNinjaDad/snaggle/internal"
 )
 
-// All errors returned will be of the type ErrElf and can be checked with `errors.As(err, &errelf)`
+// All errors returned will be of the type ErrElf and can be checked with:
+//
+//	```
+//	var errelf *ErrElf
+//	errors.As(err, &errelf)
+//	```
 type ErrElf struct {
 	path string
-	err  error
+	errs []error
 }
 
 func (e *ErrElf) Error() string {
-	return "error parsing " + e.path + ": " + e.err.Error()
+	return "error(s) parsing " + e.path + ":\n" + errors.Join(e.errs...).Error()
 }
 
-func (e *ErrElf) Unwrap() error {
-	return e.err
+func (e *ErrElf) Unwrap() []error {
+	return e.errs
 }
 
-func (e *ErrElf) Wrap(err error) {
-	e.err = err
+func (e *ErrElf) Join(err error) {
+	e.errs = append(e.errs, err)
 }
 
 // Specific error values which can be checked with `errors.Is(err, ErrElfXyz)`
@@ -164,7 +169,7 @@ func New(path string) (Elf, error) {
 		if elf.Path == "" { // resolve may return "" on error
 			elf.Path = path
 		}
-		reterr.Wrap(err)
+		reterr.Join(err)
 		return elf, reterr
 	}
 
