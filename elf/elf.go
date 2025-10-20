@@ -22,7 +22,7 @@ var ErrElf = errors.New("error from snaggle/elf")
 // Specific error conditions
 var (
 	// Error returned when calling `ld.so` (like `ldd`) to identify dependencies
-	ErrElfLdd = errors.New("ldd failed")
+	ErrElfLdd = errors.New("ldd failed to execute")
 )
 
 // A parsed Elf binary
@@ -274,16 +274,14 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 //   - WARNING: Behaviour is *undefined* for interpreters except `ld-linux.so*`
 func ldd(path string, interpreter string) ([]string, error) {
 	if !internal.Ld_linux_64_RE.MatchString(interpreter) {
-		err := errors.New("unsupported interpreter " + interpreter + "requested to parse " + path)
-		return nil, errors.Join(ErrElfLdd, err, errors.ErrUnsupported)
+		return nil, fmt.Errorf("%w unsupported interpreter %s: %w", ErrElfLdd, interpreter, errors.ErrUnsupported)
 	}
 
 	ldso := exec.Command(interpreter, path)
 	ldso.Env = append(ldso.Env, "LD_TRACE_LOADED_OBJECTS=1")
 	stdout, err := ldso.Output()
 	if err != nil {
-		err = fmt.Errorf("failed to execute %s %s: %w", interpreter, path, err)
-		return nil, errors.Join(ErrElfLdd, err)
+		return nil, fmt.Errorf("%w %s %s: %w", ErrElfLdd, interpreter, path, err)
 	}
 
 	dependencies := make([]string, 0, strings.Count(string(stdout), "=>"))
