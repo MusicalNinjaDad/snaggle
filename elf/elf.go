@@ -175,11 +175,6 @@ func New(path string) (Elf, error) {
 	var err error
 	reterr := &ErrElf{path: path}
 
-	appenderr := func(err error, message string) {
-		err = fmt.Errorf("%s %s: %w", message, elf.Path, err)
-		errs = append(errs, err)
-	}
-
 	elf.Name = filepath.Base(path)
 
 	elf.Path, err = resolve(path)
@@ -228,7 +223,7 @@ func New(path string) (Elf, error) {
 	if elf.IsDyn() {
 		elf.Dependencies, err = ldd(elf.Path, elf.Interpreter)
 		if err != nil {
-			appenderr(err, "error getting dependencies for")
+			reterr.Join(err)
 		}
 	}
 
