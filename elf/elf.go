@@ -46,7 +46,7 @@ func (e *ErrElf) Path() string {
 	return e.path
 }
 
-// Error returned when the provided file is not a valid Elf
+// Error returned when the provided file is not a valid Elf.
 var ErrInvalidElf = errors.New("invalid ELF file")
 
 // Specific errors which wrap ErrInvalidElf
