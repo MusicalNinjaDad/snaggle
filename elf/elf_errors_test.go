@@ -4,6 +4,7 @@ import (
 	"debug/elf"
 	"errors"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -20,6 +21,7 @@ func TestFileNotFound(t *testing.T) {
 	Assert.Equal("path", bad.Name)
 	Assert.Equal(path, bad.Path)
 	Assert.ErrorIs(err, fs.ErrNotExist)
+	Assert.NotErrorIs(err, ErrInvalidElf)
 	Assert.ErrorAs(err, &errelf)
 	errpath := err.(*ErrElf).Path()
 	Assert.Equal(path, errpath)
@@ -63,4 +65,27 @@ func TestLdd_unsupported_interpreter(t *testing.T) {
 	Assert.ErrorIs(err, errors.ErrUnsupported)
 	Assert.ErrorContains(err, "invalid ELF file: unsupported operation (unsupported interpreter) '"+interpreter+"'")
 	Assert.Nil(dependencies)
+}
+
+func TestIO_Error(t *testing.T) {
+	Assert := assert.New(t)
+	tmp := t.TempDir()
+	path := filepath.Join(tmp, "noaccess")
+	noaccess, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(noaccess.Name())
+	noaccess.Chmod(0222) // --w--w--w-
+	bad, err := New(noaccess.Name())
+	var errelf *ErrElf
+	Assert.Equal("noaccess", bad.Name)
+	Assert.Equal(path, bad.Path)
+	Assert.ErrorIs(err, fs.ErrPermission)
+	Assert.NotErrorIs(err, ErrInvalidElf)
+	Assert.ErrorAs(err, &errelf)
+	errpath := err.(*ErrElf).Path()
+	Assert.Equal(path, errpath)
+	Assert.ErrorContains(err, "error(s) parsing "+path+":")
+	Assert.ErrorContains(err, "permission denied")
 }

@@ -183,7 +183,10 @@ func New(path string) (Elf, error) {
 
 	elffile, err = debug_elf.Open(elf.Path)
 	if err != nil {
-		err = fmt.Errorf("%w: %w", ErrInvalidElf, err)
+		var formaterr *debug_elf.FormatError
+		if errors.As(err, &formaterr) {
+			err = fmt.Errorf("%w: %w", ErrInvalidElf, err)
+		}
 		reterr.Join(err)
 		return elf, reterr
 	}
