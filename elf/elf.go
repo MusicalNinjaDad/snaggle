@@ -53,6 +53,8 @@ var ErrInvalidElf = errors.New("invalid ELF file")
 var (
 	// Error returned if dynamic ELF has a bad entry for the interpreter
 	ErrBadInterpreter = fmt.Errorf("%w: bad interpreter", ErrInvalidElf)
+	// Error returned if the ELF is not a type we support (currently only ET_EXEC & ET_DYN)
+	ErrUnsupportedElfType = fmt.Errorf("%w: %w (unsupported ELF Type)", ErrInvalidElf, errors.ErrUnsupported)
 	// Error returned if the interpreter is not `ld-linux*.so`
 	ErrUnsupportedInterpreter = fmt.Errorf("%w: %w (unsupported interpreter)", ErrInvalidElf, errors.ErrUnsupported)
 )
@@ -215,7 +217,7 @@ func New(path string) (Elf, error) {
 
 	elf.Type, err = elftype(elffile)
 	if err != nil {
-		appenderr(err, "error getting type of")
+		reterr.Join(err)
 	}
 
 	if elf.Type == Type(PIE) && elf.Interpreter == "" {
@@ -267,7 +269,7 @@ func elftype(elffile *debug_elf.File) (Type, error) {
 		}
 
 	default:
-		return Type(UNDEF), fmt.Errorf("unsupported elf type: %w", errors.ErrUnsupported)
+		return Type(UNDEF), fmt.Errorf("%w: %s", ErrUnsupportedElfType, claimedtype)
 	}
 }
 
@@ -346,7 +348,7 @@ func ldd(path string, interpreter string) ([]string, error) {
 func hasDT_FLAGS_1(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, error) {
 	dt_flags_1, err := elffile.DynValue(debug_elf.DynTag(debug_elf.DT_FLAGS_1))
 	if err != nil {
-		return false, fmt.Errorf("error getting DT_FLAGS_1: %w", err)
+		return false, fmt.Errorf("%w: invalid DT_FLAGS_1: %w", ErrInvalidElf, err)
 	}
 	for _, flags := range dt_flags_1 {
 		// Bitmask against PIE Flag (0x08000000)
