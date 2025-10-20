@@ -42,3 +42,12 @@ func TestNotElf(t *testing.T) {
 	Assert.ErrorContains(err, "error(s) parsing "+path+":")
 	Assert.ErrorContains(err, "invalid ELF file")
 }
+
+func TestLdd_static(t *testing.T) {
+	Assert := assert.New(t)
+	static := filepath.Join(Pwd(t), "../testdata/hello_static")
+	dependencies, err := ldd(static, P_ld_linux)
+	Assert.ErrorIs(err, ErrElfLdd)
+	Assert.ErrorContains(err, "ldd failed to execute /lib64/ld-linux-x86-64.so.2 /workspaces/snaggle/testdata/hello_static: ")
+	Assert.Nil(dependencies)
+}
