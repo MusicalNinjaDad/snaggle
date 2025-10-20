@@ -276,9 +276,8 @@ func elftype(elffile *debug_elf.File) (Type, error) {
 // Errors:
 //
 // Errors will include a best-effort value for what we found in the header `(entry, ...)` plus one of the following errors:
-//   - "did not read full interpreter path." - if we are not confident to have proprely retrieved the entry
-//   - "zero-length entry" - if the entry was present but empty
-//   - Anything propogated from io.ReadAll
+//   - ErrBadInterpreter if the entry is invalid or broken
+//   - Anything propogated from io.ReadAll with the added prefix "IO error reading interpreter:"
 func interpreter(elffile *debug_elf.File) (string, error) {
 	for _, prog := range elffile.Progs {
 		if prog.Type == debug_elf.PT_INTERP {
