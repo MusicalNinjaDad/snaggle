@@ -1,9 +1,6 @@
 package elf_test
 
 import (
-	"errors"
-	"io/fs"
-	"os"
 	"testing"
 
 	"github.com/MusicalNinjaDad/snaggle/elf"
@@ -18,11 +15,6 @@ func TestCommonBinaries(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			path := tt.ExpectedElf.Path
-			if _, err := os.Stat(path); errors.Is(err, fs.ErrNotExist) {
-				t.Fatalf("Skipping %s as %s not present", tt.Name, path)
-				return
-			}
-
 			Assert := assert.New(t)
 			parsed, err := elf.New(path)
 			Assert.NoError(err)
