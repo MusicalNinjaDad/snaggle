@@ -273,6 +273,11 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 //     linked ELF will lead to a segfault (which gets caught and returned as an error).
 //   - WARNING: Behaviour is *undefined* for interpreters except `ld-linux.so*`
 func ldd(path string, interpreter string) ([]string, error) {
+	if !internal.Ld_linux_64_RE.MatchString(interpreter) {
+		err := errors.New("unsupported interpreter " + interpreter + "requested to parse " + path)
+		return nil, errors.Join(ErrElfLdd, err, errors.ErrUnsupported)
+	}
+
 	ldso := exec.Command(interpreter, path)
 	ldso.Env = append(ldso.Env, "LD_TRACE_LOADED_OBJECTS=1")
 	stdout, err := ldso.Output()
