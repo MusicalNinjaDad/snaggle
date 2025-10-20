@@ -15,15 +15,61 @@ import (
 	"github.com/MusicalNinjaDad/snaggle/internal"
 )
 
-// ErrElf is the base error type for this package.
-// All errors returned by this package can be checked with errors.Is(err, ErrElf)
-var ErrElf = errors.New("error from snaggle/elf")
+// All errors returned will be of the type ErrElf.
+//
+// To extract the path use [errors.As] followed by .Path()
+//
+//	  var errelf *ErrElf
+//		 if errors.As(err, &errelf) {
+//		     errelf.Path()
+//		 }
+//
+// ErrElf can store multiple errors for a single Elf struct. Use .Join() to add an error.
+type ErrElf struct {
+	path string
+	errs []error
+}
 
-// Specific error conditions
+func (e *ErrElf) Error() string {
+	if e.errs != nil {
+		return "error(s) parsing " + e.path + ":\n" + errors.Join(e.errs...).Error()
+	}
+	panic("Don't call .Error() on an empty ErrElf")
+}
+
+func (e *ErrElf) IsError() bool {
+	return len(e.errs) > 0
+}
+
+func (e *ErrElf) Unwrap() []error {
+	return e.errs
+}
+
+func (e *ErrElf) Join(err error) {
+	if err != nil {
+		e.errs = append(e.errs, err)
+	}
+}
+
+func (e *ErrElf) Path() string {
+	return e.path
+}
+
+// Error returned when the provided file is not a valid Elf.
+var ErrInvalidElf = errors.New("invalid ELF file")
+
+// Specific errors which wrap ErrInvalidElf
 var (
-	// Error returned when calling `ld.so` (like `ldd`) to identify dependencies
-	ErrElfLdd = errors.Join(ErrElf, errors.New("ldd failed"))
+	// Error returned if dynamic ELF has a bad entry for the interpreter
+	ErrBadInterpreter = fmt.Errorf("%w: bad interpreter", ErrInvalidElf)
+	// Error returned if the ELF is not a type we support (currently only ET_EXEC & ET_DYN)
+	ErrUnsupportedElfType = fmt.Errorf("%w: %w (unsupported ELF Type)", ErrInvalidElf, errors.ErrUnsupported)
+	// Error returned if the interpreter is not `ld-linux*.so`
+	ErrUnsupportedInterpreter = fmt.Errorf("%w: %w (unsupported interpreter)", ErrInvalidElf, errors.ErrUnsupported)
 )
+
+// Error wrapping a failure when calling `ld-linux*.so` (like `ldd`) to identify dependencies
+var ErrLdd = errors.New("ldd failed to execute")
 
 // A parsed Elf binary
 type Elf struct {
@@ -133,30 +179,35 @@ func (e Elf) Diff(o Elf) []string {
 
 func New(path string) (Elf, error) {
 	elf := Elf{Path: path}
-	var elffile *debug_elf.File
-	var errs []error
-	var err error
-
-	appenderr := func(err error, message string) {
-		err = fmt.Errorf("%s %s: %w", message, elf.Path, err)
-		errs = append(errs, err)
-	}
+	reterr := &ErrElf{path: path} // error(s) returned from this function
+	var err error                 // individual error returned by any functions called
+	var elffile *debug_elf.File   // the opened File
 
 	elf.Name = filepath.Base(path)
 
 	elf.Path, err = resolve(path)
 	if err != nil {
-		return elf, err
+		if elf.Path == "" { // resolve may return "" on error
+			elf.Path = path // so we reset the path if that's happened
+		}
+		reterr.Join(err)
+		return elf, reterr
 	}
 
 	elffile, err = debug_elf.Open(elf.Path)
 	if err != nil {
-		return elf, err
+		var formaterr *debug_elf.FormatError
+		if errors.As(err, &formaterr) {
+			err = fmt.Errorf("%w: %w", ErrInvalidElf, err)
+		}
+		reterr.Join(err)
+		return elf, reterr
 	}
 	defer func() {
 		err := elffile.Close()
 		if err != nil {
-			appenderr(err, "error closing")
+			err = fmt.Errorf("error closing file: %w", err)
+			reterr.Join(err)
 		}
 	}()
 
@@ -164,27 +215,30 @@ func New(path string) (Elf, error) {
 
 	elf.Interpreter, err = interpreter(elffile)
 	if err != nil {
-		appenderr(err, "error getting interpreter for")
+		reterr.Join(err)
 	}
 
 	elf.Type, err = elftype(elffile)
 	if err != nil {
-		appenderr(err, "error getting type of")
+		reterr.Join(err)
 	}
 
 	if elf.Type == Type(PIE) && elf.Interpreter == "" {
-		err = fmt.Errorf("%s is a PIE without interpreter", elf.Path)
-		errs = append(errs, err)
+		err = fmt.Errorf("%w (PIE without interpreter)", ErrBadInterpreter)
+		reterr.Join(err)
 	}
 
-	if elf.IsDyn() && usesLd_linux_so(&elf) {
+	if elf.IsDyn() {
 		elf.Dependencies, err = ldd(elf.Path, elf.Interpreter)
 		if err != nil {
-			appenderr(err, "error getting dependencies for")
+			reterr.Join(err)
 		}
 	}
 
-	return elf, errors.Join(errs...)
+	if reterr.IsError() {
+		return elf, reterr
+	}
+	return elf, nil
 }
 
 // resolve resolves symlinks and returns an absolute path.
@@ -202,7 +256,7 @@ func resolve(path string) (string, error) {
 
 // Identifies the type of Elf (binary vs library) based upon a combination of `DT_FLAGS_1` & the claimed `e_type` in the header.
 //
-//   - Returns `Type(UNDEF), errors.ErrUnsupported` for types we don't recognise.
+//   - Returns `Type(UNDEF), ErrUnsupportedElfType` for types we don't recognise.
 func elftype(elffile *debug_elf.File) (Type, error) {
 	switch claimedtype := elffile.Type; claimedtype {
 
@@ -221,7 +275,7 @@ func elftype(elffile *debug_elf.File) (Type, error) {
 		}
 
 	default:
-		return Type(UNDEF), fmt.Errorf("unsupported elf type: %w", errors.ErrUnsupported)
+		return Type(UNDEF), fmt.Errorf("%w: %s", ErrUnsupportedElfType, claimedtype)
 	}
 }
 
@@ -234,24 +288,24 @@ func elftype(elffile *debug_elf.File) (Type, error) {
 // Errors:
 //
 // Errors will include a best-effort value for what we found in the header `(entry, ...)` plus one of the following errors:
-//   - "did not read full interpreter path." - if we are not confident to have proprely retrieved the entry
-//   - "zero-length entry" - if the entry was present but empty
-//   - Anything propogated from io.ReadAll
+//   - ErrBadInterpreter if the entry is invalid or broken
+//   - Anything propogated from io.ReadAll with the added prefix "IO error reading interpreter:"
 func interpreter(elffile *debug_elf.File) (string, error) {
 	for _, prog := range elffile.Progs {
 		if prog.Type == debug_elf.PT_INTERP {
 			p := prog.Open()
 			interp, err := io.ReadAll(p)
 			if err != nil {
+				err := fmt.Errorf("IO error reading interpreter: %w", err)
 				return string(interp), err
 			}
 			interpreter := string(bytes.TrimRight(interp, "\x00")) // strip `\x00` termination
 			if len(interpreter) != int(prog.Filesz-1) {            // have multi-byte chars or unexpected contents
-				err := fmt.Errorf("did not read full interpreter path: expected %v bytes, read %v bytes", prog.Filesz-1, len(interpreter))
+				err := fmt.Errorf("%w: expected %v bytes, read %v bytes (%s)", ErrBadInterpreter, prog.Filesz-1, len(interpreter), interpreter)
 				return string(interp), err
 			}
 			if len(interpreter) == 0 {
-				err := errors.New("zero-length interpreter")
+				err := fmt.Errorf("%w: zero-length interpreter", ErrBadInterpreter)
 				return string(interp), err
 			}
 			return interpreter, nil
@@ -273,12 +327,15 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 //     linked ELF will lead to a segfault (which gets caught and returned as an error).
 //   - WARNING: Behaviour is *undefined* for interpreters except `ld-linux.so*`
 func ldd(path string, interpreter string) ([]string, error) {
+	if !internal.Ld_linux_64_RE.MatchString(interpreter) {
+		return nil, fmt.Errorf("%w '%s'", ErrUnsupportedInterpreter, interpreter)
+	}
+
 	ldso := exec.Command(interpreter, path)
 	ldso.Env = append(ldso.Env, "LD_TRACE_LOADED_OBJECTS=1")
 	stdout, err := ldso.Output()
 	if err != nil {
-		err = fmt.Errorf("failed to execute %s %s: %w", interpreter, path, err)
-		return nil, errors.Join(ErrElfLdd, err)
+		return nil, fmt.Errorf("%w %s %s: %w", ErrLdd, interpreter, path, err)
 	}
 
 	dependencies := make([]string, 0, strings.Count(string(stdout), "=>"))
@@ -296,7 +353,7 @@ func ldd(path string, interpreter string) ([]string, error) {
 func hasDT_FLAGS_1(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, error) {
 	dt_flags_1, err := elffile.DynValue(debug_elf.DynTag(debug_elf.DT_FLAGS_1))
 	if err != nil {
-		return false, fmt.Errorf("error getting DT_FLAGS_1: %w", err)
+		return false, fmt.Errorf("%w: invalid DT_FLAGS_1: %w", ErrInvalidElf, err)
 	}
 	for _, flags := range dt_flags_1 {
 		// Bitmask against PIE Flag (0x08000000)
@@ -305,8 +362,4 @@ func hasDT_FLAGS_1(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, erro
 		}
 	}
 	return false, nil
-}
-
-func usesLd_linux_so(elf *Elf) bool {
-	return internal.Ld_linux_64_RE.MatchString(elf.Interpreter)
 }

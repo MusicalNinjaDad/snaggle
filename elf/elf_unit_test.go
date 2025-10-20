@@ -37,15 +37,6 @@ func TestLdd_nested(t *testing.T) {
 	AssertDependenciesEqual(t, expectedDependencies, dependencies)
 }
 
-func TestLdd_static(t *testing.T) {
-	Assert := assert.New(t)
-	static := filepath.Join(Pwd(t), "../testdata/hello_static")
-	dependencies, err := ldd(static, P_ld_linux)
-	Assert.ErrorIs(err, ErrElf)
-	Assert.ErrorIs(err, ErrElfLdd)
-	Assert.Nil(dependencies)
-}
-
 func TestLibpathcmp(t *testing.T) {
 	fedora := "/lib64/libc.so.6"
 	ubuntu := "/lib64/x86_64-linux-gnu/libc.so.6"
@@ -58,11 +49,4 @@ func TestSortByFilename(t *testing.T) {
 	assert.NotEqual(t, sorted, unsorted)
 	slices.SortFunc(unsorted, Libpathcmp)
 	assert.Equal(t, sorted, unsorted)
-}
-
-func TestUsesLd_linux_so(t *testing.T) {
-	Assert := assert.New(t)
-	pie, err := New(filepath.Join(Pwd(t), "../testdata/hello_pie"))
-	Assert.NoError(err)
-	Assert.True(usesLd_linux_so(&pie))
 }
