@@ -21,7 +21,9 @@ func readOnlyFile(t *testing.T) *os.File {
 	if err != nil {
 		t.Fatal(err)
 	}
-	noaccess.Chmod(0222) // --w--w--w-
+	if err := noaccess.Chmod(0222); err != nil { // --w--w--w-
+		t.Fatal(err)
+	}
 	return noaccess
 }
 
