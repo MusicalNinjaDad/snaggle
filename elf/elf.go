@@ -43,6 +43,8 @@ var ErrInvalidElf = errors.New("invalid ELF file")
 
 // Specific errors which wrap ErrInvalidElf
 var (
+	// Error returned if dynamic ELF has a bad entry for the interpreter
+	ErrBadInterpreter = fmt.Errorf("%w: bad interpreter", ErrInvalidElf)
 	// Error returned if the interpreter is not `ld-linux*.so`
 	ErrUnsupportedInterpreter = fmt.Errorf("%w: %w (unsupported interpreter)", ErrInvalidElf, errors.ErrUnsupported)
 )
@@ -197,7 +199,7 @@ func New(path string) (Elf, error) {
 
 	elf.Interpreter, err = interpreter(elffile)
 	if err != nil {
-		appenderr(err, "error getting interpreter for")
+		reterr.Join(err)
 	}
 
 	elf.Type, err = elftype(elffile)
@@ -276,15 +278,16 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 			p := prog.Open()
 			interp, err := io.ReadAll(p)
 			if err != nil {
+				err := fmt.Errorf("IO error reading interpreter: %w", err)
 				return string(interp), err
 			}
 			interpreter := string(bytes.TrimRight(interp, "\x00")) // strip `\x00` termination
 			if len(interpreter) != int(prog.Filesz-1) {            // have multi-byte chars or unexpected contents
-				err := fmt.Errorf("did not read full interpreter path: expected %v bytes, read %v bytes", prog.Filesz-1, len(interpreter))
+				err := fmt.Errorf("%w: expected %v bytes, read %v bytes (%s)", ErrBadInterpreter, prog.Filesz-1, len(interpreter), interpreter)
 				return string(interp), err
 			}
 			if len(interpreter) == 0 {
-				err := errors.New("zero-length interpreter")
+				err := fmt.Errorf("%w: zero-length interpreter", ErrBadInterpreter)
 				return string(interp), err
 			}
 			return interpreter, nil
