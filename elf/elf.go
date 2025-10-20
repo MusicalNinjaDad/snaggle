@@ -42,6 +42,8 @@ func (e *ErrElf) Join(err error) {
 var (
 	// Error returned when calling `ld.so` (like `ldd`) to identify dependencies
 	ErrElfLdd = errors.New("ldd failed to execute")
+	// Error returned when the provided file is not a valid Elf
+	ErrInvalidElf = errors.New("invalid ELF file")
 )
 
 // A parsed Elf binary
@@ -175,7 +177,9 @@ func New(path string) (Elf, error) {
 
 	elffile, err = debug_elf.Open(elf.Path)
 	if err != nil {
-		return elf, err
+		err = fmt.Errorf("%w: %w", ErrInvalidElf, err)
+		reterr.Join(err)
+		return elf, reterr
 	}
 	defer func() {
 		err := elffile.Close()
