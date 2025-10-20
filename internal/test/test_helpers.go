@@ -1,4 +1,4 @@
-package internal
+package test
 
 import (
 	"errors"
@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	. "github.com/MusicalNinjaDad/snaggle/internal" //lint:ignore ST1001 test helpers
 )
 
 // Test helper: returns current working directory, will `FailNow` on error

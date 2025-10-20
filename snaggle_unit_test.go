@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	. "github.com/MusicalNinjaDad/snaggle/internal"
+	. "github.com/MusicalNinjaDad/snaggle/internal/test"
 )
 
 func TestCopyBinary(t *testing.T) {

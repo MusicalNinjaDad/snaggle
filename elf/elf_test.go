@@ -10,7 +10,7 @@ import (
 	"github.com/MusicalNinjaDad/snaggle/elf"
 	"github.com/stretchr/testify/assert"
 
-	. "github.com/MusicalNinjaDad/snaggle/internal"
+	. "github.com/MusicalNinjaDad/snaggle/internal/test"
 )
 
 func TestCommonBinaries(t *testing.T) {
