@@ -15,11 +15,21 @@ import (
 	"github.com/MusicalNinjaDad/snaggle/internal"
 )
 
-// ErrElf is the base error type for this package.
-// All errors returned by this package can be checked with errors.Is(err, ErrElf)
-var ErrElf = errors.New("error from snaggle/elf")
+// All errors returned will be of the type ErrElf and can be checked with `errors.As(err, &errelf)`
+type ErrElf struct {
+	path string
+	err  error
+}
 
-// Specific error conditions
+func (e *ErrElf) Error() string {
+	return "error parsing " + e.path + ": " + e.err.Error()
+}
+
+func (e *ErrElf) Unwrap() error {
+	return e.err
+}
+
+// Specific error values which can be checked with `errors.Is(err, ErrElfXyz)`
 var (
 	// Error returned when calling `ld.so` (like `ldd`) to identify dependencies
 	ErrElfLdd = errors.New("ldd failed to execute")
@@ -136,6 +146,7 @@ func New(path string) (Elf, error) {
 	var elffile *debug_elf.File
 	var errs []error
 	var err error
+	reterr := &ErrElf{path: path}
 
 	appenderr := func(err error, message string) {
 		err = fmt.Errorf("%s %s: %w", message, elf.Path, err)
@@ -149,7 +160,8 @@ func New(path string) (Elf, error) {
 		if elf.Path == "" { // resolve may return "" on error
 			elf.Path = path
 		}
-		return elf, err
+		reterr.err = err
+		return elf, reterr
 	}
 
 	elffile, err = debug_elf.Open(elf.Path)
