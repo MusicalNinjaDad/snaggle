@@ -1,7 +1,6 @@
 package elf
 
 import (
-	"debug/elf"
 	"errors"
 	"io/fs"
 	"os"
@@ -72,21 +71,37 @@ func TestFileErrors(t *testing.T) {
 	}
 }
 
-func TestNotElf(t *testing.T) {
-	Assert := assert.New(t)
-	path := filepath.Join(Pwd(t), "../testdata/ldd")
-	bad, err := New(path)
-	var errelf *ErrElf
-	var errformat *elf.FormatError
-	Assert.Equal("ldd", bad.Name)
-	Assert.Equal(path, bad.Path)
-	Assert.ErrorAs(err, &errformat)
-	Assert.ErrorIs(err, ErrInvalidElf)
-	Assert.ErrorAs(err, &errelf)
-	errpath := err.(*ErrElf).Path()
-	Assert.Equal(path, errpath)
-	Assert.ErrorContains(err, "error(s) parsing "+path+":")
-	Assert.ErrorContains(err, "invalid ELF file")
+func TestInvalidElf(t *testing.T) {
+	tests := []struct {
+		name     string
+		filename string
+		path     string
+	}{
+		{
+			name:     "not an elf",
+			filename: "ldd",
+			path:     filepath.Join(Pwd(t), "../testdata/ldd"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			Assert := assert.New(t)
+			var errelf *ErrElf
+			parsed, err := New(tc.path)
+			// We should have basic info in ALL cases
+			Assert.Equal(parsed.Name, tc.filename)
+			Assert.Equal(parsed.Path, tc.path)
+
+			Assert.ErrorIs(err, ErrInvalidElf)
+			Assert.ErrorContains(err, "invalid ELF file")
+
+			Assert.ErrorAs(err, &errelf)
+			Assert.Equal(tc.path, errelf.Path())
+			Assert.ErrorContains(err, "error(s) parsing "+tc.path+":")
+
+		})
+	}
 }
 
 func static(t *testing.T) string {
