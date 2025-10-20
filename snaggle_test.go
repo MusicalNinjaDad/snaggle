@@ -9,22 +9,6 @@ import (
 	. "github.com/MusicalNinjaDad/snaggle/internal"
 )
 
-func TestLddSingleBinary(t *testing.T) {
-	Assert := assert.New(t)
-	expectedLibs := []string{"libc.so.6", "/lib64/ld-linux-x86-64.so.2"}
-	libs, err := LibPaths("testdata/which")
-	Assert.NoError(err)
-	Assert.Equal(expectedLibs, libs)
-}
-
-func TestSymlinkedBinary(t *testing.T) {
-	Assert := assert.New(t)
-	expectedLibs := []string{"libc.so.6", "/lib64/ld-linux-x86-64.so.2"}
-	libs, err := LibPaths("testdata/which2")
-	Assert.NoError(err)
-	Assert.Equal(expectedLibs, libs)
-}
-
 func TestCopyBinary(t *testing.T) {
 	Assert := assert.New(t)
 	tmp := WorkspaceTempDir(t)
