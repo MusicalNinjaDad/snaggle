@@ -31,7 +31,14 @@ type ErrElf struct {
 }
 
 func (e *ErrElf) Error() string {
-	return "error(s) parsing " + e.path + ":\n" + errors.Join(e.errs...).Error()
+	if e.errs != nil {
+		return "error(s) parsing " + e.path + ":\n" + errors.Join(e.errs...).Error()
+	}
+	panic("Don't call .Error() on an empty ErrElf")
+}
+
+func (e *ErrElf) IsError() bool {
+	return e.errs != nil
 }
 
 func (e *ErrElf) Unwrap() []error {
@@ -226,7 +233,10 @@ func New(path string) (Elf, error) {
 		}
 	}
 
-	return elf, reterr
+	if reterr.IsError() {
+		return elf, reterr
+	}
+	return elf, nil
 }
 
 // resolve resolves symlinks and returns an absolute path.
