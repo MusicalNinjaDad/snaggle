@@ -146,6 +146,9 @@ func New(path string) (Elf, error) {
 
 	elf.Path, err = resolve(path)
 	if err != nil {
+		if elf.Path == "" { // resolve may return "" on error
+			elf.Path = path
+		}
 		return elf, err
 	}
 
