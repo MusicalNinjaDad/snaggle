@@ -15,8 +15,16 @@ import (
 	"github.com/MusicalNinjaDad/snaggle/internal"
 )
 
-// All errors returned will be of the type ErrElf. If you need to parse this to find the path use:
-// `errpath := err.(*ErrElf).Path()`
+// All errors returned will be of the type ErrElf.
+//
+// To extract the path use [errors.As] followed by .Path()
+//
+//	  var errelf *ErrElf
+//		 if errors.As(err, &errelf) {
+//		     errelf.Path()
+//		 }
+//
+// ErrElf can store multiple errors for a single Elf struct. Use .Join() to add an error.
 type ErrElf struct {
 	path string
 	errs []error
