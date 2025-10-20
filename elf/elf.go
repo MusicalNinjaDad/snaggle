@@ -244,7 +244,7 @@ func resolve(path string) (string, error) {
 
 // Identifies the type of Elf (binary vs library) based upon a combination of `DT_FLAGS_1` & the claimed `e_type` in the header.
 //
-//   - Returns `Type(UNDEF), errors.ErrUnsupported` for types we don't recognise.
+//   - Returns `Type(UNDEF), ErrUnsupportedElfType` for types we don't recognise.
 func elftype(elffile *debug_elf.File) (Type, error) {
 	switch claimedtype := elffile.Type; claimedtype {
 
