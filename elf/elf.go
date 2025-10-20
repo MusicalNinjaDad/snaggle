@@ -29,6 +29,10 @@ func (e *ErrElf) Unwrap() error {
 	return e.err
 }
 
+func (e *ErrElf) Wrap(err error) {
+	e.err = err
+}
+
 // Specific error values which can be checked with `errors.Is(err, ErrElfXyz)`
 var (
 	// Error returned when calling `ld.so` (like `ldd`) to identify dependencies
@@ -160,7 +164,7 @@ func New(path string) (Elf, error) {
 		if elf.Path == "" { // resolve may return "" on error
 			elf.Path = path
 		}
-		reterr.err = err
+		reterr.Wrap(err)
 		return elf, reterr
 	}
 
