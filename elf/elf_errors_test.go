@@ -37,7 +37,7 @@ func TestFileErrors(t *testing.T) {
 		{
 			name:      "DirectoryNotFound",
 			filename:  "nonexistant",
-			path:      filepath.Join(Pwd(t), "../testdata/nothere/nonexistant"),
+			path:      TestdataPath("nothere/nonexistant"),
 			err:       fs.ErrNotExist,
 			errorText: "no such file or directory",
 		},
@@ -80,7 +80,7 @@ func TestInvalidElf(t *testing.T) {
 		{
 			name:     "not an elf",
 			filename: "ldd",
-			path:     filepath.Join(Pwd(t), "../testdata/ldd"),
+			path:     P_ldd,
 		},
 	}
 
@@ -104,11 +104,6 @@ func TestInvalidElf(t *testing.T) {
 	}
 }
 
-func static(t *testing.T) string {
-	t.Helper()
-	return filepath.Join(Pwd(t), "../testdata/hello_static")
-}
-
 func TestLddErrors(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -120,15 +115,15 @@ func TestLddErrors(t *testing.T) {
 	}{
 		{
 			name:        "static binary",
-			path:        static(t),
+			path:        P_hello_static,
 			interpreter: P_ld_linux,
 			errs:        []error{ErrLdd},
-			errorText:   "ldd failed to execute /lib64/ld-linux-x86-64.so.2 " + static(t) + ": ",
+			errorText:   "ldd failed to execute /lib64/ld-linux-x86-64.so.2 " + P_hello_static + ": ",
 			invalidErrs: []error{ErrInvalidElf, ErrUnsupportedInterpreter},
 		},
 		{
 			name:        "unsupported interpreter",
-			path:        static(t),
+			path:        P_hello_static,
 			interpreter: "/lib64/evil_interpreter.so",
 			errs:        []error{ErrUnsupportedInterpreter, ErrInvalidElf, errors.ErrUnsupported},
 			errorText:   "invalid ELF file: unsupported operation (unsupported interpreter) '/lib64/evil_interpreter.so'",

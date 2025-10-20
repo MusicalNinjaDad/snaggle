@@ -2,7 +2,6 @@ package testdata
 
 //nolint:staticcheck
 import (
-	"path/filepath"
 	"testing"
 
 	"github.com/MusicalNinjaDad/snaggle/elf"
@@ -25,7 +24,7 @@ func CommonBinaries(t *testing.T) []BinaryDetails {
 			Name: "PIE no dependencies",
 			ExpectedElf: elf.Elf{
 				Name:         "hello_pie",
-				Path:         filepath.Join(Pwd(t), "../testdata/hello_pie"),
+				Path:         P_hello_pie,
 				Class:        elf.EI_CLASS(elf.ELF64),
 				Type:         elf.Type(elf.PIE),
 				Interpreter:  P_ld_linux,
@@ -39,7 +38,7 @@ func CommonBinaries(t *testing.T) []BinaryDetails {
 			Name: "Static linked executable",
 			ExpectedElf: elf.Elf{
 				Name:         "hello_static",
-				Path:         filepath.Join(Pwd(t), "../testdata/hello_static"),
+				Path:         P_hello_static,
 				Class:        elf.EI_CLASS(elf.ELF64),
 				Type:         elf.Type(elf.EXE),
 				Interpreter:  "",
@@ -53,7 +52,7 @@ func CommonBinaries(t *testing.T) []BinaryDetails {
 			Name: "PIE 1 dependency",
 			ExpectedElf: elf.Elf{
 				Name:         "which",
-				Path:         filepath.Join(Pwd(t), "../testdata/which"),
+				Path:         P_which,
 				Class:        elf.EI_CLASS(elf.ELF64),
 				Type:         elf.Type(elf.PIE),
 				Interpreter:  P_ld_linux,
@@ -67,7 +66,7 @@ func CommonBinaries(t *testing.T) []BinaryDetails {
 			Name: "PIE nested dependencies",
 			ExpectedElf: elf.Elf{
 				Name:         "id",
-				Path:         filepath.Join(Pwd(t), "../testdata/id"),
+				Path:         P_id,
 				Class:        elf.EI_CLASS(elf.ELF64),
 				Type:         elf.Type(elf.PIE),
 				Interpreter:  P_ld_linux,
