@@ -188,7 +188,8 @@ func New(path string) (Elf, error) {
 	defer func() {
 		err := elffile.Close()
 		if err != nil {
-			appenderr(err, "error closing")
+			err = fmt.Errorf("error closing file: %w", err)
+			reterr.Join(err)
 		}
 	}()
 
