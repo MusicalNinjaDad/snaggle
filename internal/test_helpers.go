@@ -47,6 +47,17 @@ func AssertDependenciesEqual(t *testing.T, expected []string, actual []string) {
 	}
 }
 
+// Test Helper: validates that two paths point to the same inode
+func AssertSameFile(t *testing.T, path1 string, path2 string) {
+	t.Helper()
+	file1, err1 := os.Stat(path1)
+	file2, err2 := os.Stat(path2)
+	if err1 != nil || err2 != nil {
+		t.Fatal("Errors stating:", path1, "-", err1, ";", path2, "-", err2)
+	}
+	assert.Truef(t, os.SameFile(file1, file2), "%s & %s are different files", file1, file2)
+}
+
 // Paths to common libraries
 const (
 	P_ld_linux   = "/lib64/ld-linux-x86-64.so.2"
