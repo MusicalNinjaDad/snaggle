@@ -15,12 +15,8 @@ import (
 	"github.com/MusicalNinjaDad/snaggle/internal"
 )
 
-// All errors returned will be of the type ErrElf and can be checked with:
-//
-//	```
-//	var errelf *ErrElf
-//	errors.As(err, &errelf)
-//	```
+// All errors returned will be of the type ErrElf. If you need to parse this to find the path use:
+// `errpath := err.(*ErrElf).Path()`
 type ErrElf struct {
 	path string
 	errs []error
@@ -36,6 +32,10 @@ func (e *ErrElf) Unwrap() []error {
 
 func (e *ErrElf) Join(err error) {
 	e.errs = append(e.errs, err)
+}
+
+func (e *ErrElf) Path() string {
+	return e.path
 }
 
 // Specific error values which can be checked with `errors.Is(err, ErrElfXyz)`
