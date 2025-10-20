@@ -87,23 +87,50 @@ func TestNotElf(t *testing.T) {
 	Assert.ErrorContains(err, "invalid ELF file")
 }
 
-func TestLdd_static(t *testing.T) {
-	Assert := assert.New(t)
-	static := filepath.Join(Pwd(t), "../testdata/hello_static")
-	dependencies, err := ldd(static, P_ld_linux)
-	Assert.ErrorIs(err, ErrLdd)
-	Assert.ErrorContains(err, "ldd failed to execute /lib64/ld-linux-x86-64.so.2 "+static+": ")
-	Assert.Nil(dependencies)
+func static(t *testing.T) string {
+	t.Helper()
+	return filepath.Join(Pwd(t), "../testdata/hello_static")
 }
 
-func TestLdd_unsupported_interpreter(t *testing.T) {
-	Assert := assert.New(t)
-	static := filepath.Join(Pwd(t), "../testdata/hello_static")
-	interpreter := "/lib64/evil_interpreter.so"
-	dependencies, err := ldd(static, interpreter)
-	Assert.ErrorIs(err, ErrUnsupportedInterpreter)
-	Assert.ErrorIs(err, ErrInvalidElf)
-	Assert.ErrorIs(err, errors.ErrUnsupported)
-	Assert.ErrorContains(err, "invalid ELF file: unsupported operation (unsupported interpreter) '"+interpreter+"'")
-	Assert.Nil(dependencies)
+func TestLddErrors(t *testing.T) {
+	tests := []struct {
+		name        string
+		path        string
+		interpreter string
+		errs        []error
+		errorText   string
+		invalidErrs []error
+	}{
+		{
+			name:        "static binary",
+			path:        static(t),
+			interpreter: P_ld_linux,
+			errs:        []error{ErrLdd},
+			errorText:   "ldd failed to execute /lib64/ld-linux-x86-64.so.2 " + static(t) + ": ",
+			invalidErrs: []error{ErrInvalidElf, ErrUnsupportedInterpreter},
+		},
+		{
+			name:        "unsupported interpreter",
+			path:        static(t),
+			interpreter: "/lib64/evil_interpreter.so",
+			errs:        []error{ErrUnsupportedInterpreter, ErrInvalidElf, errors.ErrUnsupported},
+			errorText:   "invalid ELF file: unsupported operation (unsupported interpreter) '/lib64/evil_interpreter.so'",
+			invalidErrs: []error{ErrLdd},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			Assert := assert.New(t)
+			dependencies, err := ldd(tc.path, tc.interpreter)
+			Assert.Nil(dependencies)
+			for _, e := range tc.errs {
+				Assert.ErrorIs(err, e)
+			}
+			Assert.ErrorContains(err, tc.errorText)
+			for _, e := range tc.invalidErrs {
+				Assert.NotErrorIs(err, e)
+			}
+		})
+	}
 }
