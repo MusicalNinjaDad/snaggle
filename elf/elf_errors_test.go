@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	. "github.com/MusicalNinjaDad/snaggle/internal/test"
+	. "github.com/MusicalNinjaDad/snaggle/internal"
 )
 
 func readOnlyFile(t *testing.T) *os.File {
