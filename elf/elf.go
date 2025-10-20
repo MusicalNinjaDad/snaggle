@@ -38,12 +38,15 @@ func (e *ErrElf) Path() string {
 	return e.path
 }
 
-// Specific error values which can be checked with `errors.Is(err, ErrElfXyz)`
+// Error returned when the provided file is not a valid Elf
+var ErrInvalidElf = errors.New("invalid ELF file")
+
+// Specific errors which wrap ErrInvalidElf
 var (
+	// Error returned if the interpreter is not `ld-linux*.so`
+	ErrUnsupportedInterpreter = fmt.Errorf("%w: %w (unsupported interpreter)", ErrInvalidElf, errors.ErrUnsupported)
 	// Error returned when calling `ld.so` (like `ldd`) to identify dependencies
 	ErrElfLdd = errors.New("ldd failed to execute")
-	// Error returned when the provided file is not a valid Elf
-	ErrInvalidElf = errors.New("invalid ELF file")
 )
 
 // A parsed Elf binary
@@ -302,7 +305,7 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 //   - WARNING: Behaviour is *undefined* for interpreters except `ld-linux.so*`
 func ldd(path string, interpreter string) ([]string, error) {
 	if !internal.Ld_linux_64_RE.MatchString(interpreter) {
-		return nil, fmt.Errorf("%w unsupported interpreter %s: %w", ErrElfLdd, interpreter, errors.ErrUnsupported)
+		return nil, fmt.Errorf("%w '%s'", ErrUnsupportedInterpreter, interpreter)
 	}
 
 	ldso := exec.Command(interpreter, path)
