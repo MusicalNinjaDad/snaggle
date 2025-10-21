@@ -58,6 +58,9 @@ func WorkspaceTempDir(t *testing.T) string {
 // portability (libs are potentially in different paths)
 func AssertDependenciesEqual(t *testing.T, expected []string, actual []string) {
 	t.Helper()
+	if len(expected) == 0 && len(actual) == 0 {
+		return // no dependencies
+	}
 	for idx, dep := range expected {
 		assert.Zerof(t, Libpathcmp(dep, actual[idx]), "dependency %v differs: %s != %s", idx, dep, actual[idx])
 	}
