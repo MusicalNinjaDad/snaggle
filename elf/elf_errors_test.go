@@ -28,7 +28,7 @@ func TestFileErrors(t *testing.T) {
 		{
 			name:      "Access Denied",
 			filename:  "noaccess",
-			path:      ReadOnlyFile(t).Name(),
+			path:      ReadOnlyFile(t, "noaccess").Name(),
 			err:       fs.ErrPermission,
 			errorText: "permission denied",
 		},

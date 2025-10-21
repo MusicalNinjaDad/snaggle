@@ -84,10 +84,11 @@ var P_which = TestdataPath("which")
 var P_id = TestdataPath("id")
 var P_ldd = TestdataPath("ldd")
 
-func ReadOnlyFile(t *testing.T) *os.File {
+// Test helper: Provides a readonly file in a temp directory which is removed after test execution
+func ReadOnlyFile(t *testing.T, filename string) *os.File {
 	t.Helper()
 	tmp := t.TempDir()
-	path := filepath.Join(tmp, "noaccess")
+	path := filepath.Join(tmp, filename)
 	noaccess, err := os.Create(path)
 	if err != nil {
 		t.Fatal(err)
