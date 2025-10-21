@@ -58,7 +58,9 @@ func link(sourcePath string, targetDir string) error {
 
 	// TODO: what if either is a symlink?
 	err := os.Link(sourcePath, target)
-	if errors.Is(err, syscall.EXDEV) {
+	if errors.Is(err, syscall.EXDEV) || errors.Is(err, syscall.EPERM) {
+		// X-Device link || No permission to link
+		// Try simple copy
 		if err := copy(sourcePath, target); err != nil {
 			return err
 		}
