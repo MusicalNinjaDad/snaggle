@@ -6,6 +6,8 @@ package snaggle
 import (
 	"os"
 	"path/filepath"
+
+	"github.com/MusicalNinjaDad/snaggle/elf"
 )
 
 // linkFile creates a hardlink to `path` under `newRoot`, preserving the full directory
@@ -40,5 +42,6 @@ func linkFile(path string, newRoot string) (string, error) {
 
 // Parse file and build a minimal /bin & /lib under root
 func Snaggle(path string, root string) error {
-	return nil
+	_, err := elf.New(path)
+	return err
 }
