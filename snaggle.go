@@ -57,13 +57,19 @@ func link(sourcePath string, targetDir string) (err error) {
 
 // Parse file and build a minimal /bin & /lib under root
 func Snaggle(path string, root string) error {
-	_, err := elf.New(path)
+	file, err := elf.New(path)
 	if err != nil {
 		return err
 	}
-	bin := filepath.Join(root, "bin")
-	if err = link(path, bin); err != nil {
+	binDir := filepath.Join(root, "bin")
+	libDir := filepath.Join(root, "lib64")
+	if err = link(path, binDir); err != nil {
 		return err
+	}
+	for _, lib := range file.Dependencies {
+		if err = link(lib, libDir); err != nil {
+			return err
+		}
 	}
 	return nil
 }
