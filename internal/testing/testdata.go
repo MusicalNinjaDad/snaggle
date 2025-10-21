@@ -1,16 +1,17 @@
 // Helpers related to testdata assets. Only suitable for integration tests (*_test) packages
 // due to circular imports
-package testdata
+package testing
 
 //nolint:staticcheck
 import (
 	"testing"
 
 	"github.com/MusicalNinjaDad/snaggle/elf"
+
 	. "github.com/MusicalNinjaDad/snaggle/internal" //lint:ignore ST1001 test helpers
 )
 
-type BinaryDetails struct {
+type binaryDetails struct {
 	Name        string // test run name
 	ExpectedElf elf.Elf
 	Dynamic     bool
@@ -19,9 +20,9 @@ type BinaryDetails struct {
 }
 
 // Test Helper: provides a set of common binaries to use in table tests
-func CommonBinaries(t *testing.T) []BinaryDetails {
+func CommonBinaries(t *testing.T) []binaryDetails {
 	t.Helper()
-	return []BinaryDetails{
+	return []binaryDetails{
 		{
 			Name: "PIE no dependencies",
 			ExpectedElf: elf.Elf{

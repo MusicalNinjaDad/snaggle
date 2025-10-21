@@ -7,7 +7,7 @@ import (
 
 	"github.com/MusicalNinjaDad/snaggle/elf"
 
-	. "github.com/MusicalNinjaDad/snaggle/internal/testdata"
+	. "github.com/MusicalNinjaDad/snaggle/internal/testing"
 )
 
 func TestCommonBinaries(t *testing.T) {
