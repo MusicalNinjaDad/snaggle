@@ -94,7 +94,11 @@ func hashFile(path string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer func() { err = errors.Join(err, file.Close()) }()
+	defer func() {
+		err = errors.Join(err,
+			file.Close(),
+		)
+	}()
 
 	hash := sha256.New()
 	if _, err := io.Copy(hash, file); err != nil {

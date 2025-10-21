@@ -73,18 +73,30 @@ func copy(sourcePath string, target string) error {
 	if err != nil {
 		return err
 	}
-	defer func() { err = errors.Join(err, src.Close()) }()
+	defer func() {
+		err = errors.Join(err,
+			src.Close(),
+		)
+	}()
 
 	dst, err := os.Create(target)
 	if err != nil {
 		return err
 	}
-	defer func() { err = errors.Join(err, dst.Close()) }()
+	defer func() {
+		err = errors.Join(err,
+			dst.Close(),
+		)
+	}()
 
 	if _, err := io.Copy(dst, src); err != nil {
 		return err
 	}
-	defer func() { err = errors.Join(err, dst.Sync()) }()
+	defer func() {
+		err = errors.Join(err,
+			dst.Sync(),
+		)
+	}()
 
 	return nil
 }

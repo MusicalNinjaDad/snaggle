@@ -147,11 +147,9 @@ func New(path string) (Elf, error) {
 		return elf, reterr
 	}
 	defer func() {
-		err := elffile.Close()
-		if err != nil {
-			err = fmt.Errorf("error closing file: %w", err)
-			reterr.Join(err)
-		}
+		reterr.Join(
+			elffile.Close(),
+		)
 	}()
 
 	elf.Class = EI_CLASS(elffile.Class)
