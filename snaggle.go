@@ -37,3 +37,8 @@ func linkFile(path string, newRoot string) (string, error) {
 	err = os.Link(path, target)
 	return target, err
 }
+
+// Parse file and build a minimal /bin & /lib under root
+func Snaggle(path string, root string) error {
+	return nil
+}
