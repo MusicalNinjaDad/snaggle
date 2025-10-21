@@ -3,8 +3,9 @@ package elf_test
 import (
 	"testing"
 
-	"github.com/MusicalNinjaDad/snaggle/elf"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/MusicalNinjaDad/snaggle/elf"
 
 	. "github.com/MusicalNinjaDad/snaggle/internal/testdata"
 )
