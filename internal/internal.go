@@ -24,16 +24,16 @@ func Libpathcmp(path1 string, path2 string) int {
 // Regex to check if this is a 64-bit version of `ld-linux*.so`, matches /lib64(/more/directories)/ld-linux*.so(.*)
 var Ld_linux_64_RE = regexp.MustCompile(`^\/lib64(?:\/.+|)\/ld-linux.*\.so(?:\..+|)$`)
 
-// Test helper: returns the path to /internal/testdata where binaries etc are stored
+// Test helper: construct the correct absolute value of path, where path is relative to ./internal/testdata
 func TestdataPath(path string) string {
 	_, thisfile, _, _ := runtime.Caller(0)
 	internalDir := filepath.Dir(thisfile)
 	return filepath.Join(internalDir, "testdata", path)
 }
 
-// Construct a TempDir under `./.tmp`
+// Test helper: constructs a TempDir under `./internal/testdata/.tmp`
 //
-// This is (almost) guaranteed to be on the same filesystem as `./testdata` and therefore
+// This is (almost) guaranteed to be on the same filesystem as `./internal/testdata` and therefore
 // allow for valid hardlinks.
 func WorkspaceTempDir(t *testing.T) string {
 	t.Helper()
@@ -78,11 +78,14 @@ const (
 	P_libselinux = "/lib64/libselinux.so.1"
 )
 
-var P_hello_pie = TestdataPath("hello_pie")
-var P_hello_static = TestdataPath("hello_static")
-var P_which = TestdataPath("which")
-var P_id = TestdataPath("id")
-var P_ldd = TestdataPath("ldd")
+// Paths to our test binaries
+var (
+	P_hello_pie    = TestdataPath("hello_pie")
+	P_hello_static = TestdataPath("hello_static")
+	P_which        = TestdataPath("which")
+	P_id           = TestdataPath("id")
+	P_ldd          = TestdataPath("ldd")
+)
 
 // Test helper: Provides a readonly file in a temp directory which is removed after test execution
 func ReadOnlyFile(t *testing.T, filename string) *os.File {
