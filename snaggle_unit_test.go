@@ -9,11 +9,11 @@ import (
 	. "github.com/MusicalNinjaDad/snaggle/internal"
 )
 
-func TestCopyBinary(t *testing.T) {
+func TestLinkTree(t *testing.T) {
 	Assert := assert.New(t)
 	tmp := WorkspaceTempDir(t)
 	expectedFile := filepath.Join(tmp, P_which)
-	path, err := linkFile(P_which, tmp)
+	path, err := linkTree(P_which, tmp)
 	Assert.NoError(err)
 	Assert.Equal(expectedFile, path)
 	Assert.FileExists(expectedFile)

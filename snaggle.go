@@ -10,10 +10,10 @@ import (
 	"github.com/MusicalNinjaDad/snaggle/elf"
 )
 
-// linkFile creates a hardlink to `path` under `newRoot`, preserving the full directory
+// linkTree creates a hardlink to `path` under `newRoot`, preserving the full directory
 // structure similar to how `cp -r` does.
 //
-// E.g. `linkFile(/usr/bin/which, /tmp)` will create a link at `/tmp/usr/bin/which`.
+// E.g. `linkTree(/usr/bin/which, /tmp)` will create a link at `/tmp/usr/bin/which`.
 //
 // Note: the _absolute_ `path` will be used, even if a relative path is provided.
 //
@@ -21,7 +21,7 @@ import (
 // lack of meaningful documentation on stdlib errors means the author of this code can't give
 // any guidance on what they may be.
 // PRs are always welcome to improve error handling or documentation.
-func linkFile(path string, newRoot string) (string, error) {
+func linkTree(path string, newRoot string) (string, error) {
 	path, err := filepath.Abs(path)
 	target := filepath.Join(newRoot, path)
 	if err != nil {
@@ -42,6 +42,13 @@ func linkFile(path string, newRoot string) (string, error) {
 
 // Parse file and build a minimal /bin & /lib under root
 func Snaggle(path string, root string) error {
-	_, err := elf.New(path)
-	return err
+	file, err := elf.New(path)
+	if err != nil {
+		return err
+	}
+	bin := filepath.Join(root, "bin")
+	if _, err := linkTree(file.Name, bin); err != nil {
+		return err
+	}
+	return nil
 }
