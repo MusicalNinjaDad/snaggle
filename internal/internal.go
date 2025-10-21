@@ -116,12 +116,24 @@ func AssertSameFile(t *testing.T, path1 string, path2 string) {
 }
 
 // Paths to common libraries
-const (
-	P_ld_linux   = "/lib64/ld-linux-x86-64.so.2"
-	P_libc       = "/lib64/libc.so.6"
-	P_libpcre2_8 = "/lib64/libpcre2-8.so.0"
-	P_libselinux = "/lib64/libselinux.so.1"
+var (
+	P_ld_linux   = findLib("ld-linux-x86-64.so.2")
+	P_libc       = findLib("libc.so.6")
+	P_libpcre2_8 = findLib("libpcre2-8.so.0")
+	P_libselinux = findLib("libselinux.so.1")
 )
+
+// searches /lib* & /usr/lib* to find filename.
+func findLib(filename string) (path string) {
+	searchPaths := []string{"/lib*/*/", "/usr/lib*/*/", "/lib*/", "/usr/lib*/"} // ld.so-like ordering
+	for _, dir := range searchPaths {
+		matches, _ := filepath.Glob(dir + filename) // only possible returned error is ErrBadPattern
+		if len(matches) > 0 {
+			return matches[0]
+		}
+	}
+	return ""
+}
 
 // Paths to our test binaries
 var (
