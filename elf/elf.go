@@ -16,43 +16,22 @@ import (
 )
 
 // All errors returned will be of the type ErrElf.
+
+//   - ErrElf can store multiple errors for a single Elf struct. Use .Join() to add an error.
+//   - Will PANIC! if .Error is called and no errors are contained
+//   - Will not == nil, even if empty. Use .IsEmpty() to check and then manually return something, nil
 //
 // To extract the path use [errors.As] followed by .Path()
 //
-//	  var errelf *ErrElf
-//		 if errors.As(err, &errelf) {
-//		     errelf.Path()
-//		 }
+//	var errelf *ErrElf
+//	if errors.As(err, &errelf) {
+//	     errelf.Path()
+//	}
 //
-// ErrElf can store multiple errors for a single Elf struct. Use .Join() to add an error.
+// .
 type ErrElf struct {
 	path string
 	errs []error
-}
-
-func (e *ErrElf) Error() string {
-	if e.errs != nil {
-		return "error(s) parsing " + e.path + ":\n" + errors.Join(e.errs...).Error()
-	}
-	panic("Don't call .Error() on an empty ErrElf")
-}
-
-func (e *ErrElf) IsError() bool {
-	return len(e.errs) > 0
-}
-
-func (e *ErrElf) Unwrap() []error {
-	return e.errs
-}
-
-func (e *ErrElf) Join(err error) {
-	if err != nil {
-		e.errs = append(e.errs, err)
-	}
-}
-
-func (e *ErrElf) Path() string {
-	return e.path
 }
 
 // Error returned when the provided file is not a valid Elf.
@@ -75,21 +54,16 @@ var ErrLdd = errors.New("ldd failed to execute")
 type Elf struct {
 	// The filename
 	Name string
-
 	// Absolute, fully resolved path to the file
 	Path string
-
 	// 32 or 64 bit?
 	//  - See https://man7.org/linux/man-pages/man5/elf.5.html#:~:text=.%20%20(3%3A%20%27F%27)-,EI_CLASS,-The%20fifth%20byte
 	Class EI_CLASS
-
 	// Simplified based on ET_DYN & DynFlag1
 	Type Type
-
 	// Absolute path to the interpreter (if executable), "" if not executable.
 	//  - See https://gist.github.com/x0nu11byt3/bcb35c3de461e5fb66173071a2379779 for much more background
 	Interpreter string
-
 	// All requested libraries
 	Dependencies []string
 }
@@ -102,7 +76,7 @@ const (
 	ELF64   = debug_elf.ELFCLASS64   // 2
 )
 
-// Think before directly comparing to bitmask (2^n) values. See value description for individual hints.
+// Think carefully before directly comparing to bitmask (2^n) values. See value descriptions for individual hints.
 type Type byte
 
 const (
@@ -119,64 +93,33 @@ const (
 	PIE = 3 // EXE + DYN
 )
 
-// Whether this is **primarily** an executable.
+// Is this ELF **primarily** an executable.
 //
 //   - This will return `false` in cases such as `/lib64/ld-linux-x86-64.so.2` which has an entry point
-//     and _may_ be `exec()`'ed but is not `ET_EXEC` or `PIE`
+//     and _may_ be `exec()`'ed but is primarily designed as a library and therefore not `ET_EXEC` or `PIE`
 func (e *Elf) IsExe() bool {
 	return e.Type&Type(EXE) != 0
 }
 
-// If it's not **primarily** an executable, then it's a library.
-// (Slightly simplified but good enough for our case)
+// Is this ELF **primarily** a library?
+//
+//   - If it's not **primarily** an executable, then it's a library (Slightly simplified but good enough for our case)
 func (e *Elf) IsLib() bool {
 	return e.Type&Type(EXE) == 0
 }
 
+// Is this ELF dynamically linked?
 func (e *Elf) IsDyn() bool {
 	return e.Type&Type(DYN) != 0
 }
 
-// Deeply check for diffs between two `Elf`s. Ignores differences in the Path, as long as:
-//  1. Both `Path`s are absolute
-//  2. Both `Path`s end in the same filename
-func (e Elf) Diff(o Elf) []string {
-	var diffs []string
-	elf := reflect.TypeOf(e)
-	self := reflect.ValueOf(e)
-	other := reflect.ValueOf(o)
-
-	for _, field := range reflect.VisibleFields(elf) {
-		selfVal := self.FieldByIndex(field.Index).Interface()
-		otherVal := other.FieldByIndex(field.Index).Interface()
-
-		switch field.Name {
-		case "Path":
-			if internal.Libpathcmp(selfVal.(string), otherVal.(string)) != 0 {
-				diffs = append(diffs, fmt.Sprintf("%s differs for %s: %v != %v", field.Name, self.FieldByName("Name"), selfVal, otherVal))
-			}
-		case "Dependencies":
-			selfDeps := self.FieldByIndex(field.Index).Interface().([]string)
-			otherDeps := other.FieldByIndex(field.Index).Interface().([]string)
-			if len(selfDeps) != len(otherDeps) {
-				diffs = append(diffs, fmt.Sprintf("%s has %v dependencies in left, %v dependencies in right", self.FieldByName("Name"), len(selfDeps), len(otherDeps)))
-			} else {
-				for idx, selfDep := range selfDeps {
-					otherDep := otherDeps[idx]
-					if internal.Libpathcmp(selfDep, otherDep) != 0 {
-						diffs = append(diffs, fmt.Sprintf("dependency %v differs for %s: %s != %s", idx, self.FieldByName("Name"), selfDep, otherDep))
-					}
-				}
-			}
-		default:
-			if !reflect.DeepEqual(selfVal, otherVal) {
-				diffs = append(diffs, fmt.Sprintf("%s differs for %s: %v != %v", field.Name, self.FieldByName("Name"), selfVal, otherVal))
-			}
-		}
-	}
-	return diffs
-}
-
+// Construct a new [Elf] for the file located at path, any error will be an [ErrElf]
+//
+//   - Returns a best-effort result on error
+//   - Returns early if errors are encountered in resolving the Path or in initial parsing by [debug_elf.Open],
+//     in this case Name & Path will be filled, although Path may not be fully resolved
+//   - If errors are encountered in parsing these will be collected in the returned [ErrElf] and the result will
+//     contain as much valid information as possible
 func New(path string) (Elf, error) {
 	elf := Elf{Path: path}
 	reterr := &ErrElf{path: path} // error(s) returned from this function
@@ -222,7 +165,6 @@ func New(path string) (Elf, error) {
 	if err != nil {
 		reterr.Join(err)
 	}
-
 	if elf.Type == Type(PIE) && elf.Interpreter == "" {
 		err = fmt.Errorf("%w (PIE without interpreter)", ErrBadInterpreter)
 		reterr.Join(err)
@@ -264,7 +206,7 @@ func elftype(elffile *debug_elf.File) (Type, error) {
 		return Type(EXE), nil
 
 	case debug_elf.ET_DYN:
-		pie, err := hasDT_FLAGS_1(elffile, debug_elf.DF_1_PIE)
+		pie, err := hasDT_FLAGS_1_Flag(elffile, debug_elf.DF_1_PIE)
 		if err != nil {
 			return Type(DYN), err
 		}
@@ -285,11 +227,9 @@ func elftype(elffile *debug_elf.File) (Type, error) {
 //   - `path` if a valid entry was found.
 //   - `""` if no such header is present. (E.g. for a library)
 //
-// Errors:
-//
 // Errors will include a best-effort value for what we found in the header `(entry, ...)` plus one of the following errors:
-//   - ErrBadInterpreter if the entry is invalid or broken
-//   - Anything propogated from io.ReadAll with the added prefix "IO error reading interpreter:"
+//   - [ErrBadInterpreter] if the entry is invalid or broken
+//   - Anything propogated from [io.ReadAll] with the added prefix "IO error reading interpreter:"
 func interpreter(elffile *debug_elf.File) (string, error) {
 	for _, prog := range elffile.Progs {
 		if prog.Type == debug_elf.PT_INTERP {
@@ -350,7 +290,8 @@ func ldd(path string, interpreter string) ([]string, error) {
 	return dependencies, nil
 }
 
-func hasDT_FLAGS_1(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, error) {
+// Does the file have the given DT_FLAGS_1 flag set?
+func hasDT_FLAGS_1_Flag(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, error) {
 	dt_flags_1, err := elffile.DynValue(debug_elf.DynTag(debug_elf.DT_FLAGS_1))
 	if err != nil {
 		return false, fmt.Errorf("%w: invalid DT_FLAGS_1: %w", ErrInvalidElf, err)
@@ -362,4 +303,72 @@ func hasDT_FLAGS_1(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool, erro
 		}
 	}
 	return false, nil
+}
+
+// Deeply check for diffs between two `Elf`s. Ignores differences in the Path, as long as:
+//  1. Both `Path`s are absolute
+//  2. Both `Path`s end in the same filename
+func (e Elf) Diff(o Elf) []string {
+	var diffs []string
+	elf := reflect.TypeOf(e)
+	self := reflect.ValueOf(e)
+	other := reflect.ValueOf(o)
+
+	for _, field := range reflect.VisibleFields(elf) {
+		selfVal := self.FieldByIndex(field.Index).Interface()
+		otherVal := other.FieldByIndex(field.Index).Interface()
+
+		switch field.Name {
+		case "Path":
+			if internal.Libpathcmp(selfVal.(string), otherVal.(string)) != 0 {
+				diffs = append(diffs, fmt.Sprintf("%s differs for %s: %v != %v", field.Name, self.FieldByName("Name"), selfVal, otherVal))
+			}
+		case "Dependencies":
+			selfDeps := self.FieldByIndex(field.Index).Interface().([]string)
+			otherDeps := other.FieldByIndex(field.Index).Interface().([]string)
+			if len(selfDeps) != len(otherDeps) {
+				diffs = append(diffs, fmt.Sprintf("%s has %v dependencies in left, %v dependencies in right", self.FieldByName("Name"), len(selfDeps), len(otherDeps)))
+			} else {
+				for idx, selfDep := range selfDeps {
+					otherDep := otherDeps[idx]
+					if internal.Libpathcmp(selfDep, otherDep) != 0 {
+						diffs = append(diffs, fmt.Sprintf("dependency %v differs for %s: %s != %s", idx, self.FieldByName("Name"), selfDep, otherDep))
+					}
+				}
+			}
+		default:
+			if !reflect.DeepEqual(selfVal, otherVal) {
+				diffs = append(diffs, fmt.Sprintf("%s differs for %s: %v != %v", field.Name, self.FieldByName("Name"), selfVal, otherVal))
+			}
+		}
+	}
+	return diffs
+}
+
+func (e *ErrElf) Error() string {
+	if e.errs != nil {
+		return "error(s) parsing " + e.path + ":\n" + errors.Join(e.errs...).Error()
+	}
+	panic("Don't call .Error() on an empty ErrElf")
+}
+
+// Does this [ErrElf] contain any errors?
+func (e *ErrElf) IsError() bool {
+	return len(e.errs) > 0
+}
+
+func (e *ErrElf) Unwrap() []error {
+	return e.errs
+}
+
+// Add an error to the [ErrElf]
+func (e *ErrElf) Join(err error) {
+	if err != nil {
+		e.errs = append(e.errs, err)
+	}
+}
+
+// The path of the [Elf] which this [ErrElf] describes
+func (e *ErrElf) Path() string {
+	return e.path
 }
