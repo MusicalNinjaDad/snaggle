@@ -4,8 +4,10 @@
 package snaggle
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
+	"syscall"
 
 	"github.com/MusicalNinjaDad/snaggle/elf"
 )
@@ -40,7 +42,9 @@ func linkTree(path string, newRoot string) (string, error) {
 	return target, err
 }
 
-// create a hardlink in targetDir which references sourcePath.
+// create a hardlink in targetDir which references sourcePath,
+// falls back to cp -a if sourcePath and targetDir are on different
+// filesystems.
 func link(sourcePath string, targetDir string) (err error) {
 	filename := filepath.Base(sourcePath)
 	target := filepath.Join(targetDir, filename)
@@ -52,6 +56,9 @@ func link(sourcePath string, targetDir string) (err error) {
 	// TODO: handle err (e.g. "operation not permitted")
 	// TODO: what if either is a symlink?
 	err = os.Link(sourcePath, target)
+	if errors.Is(err, syscall.EXDEV) {
+		panic("X-Dev link")
+	}
 	return
 }
 
