@@ -2,11 +2,15 @@
 package internal
 
 import (
+	"crypto/sha256"
 	"errors"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 
@@ -59,16 +63,56 @@ func AssertDependenciesEqual(t *testing.T, expected []string, actual []string) {
 	}
 }
 
-// Test Helper: validates that two paths point to the same inode
-func AssertSameInode(t *testing.T, path1 string, path2 string) {
-	t.Helper()
+// Are two paths refering to identical inodes?
+func sameInode(path1 string, path2 string) (bool, error) {
 	file1, err1 := os.Stat(path1)
 	file2, err2 := os.Stat(path2)
 	if err1 != nil || err2 != nil {
-		t.Errorf("Errors stating: %s - %v; %s - %v", path1, err1, path2, err2)
-		return
+		err := fmt.Errorf("errors stating: %s - %w; %s - %w", path1, err1, path2, err2)
+		return false, err
 	}
-	assert.Truef(t, os.SameFile(file1, file2), "%s & %s are different files", file1, file2)
+	return os.SameFile(file1, file2), nil
+}
+
+// Test Helper: validates that two paths point to the same inode
+func AssertSameInode(t *testing.T, path1 string, path2 string) {
+	t.Helper()
+	same, err := sameInode(path1, path2)
+	assert.NoError(t, err)
+	assert.Truef(t, same, "%s & %s are different files", path1, path2)
+}
+
+// Do both files have same SHA256?
+func sameHash(path1 string, path2 string) (bool, error) {
+	sha1, err1 := hashFile(path1)
+	sha2, err2 := hashFile(path2)
+	return slices.Equal(sha1, sha2), errors.Join(err1, err2)
+}
+
+func hashFile(path string) ([]byte, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	hash := sha256.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		return nil, err
+	}
+	return hash.Sum(nil), nil
+}
+
+// Test Helper: validates that two files are identical
+func AssertSameFile(t *testing.T, path1 string, path2 string) {
+	t.Helper()
+	same, err := sameInode(path1, path2)
+	assert.NoError(t, err)
+	if !same {
+		same, err = sameHash(path1, path2)
+		assert.NoError(t, err)
+		assert.Truef(t, same, "%s & %s are different files", path1, path2)
+	}
 }
 
 // Paths to common libraries

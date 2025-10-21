@@ -19,5 +19,5 @@ func TestWhich(t *testing.T) {
 	err := Snaggle(path, tmp)
 	Assert.NoError(err)
 	AssertSameInode(t, P_which, expectedBin)
-	AssertSameInode(t, P_libc, expectedLib)
+	AssertSameFile(t, P_libc, expectedLib)
 }
