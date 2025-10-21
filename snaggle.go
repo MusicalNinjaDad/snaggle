@@ -5,8 +5,8 @@ package snaggle
 
 import (
 	"errors"
+	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"syscall"
 
@@ -50,6 +50,8 @@ func link(sourcePath string, targetDir string) error {
 	filename := filepath.Base(sourcePath)
 	target := filepath.Join(targetDir, filename)
 
+	// check target is 404
+
 	if err := os.MkdirAll(targetDir, 0775); err != nil {
 		return err
 	}
@@ -57,14 +59,32 @@ func link(sourcePath string, targetDir string) error {
 	// TODO: what if either is a symlink?
 	err := os.Link(sourcePath, target)
 	if errors.Is(err, syscall.EXDEV) {
-		cp := exec.Command("cp", "--archive", sourcePath, targetDir)
-		if err := cp.Run(); err != nil {
+		if err := copy(sourcePath, target); err != nil {
 			return err
 		}
-		return nil
 	} else if err != nil {
 		return err
 	}
+	return nil
+}
+
+func copy(sourcePath string, target string) error {
+	src, err := os.Open(sourcePath)
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	dst, err := os.Create(target)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, src); err != nil {
+		return err
+	}
+	defer dst.Sync()
 
 	return nil
 }
