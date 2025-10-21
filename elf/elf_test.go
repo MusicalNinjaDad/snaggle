@@ -14,7 +14,7 @@ func TestCommonBinaries(t *testing.T) {
 	tests := CommonBinaries(t)
 
 	for _, tt := range tests {
-		t.Run(tt.Name, func(t *testing.T) {
+		t.Run(tt.Description, func(t *testing.T) {
 			path := tt.ExpectedElf.Path
 			Assert := assert.New(t)
 			parsed, err := elf.New(path)

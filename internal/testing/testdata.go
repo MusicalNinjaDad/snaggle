@@ -12,7 +12,7 @@ import (
 )
 
 type binaryDetails struct {
-	Name        string // test run name
+	Description string // test run name
 	ExpectedElf elf.Elf
 	Dynamic     bool
 	Exe         bool
@@ -20,11 +20,19 @@ type binaryDetails struct {
 }
 
 // Test Helper: provides a set of common binaries to use in table tests
+//
+//	 type binaryDetails struct {
+//			Description string // test run name
+//		   	ExpectedElf elf.Elf
+//		   	Dynamic     bool
+//		 	Exe         bool
+//			Lib         bool
+//		}
 func CommonBinaries(t *testing.T) []binaryDetails {
 	t.Helper()
 	return []binaryDetails{
 		{
-			Name: "PIE no dependencies",
+			Description: "PIE no dependencies",
 			ExpectedElf: elf.Elf{
 				Name:         "hello_pie",
 				Path:         P_hello_pie,
@@ -38,7 +46,7 @@ func CommonBinaries(t *testing.T) []binaryDetails {
 			Lib:     false,
 		},
 		{
-			Name: "Static linked executable",
+			Description: "Static linked executable",
 			ExpectedElf: elf.Elf{
 				Name:         "hello_static",
 				Path:         P_hello_static,
@@ -52,7 +60,7 @@ func CommonBinaries(t *testing.T) []binaryDetails {
 			Lib:     false,
 		},
 		{
-			Name: "PIE 1 dependency",
+			Description: "PIE 1 dependency",
 			ExpectedElf: elf.Elf{
 				Name:         "which",
 				Path:         P_which,
@@ -66,7 +74,7 @@ func CommonBinaries(t *testing.T) []binaryDetails {
 			Lib:     false,
 		},
 		{
-			Name: "PIE nested dependencies",
+			Description: "PIE nested dependencies",
 			ExpectedElf: elf.Elf{
 				Name:         "id",
 				Path:         P_id,
