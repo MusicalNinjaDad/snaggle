@@ -4,63 +4,14 @@
 package snaggle
 
 import (
-	"bytes"
-	"debug/elf"
-	"errors"
-	"fmt"
-	"io"
 	"os"
 	"path/filepath"
-	"slices"
 )
 
-// Non-recursively identifies dynamic libraries for the ELF file at `elfpath` and returns a slice with libraries
-// as defined in the ELF followed by the interpreter.
-//
-// Note:
-//   - The interpreter will always be the last entry and will have a full, absolute path.
-//     See https://gist.github.com/x0nu11byt3/bcb35c3de461e5fb66173071a2379779 for much more background
-//   - The libraries will, hopefully, not include paths.
-//     See [man ld.so(8)](https://man7.org/linux/man-pages/man8/ld.so.8.html) for information on how
-//     the interpreter searches for the actual files.
-//   - An error, containing the phrase "Did not read full interpreter path." will be provided if we are not
-//     confident of the interpreter path.
-//   - Other errors from `debug.elf` will be propogated as is and a best-effort set of libraries returned.
-func LibPaths(elfpath string) ([]string, error) {
-	elffile, err := elf.Open(elfpath)
-	if err != nil {
-		return nil, err
-	}
-
-	libs, err := elffile.ImportedLibraries()
-	if err != nil {
-		return libs, err
-	}
-	slices.Sort(libs)
-
-	for _, prog := range elffile.Progs {
-		if prog.Type == elf.PT_INTERP {
-			p := prog.Open()
-			interp, err := io.ReadAll(p)
-			if err != nil {
-				return libs, err
-			}
-			interpreter := string(bytes.TrimRight(interp, "\x00")) // strip `\x00` termination
-			libs = append(libs, interpreter)
-			if len(interpreter) != int(prog.Filesz-1) { // have multi-byte chars or unexpected contents
-				msg := fmt.Sprint("Did not read full interpreter path. Expected", prog.Filesz-1, ", read", len(interpreter), "bytes")
-				err := errors.New(msg)
-				return libs, err
-			}
-		}
-	}
-	return libs, nil
-}
-
-// LinkFile creates a hardlink to `path` under `newRoot`, preserving the full directory
+// linkFile creates a hardlink to `path` under `newRoot`, preserving the full directory
 // structure similar to how `cp -r` does.
 //
-// E.g. `LinkFile(/usr/bin/which, /tmp)` will create a link at `/tmp/usr/bin/which`.
+// E.g. `linkFile(/usr/bin/which, /tmp)` will create a link at `/tmp/usr/bin/which`.
 //
 // Note: the _absolute_ `path` will be used, even if a relative path is provided.
 //
@@ -68,7 +19,7 @@ func LibPaths(elfpath string) ([]string, error) {
 // lack of meaningful documentation on stdlib errors means the author of this code can't give
 // any guidance on what they may be.
 // PRs are always welcome to improve error handling or documentation.
-func LinkFile(path string, newRoot string) (string, error) {
+func linkFile(path string, newRoot string) (string, error) {
 	path, err := filepath.Abs(path)
 	target := filepath.Join(newRoot, path)
 	if err != nil {

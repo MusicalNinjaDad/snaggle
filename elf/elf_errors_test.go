@@ -3,28 +3,12 @@ package elf
 import (
 	"errors"
 	"io/fs"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	. "github.com/MusicalNinjaDad/snaggle/internal"
 )
-
-func readOnlyFile(t *testing.T) *os.File {
-	t.Helper()
-	tmp := t.TempDir()
-	path := filepath.Join(tmp, "noaccess")
-	noaccess, err := os.Create(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := noaccess.Chmod(0222); err != nil { // --w--w--w-
-		t.Fatal(err)
-	}
-	return noaccess
-}
 
 func TestFileErrors(t *testing.T) {
 	tests := []struct {
@@ -37,14 +21,14 @@ func TestFileErrors(t *testing.T) {
 		{
 			name:      "DirectoryNotFound",
 			filename:  "nonexistant",
-			path:      filepath.Join(Pwd(t), "../testdata/nothere/nonexistant"),
+			path:      TestdataPath("nothere/nonexistant"),
 			err:       fs.ErrNotExist,
 			errorText: "no such file or directory",
 		},
 		{
 			name:      "Access Denied",
 			filename:  "noaccess",
-			path:      readOnlyFile(t).Name(),
+			path:      PermissionDenied(t, "noaccess").Name(),
 			err:       fs.ErrPermission,
 			errorText: "permission denied",
 		},
@@ -80,7 +64,7 @@ func TestInvalidElf(t *testing.T) {
 		{
 			name:     "not an elf",
 			filename: "ldd",
-			path:     filepath.Join(Pwd(t), "../testdata/ldd"),
+			path:     P_ldd,
 		},
 	}
 
@@ -104,11 +88,6 @@ func TestInvalidElf(t *testing.T) {
 	}
 }
 
-func static(t *testing.T) string {
-	t.Helper()
-	return filepath.Join(Pwd(t), "../testdata/hello_static")
-}
-
 func TestLddErrors(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -120,15 +99,15 @@ func TestLddErrors(t *testing.T) {
 	}{
 		{
 			name:        "static binary",
-			path:        static(t),
+			path:        P_hello_static,
 			interpreter: P_ld_linux,
 			errs:        []error{ErrLdd},
-			errorText:   "ldd failed to execute /lib64/ld-linux-x86-64.so.2 " + static(t) + ": ",
+			errorText:   "ldd failed to execute /lib64/ld-linux-x86-64.so.2 " + P_hello_static + ": ",
 			invalidErrs: []error{ErrInvalidElf, ErrUnsupportedInterpreter},
 		},
 		{
 			name:        "unsupported interpreter",
-			path:        static(t),
+			path:        P_hello_static,
 			interpreter: "/lib64/evil_interpreter.so",
 			errs:        []error{ErrUnsupportedInterpreter, ErrInvalidElf, errors.ErrUnsupported},
 			errorText:   "invalid ELF file: unsupported operation (unsupported interpreter) '/lib64/evil_interpreter.so'",
