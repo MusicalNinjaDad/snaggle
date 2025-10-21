@@ -83,3 +83,17 @@ var P_hello_static = TestdataPath("hello_static")
 var P_which = TestdataPath("which")
 var P_id = TestdataPath("id")
 var P_ldd = TestdataPath("ldd")
+
+func ReadOnlyFile(t *testing.T) *os.File {
+	t.Helper()
+	tmp := t.TempDir()
+	path := filepath.Join(tmp, "noaccess")
+	noaccess, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := noaccess.Chmod(0222); err != nil { // --w--w--w-
+		t.Fatal(err)
+	}
+	return noaccess
+}

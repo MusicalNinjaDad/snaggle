@@ -3,28 +3,12 @@ package elf
 import (
 	"errors"
 	"io/fs"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	. "github.com/MusicalNinjaDad/snaggle/internal"
 )
-
-func readOnlyFile(t *testing.T) *os.File {
-	t.Helper()
-	tmp := t.TempDir()
-	path := filepath.Join(tmp, "noaccess")
-	noaccess, err := os.Create(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := noaccess.Chmod(0222); err != nil { // --w--w--w-
-		t.Fatal(err)
-	}
-	return noaccess
-}
 
 func TestFileErrors(t *testing.T) {
 	tests := []struct {
@@ -44,7 +28,7 @@ func TestFileErrors(t *testing.T) {
 		{
 			name:      "Access Denied",
 			filename:  "noaccess",
-			path:      readOnlyFile(t).Name(),
+			path:      ReadOnlyFile(t).Name(),
 			err:       fs.ErrPermission,
 			errorText: "permission denied",
 		},
