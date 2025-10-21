@@ -40,14 +40,29 @@ func linkTree(path string, newRoot string) (string, error) {
 	return target, err
 }
 
+// create a hardlink in targetDir which references sourcePath.
+func link(sourcePath string, targetDir string) (err error) {
+	filename := filepath.Base(sourcePath)
+	target := filepath.Join(targetDir, filename)
+
+	if err = os.MkdirAll(targetDir, 0775); err != nil {
+		return
+	}
+
+	// TODO: handle err (e.g. "operation not permitted")
+	// TODO: what if either is a symlink?
+	err = os.Link(sourcePath, target)
+	return
+}
+
 // Parse file and build a minimal /bin & /lib under root
 func Snaggle(path string, root string) error {
-	file, err := elf.New(path)
+	_, err := elf.New(path)
 	if err != nil {
 		return err
 	}
 	bin := filepath.Join(root, "bin")
-	if _, err := linkTree(file.Name, bin); err != nil {
+	if err = link(path, bin); err != nil {
 		return err
 	}
 	return nil
