@@ -87,8 +87,8 @@ var (
 	P_ldd          = TestdataPath("ldd")
 )
 
-// Test helper: Provides a readonly file in a temp directory which is removed after test execution
-func ReadOnlyFile(t *testing.T, filename string) *os.File {
+// Test helper: Provides a temporary file which exists but has no read permission
+func PermissionDenied(t *testing.T, filename string) *os.File {
 	t.Helper()
 	tmp := t.TempDir()
 	path := filepath.Join(tmp, filename)
