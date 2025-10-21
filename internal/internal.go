@@ -122,9 +122,11 @@ func AssertSameFile(t *testing.T, path1 string, path2 string) {
 	}
 }
 
+// Path to interpreter
+const P_ld_linux = "/lib64/ld-linux-x86-64.so.2"
+
 // Paths to common libraries
 var (
-	P_ld_linux   = findLib("ld-linux-x86-64.so.2")
 	P_libc       = findLib("libc.so.6")
 	P_libpcre2_8 = findLib("libpcre2-8.so.0")
 	P_libselinux = findLib("libselinux.so.1")
