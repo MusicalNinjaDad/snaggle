@@ -60,7 +60,7 @@ func AssertDependenciesEqual(t *testing.T, expected []string, actual []string) {
 }
 
 // Test Helper: validates that two paths point to the same inode
-func AssertSameFile(t *testing.T, path1 string, path2 string) {
+func AssertSameInode(t *testing.T, path1 string, path2 string) {
 	t.Helper()
 	file1, err1 := os.Stat(path1)
 	file2, err2 := os.Stat(path2)

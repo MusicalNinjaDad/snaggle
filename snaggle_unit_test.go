@@ -17,5 +17,5 @@ func TestLinkTree(t *testing.T) {
 	Assert.NoError(err)
 	Assert.Equal(expectedFile, path)
 	Assert.FileExists(expectedFile)
-	AssertSameFile(t, expectedFile, path)
+	AssertSameInode(t, expectedFile, path)
 }

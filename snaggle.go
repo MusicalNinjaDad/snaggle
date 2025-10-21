@@ -6,6 +6,7 @@ package snaggle
 import (
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"syscall"
 
@@ -45,21 +46,27 @@ func linkTree(path string, newRoot string) (string, error) {
 // create a hardlink in targetDir which references sourcePath,
 // falls back to cp -a if sourcePath and targetDir are on different
 // filesystems.
-func link(sourcePath string, targetDir string) (err error) {
+func link(sourcePath string, targetDir string) error {
 	filename := filepath.Base(sourcePath)
 	target := filepath.Join(targetDir, filename)
 
-	if err = os.MkdirAll(targetDir, 0775); err != nil {
-		return
+	if err := os.MkdirAll(targetDir, 0775); err != nil {
+		return err
 	}
 
-	// TODO: handle err (e.g. "operation not permitted")
 	// TODO: what if either is a symlink?
-	err = os.Link(sourcePath, target)
+	err := os.Link(sourcePath, target)
 	if errors.Is(err, syscall.EXDEV) {
-		panic("X-Dev link")
+		cp := exec.Command("cp", "--archive", sourcePath, targetDir)
+		if err := cp.Run(); err != nil {
+			return err
+		}
+		return nil
+	} else if err != nil {
+		return err
 	}
-	return
+
+	return nil
 }
 
 // Parse file and build a minimal /bin & /lib under root

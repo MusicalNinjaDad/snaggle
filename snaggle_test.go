@@ -18,6 +18,6 @@ func TestWhich(t *testing.T) {
 	expectedLib := filepath.Join(tmp, "lib64", filepath.Base(P_libc))
 	err := Snaggle(path, tmp)
 	Assert.NoError(err)
-	AssertSameFile(t, P_which, expectedBin)
-	AssertSameFile(t, P_libc, expectedLib)
+	AssertSameInode(t, P_which, expectedBin)
+	AssertSameInode(t, P_libc, expectedLib)
 }
