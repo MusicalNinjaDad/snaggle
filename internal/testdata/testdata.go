@@ -1,3 +1,5 @@
+// Helpers related to testdata assets. Only suitable for integration tests (*_test) packages
+// due to circular imports
 package testdata
 
 //nolint:staticcheck

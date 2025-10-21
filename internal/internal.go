@@ -1,3 +1,4 @@
+// Helpers and values which can be used in any package
 package internal
 
 import (
