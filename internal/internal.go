@@ -125,13 +125,6 @@ func SameFile(path1 string, path2 string) bool {
 	return same
 }
 
-// Test Helper: validates that two files are identical
-func AssertSameFile(t *testing.T, path1 string, path2 string) {
-	t.Helper()
-	same := SameFile(path1, path2)
-	assert.Truef(t, same, "%s & %s are different files", path1, path2)
-}
-
 // Path to interpreter
 const P_ld_linux = "/lib64/ld-linux-x86-64.so.2"
 
