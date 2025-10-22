@@ -46,7 +46,7 @@ func WorkspaceTempDir(t *testing.T) string {
 	if err != nil && !errors.Is(err, os.ErrExist) {
 		t.Fatal("Failed to create ./.tmp. Error: ", err)
 	}
-	tmp, err := os.MkdirTemp(tmpRoot, t.Name())
+	tmp, err := os.MkdirTemp(tmpRoot, strings.ReplaceAll(t.Name(), "/", "_"))
 	if err != nil {
 		t.Fatal("Failed to create", tmp, "Error:", err)
 	}
