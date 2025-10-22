@@ -50,14 +50,22 @@ func link(sourcePath string, targetDir string) error {
 	filename := filepath.Base(sourcePath)
 	target := filepath.Join(targetDir, filename)
 
+	// make sure we source the underlying file, not a symlink
+	// AFTER defining the target to be named as per initial sourcePath
+	// This avoids needing to ensure that any link/copy etc. actions
+	// follow symlinks and risking hard to find bugs.
+	sourcePath, err := filepath.EvalSymlinks(sourcePath)
+	if err != nil {
+		return err
+	}
+
 	// check target is 404
 
 	if err := os.MkdirAll(targetDir, 0775); err != nil {
 		return err
 	}
 
-	// TODO: what if either is a symlink?
-	err := os.Link(sourcePath, target)
+	err = os.Link(sourcePath, target)
 	if errors.Is(err, syscall.EXDEV) || errors.Is(err, syscall.EPERM) {
 		// X-Device link || No permission to link
 		// Try simple copy
