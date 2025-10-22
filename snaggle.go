@@ -15,6 +15,10 @@ import (
 	"github.com/MusicalNinjaDad/snaggle/internal"
 )
 
+func init() {
+	log.SetFlags(0)
+}
+
 // linkTree creates a hardlink to `path` under `newRoot`, preserving the full directory
 // structure similar to how `cp -r` does.
 //
@@ -51,6 +55,7 @@ func linkTree(path string, newRoot string) (string, error) {
 func link(sourcePath string, targetDir string) error {
 	filename := filepath.Base(sourcePath)
 	target := filepath.Join(targetDir, filename)
+	originalSourcePath := sourcePath
 
 	// make sure we source the underlying file, not a symlink
 	// AFTER defining the target to be named as per initial sourcePath
@@ -77,7 +82,7 @@ func link(sourcePath string, targetDir string) error {
 	}
 
 	if err == nil {
-		log.Default().Println(sourcePath + " -> " + target)
+		log.Default().Println(originalSourcePath + " -> " + target)
 	}
 
 	return err

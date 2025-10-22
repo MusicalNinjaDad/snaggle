@@ -1,12 +1,14 @@
 package snaggle_test
 
 import (
-	"bytes"
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"testing"
 
+	"github.com/ameghdadian/x/iter"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/MusicalNinjaDad/snaggle"
@@ -19,7 +21,7 @@ func TestCommonBinaries(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.Description, func(t *testing.T) {
-			var stdout bytes.Buffer
+			var stdout strings.Builder
 			log.SetOutput(&stdout)
 			t.Cleanup(func() { log.SetOutput(os.Stdout) })
 
@@ -27,13 +29,14 @@ func TestCommonBinaries(t *testing.T) {
 			tmp := WorkspaceTempDir(t)
 
 			binPath := filepath.Join(tmp, "bin", filepath.Base(tc.ExpectedElf.Name))
+			expectedOut := make([]string, 0, 1+len(tc.ExpectedElf.Dependencies))
+			expectedOut = append(expectedOut, tc.ExpectedElf.Path+" -> "+binPath)
 			var libCopies []string
 			for _, lib := range tc.ExpectedElf.Dependencies {
-				libCopies = append(libCopies,
-					filepath.Join(tmp, "lib64", filepath.Base(lib)),
-				)
+				copy := filepath.Join(tmp, "lib64", filepath.Base(lib))
+				libCopies = append(libCopies, copy)
+				expectedOut = append(expectedOut, lib+" -> "+copy)
 			}
-			msg := tc.ExpectedElf.Path + " -> " + binPath
 
 			err := snaggle.Snaggle(tc.ExpectedElf.Path, tmp)
 			Assert.NoError(err)
@@ -44,7 +47,7 @@ func TestCommonBinaries(t *testing.T) {
 				assert.Truef(t, same, "%s & %s are different files", original, copy)
 			}
 
-			Assert.Contains(stdout.String(), msg)
+			Assert.Equal(expectedOut, slices.Collect(iter.Map((strings.Lines(stdout.String())), strings.TrimSpace)))
 		})
 	}
 }
