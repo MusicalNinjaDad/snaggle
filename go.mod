@@ -2,7 +2,10 @@ module github.com/MusicalNinjaDad/snaggle
 
 go 1.24.8
 
-require github.com/stretchr/testify v1.11.1
+require (
+	github.com/ameghdadian/x/iter v0.1.0
+	github.com/stretchr/testify v1.11.1
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
