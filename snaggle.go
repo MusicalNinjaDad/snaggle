@@ -5,6 +5,7 @@ package snaggle
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -122,7 +123,21 @@ func copy(sourcePath string, target string) error {
 		)
 	}()
 
-	return nil
+	err = dst.Chown(int(_srcstat.Sys().(*syscall.Stat_t).Uid), int(_srcstat.Sys().(*syscall.Stat_t).Gid))
+	switch {
+	// only root has permission (usually)
+	case errors.Is(err, syscall.EPERM):
+		err = nil
+	case err != nil:
+		su := int(_srcstat.Sys().(*syscall.Stat_t).Uid)
+		sg := int(_srcstat.Sys().(*syscall.Stat_t).Gid)
+		_dststat, _ := dst.Stat()
+		du := int(_dststat.Sys().(*syscall.Stat_t).Uid)
+		dg := int(_dststat.Sys().(*syscall.Stat_t).Gid)
+		err = fmt.Errorf("%w (src: %v:%v, dst: %v:%v)", err, su, sg, du, dg)
+		return err
+	}
+	return err
 }
 
 // Parse file and build a minimal /bin & /lib under root

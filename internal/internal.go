@@ -127,7 +127,9 @@ func SameFile(path1 string, path2 string) bool {
 			return false
 		}
 		same = same && (file1.Mode() == file2.Mode())
+		// This will usually fail unless the copy was performed as root
 		// same = same && (file1.Sys().(*syscall.Stat_t).Uid == file2.Sys().(*syscall.Stat_t).Uid)
+		// same = same && (file1.Sys().(*syscall.Stat_t).Gid == file2.Sys().(*syscall.Stat_t).Gid)
 	}
 	return same
 }
