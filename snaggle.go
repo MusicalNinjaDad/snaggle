@@ -99,8 +99,7 @@ func copy(sourcePath string, target string) error {
 		)
 	}()
 
-	// TODO: Check 404
-	dst, err := os.Create(target)
+	dst, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
 	if err != nil {
 		return err
 	}
