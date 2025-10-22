@@ -121,6 +121,13 @@ func SameFile(path1 string, path2 string) bool {
 		if err != nil {
 			return false
 		}
+		file1, err1 := os.Stat(path1)
+		file2, err2 := os.Stat(path2)
+		if err1 != nil || err2 != nil {
+			return false
+		}
+		same = same && (file1.Mode() == file2.Mode())
+		// same = same && (file1.Sys().(*syscall.Stat_t).Uid == file2.Sys().(*syscall.Stat_t).Uid)
 	}
 	return same
 }

@@ -99,7 +99,11 @@ func copy(sourcePath string, target string) error {
 		)
 	}()
 
-	dst, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+	_srcstat, err := src.Stat()
+	if err != nil {
+		return err
+	}
+	dst, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, _srcstat.Mode())
 	if err != nil {
 		return err
 	}
