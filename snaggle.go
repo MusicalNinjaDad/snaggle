@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/MusicalNinjaDad/snaggle/elf"
+	"github.com/MusicalNinjaDad/snaggle/internal"
 )
 
 // linkTree creates a hardlink to `path` under `newRoot`, preserving the full directory
@@ -59,23 +60,21 @@ func link(sourcePath string, targetDir string) error {
 		return err
 	}
 
-	// check target is 404
-
 	if err := os.MkdirAll(targetDir, 0775); err != nil {
 		return err
 	}
 
 	err = os.Link(sourcePath, target)
-	if errors.Is(err, syscall.EXDEV) || errors.Is(err, syscall.EPERM) {
-		// X-Device link || No permission to link
-		// Try simple copy
-		if err := copy(sourcePath, target); err != nil {
-			return err
-		}
-	} else if err != nil {
-		return err
+	switch {
+	// X-Device link || No permission to link - Try simple copy
+	case errors.Is(err, syscall.EXDEV) || errors.Is(err, syscall.EPERM):
+		err = copy(sourcePath, target)
+	// File already exists - not an err if it's identical
+	case errors.Is(err, syscall.EEXIST) && !internal.SameFile(sourcePath, target):
+		err = nil
 	}
-	return nil
+
+	return err
 }
 
 func copy(sourcePath string, target string) error {
@@ -89,6 +88,7 @@ func copy(sourcePath string, target string) error {
 		)
 	}()
 
+	// TODO: Check 404
 	dst, err := os.Create(target)
 	if err != nil {
 		return err

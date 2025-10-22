@@ -110,26 +110,25 @@ func hashFile(path string) ([]byte, error) {
 	return hash.Sum(nil), nil
 }
 
-// Are two files identical?
-func SameFile(path1 string, path2 string) (bool, error) {
+// Are two files identical?, Returns false on any fs/io errors.
+func SameFile(path1 string, path2 string) bool {
 	same, err := sameInode(path1, path2)
 	if err != nil {
-		return false, err
+		return false
 	}
 	if !same {
 		same, err = sameHash(path1, path2)
 		if err != nil {
-			return false, err
+			return false
 		}
 	}
-	return same, nil
+	return same
 }
 
 // Test Helper: validates that two files are identical
 func AssertSameFile(t *testing.T, path1 string, path2 string) {
 	t.Helper()
-	same, err := SameFile(path1, path2)
-	assert.NoError(t, err)
+	same := SameFile(path1, path2)
 	assert.Truef(t, same, "%s & %s are different files", path1, path2)
 }
 
