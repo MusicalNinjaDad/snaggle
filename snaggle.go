@@ -6,6 +6,7 @@ package snaggle
 import (
 	"errors"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -73,6 +74,10 @@ func link(sourcePath string, targetDir string) error {
 	// File already exists - not an err if it's identical
 	case errors.Is(err, syscall.EEXIST) && !internal.SameFile(sourcePath, target):
 		err = nil
+	}
+
+	if err == nil {
+		log.Default().Println(sourcePath + " -> " + target)
 	}
 
 	return err

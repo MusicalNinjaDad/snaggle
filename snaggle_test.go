@@ -1,6 +1,9 @@
 package snaggle_test
 
 import (
+	"bytes"
+	"log"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -16,8 +19,13 @@ func TestCommonBinaries(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.Description, func(t *testing.T) {
+			var stdout bytes.Buffer
+			log.SetOutput(&stdout)
+			t.Cleanup(func() { log.SetOutput(os.Stdout) })
+
 			Assert := assert.New(t)
 			tmp := WorkspaceTempDir(t)
+
 			binPath := filepath.Join(tmp, "bin", filepath.Base(tc.ExpectedElf.Name))
 			var libCopies []string
 			for _, lib := range tc.ExpectedElf.Dependencies {
@@ -25,6 +33,8 @@ func TestCommonBinaries(t *testing.T) {
 					filepath.Join(tmp, "lib64", filepath.Base(lib)),
 				)
 			}
+			msg := tc.ExpectedElf.Path + " -> " + binPath
+
 			err := snaggle.Snaggle(tc.ExpectedElf.Path, tmp)
 			Assert.NoError(err)
 			AssertSameInode(t, tc.ExpectedElf.Path, binPath)
@@ -33,6 +43,8 @@ func TestCommonBinaries(t *testing.T) {
 				same := SameFile(original, copy)
 				assert.Truef(t, same, "%s & %s are different files", original, copy)
 			}
+
+			Assert.Contains(stdout.String(), msg)
 		})
 	}
 }
