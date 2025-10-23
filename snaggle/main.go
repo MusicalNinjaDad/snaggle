@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -34,6 +35,7 @@ If for some reason this is not possible, for example FILE & DESTINATION are on d
 a copy will be performed preserving filemode and attempting to preserve ownership.
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		log.Default().SetOutput(os.Stdout)
 		return snaggle.Snaggle(args[0], args[1])
 	},
 }
