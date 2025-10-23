@@ -38,6 +38,7 @@ Hardlinks will be created if possible.
 If for some reason this is not possible, for example FILE & DESTINATION are on different filesystems,
 a copy will be performed preserving filemode and attempting to preserve ownership.
 `,
+	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return snaggle.Snaggle(args[0], args[1])
 	},

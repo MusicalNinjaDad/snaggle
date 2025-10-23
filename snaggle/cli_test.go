@@ -65,3 +65,14 @@ func TestCommonBinaries(t *testing.T) {
 		})
 	}
 }
+
+func TestInvalidNumberArgs(t *testing.T) {
+	Assert := assert.New(t)
+	snaggle := exec.Command(snaggleBin, "src")
+	out, err := snaggle.Output()
+	t.Logf("Stdout: %s", out)
+	var exitcode *exec.ExitError
+	Assert.ErrorAs(err, &exitcode)
+	t.Logf("Stderr: %s", exitcode.Stderr)
+	Assert.Equal(2, exitcode.ExitCode())
+}
