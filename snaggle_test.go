@@ -11,9 +11,9 @@ import (
 	"github.com/ameghdadian/x/iter"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/MusicalNinjaDad/snaggle"
 	. "github.com/MusicalNinjaDad/snaggle/internal"
 	. "github.com/MusicalNinjaDad/snaggle/internal/testing"
-	"github.com/MusicalNinjaDad/snaggle/snaggle"
 )
 
 func TestCommonBinaries(t *testing.T) {
