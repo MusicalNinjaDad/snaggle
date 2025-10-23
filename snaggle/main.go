@@ -9,6 +9,10 @@ import (
 	"github.com/MusicalNinjaDad/snaggle"
 )
 
+func init() {
+	log.Default().SetOutput(os.Stdout)
+}
+
 func main() {
 	err := rootCmd.Execute()
 	if err != nil {
@@ -35,19 +39,6 @@ If for some reason this is not possible, for example FILE & DESTINATION are on d
 a copy will be performed preserving filemode and attempting to preserve ownership.
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		log.Default().SetOutput(os.Stdout)
 		return snaggle.Snaggle(args[0], args[1])
 	},
-}
-
-func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cmd.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
