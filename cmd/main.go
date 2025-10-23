@@ -22,12 +22,14 @@ Snaggle is designed to help create minimal runtime containers from pre-existing 
 It may work for other use cases and I'd be interested to hear about them at:
 https://github.com/MusicalNinjaDad/snaggle
 
-FILE will be placed in DESTINATION/bin
-all dynamically linked dependencies will be placed in DESTINATION/lib64
+Snaggle will hardlink (or copy, see notes):
+- FILE -> DESTINATION/bin
+- All dynamically linked dependencies -> DESTINATION/lib64
 
-Hardlinks will be created if possible. If for some reason this is not possible,
-for example FILE & DESTINATION are on different filesystems, a copy will be performed
-preserving filemode and attempting to preserve ownership.
+Note:
+Hardlinks will be created if possible.
+If for some reason this is not possible, for example FILE & DESTINATION are on different filesystems,
+a copy will be performed preserving filemode and attempting to preserve ownership.
 `,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
