@@ -1,10 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"github.com/MusicalNinjaDad/snaggle"
 )
 
 func main() {
@@ -32,8 +33,8 @@ Hardlinks will be created if possible.
 If for some reason this is not possible, for example FILE & DESTINATION are on different filesystems,
 a copy will be performed preserving filemode and attempting to preserve ownership.
 `,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("FOO")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return snaggle.Snaggle(args[0], args[1])
 	},
 }
 
