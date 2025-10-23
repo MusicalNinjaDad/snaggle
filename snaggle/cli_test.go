@@ -18,37 +18,42 @@ import (
 )
 
 var (
-	snaggleBin   string
-	snagglePanic string
+	snaggleBin        string
+	_, thisfile, _, _ = runtime.Caller(0)
 )
 
-func TestMain(m *testing.M) {
-	_, thisfile, _, _ := runtime.Caller(0)
-	buildTmp, err := os.MkdirTemp(os.TempDir(), filepath.Base(thisfile))
+func removeBuildDir(bin string) {
+	buildDir := filepath.Dir(bin)
+	if err := os.RemoveAll(buildDir); err != nil {
+		msg := fmt.Sprintf("cannot remove temporary directory used for build output: %v", err)
+		panic(msg)
+	}
+}
+
+func build(tags []string) string {
+	buildDir, err := os.MkdirTemp(os.TempDir(), filepath.Base(thisfile))
 	if err != nil {
 		panic("Cannot create temporary directory for build output")
 	}
-	defer func() {
-		if err := os.RemoveAll(buildTmp); err != nil {
-			msg := fmt.Sprintf("cannot remove temporary directory used for build output: %v", err)
-			panic(msg)
-		}
-	}()
 
-	snaggleBin = filepath.Join(buildTmp, "snaggle")
-	build := exec.Command("go", "build", "-o", snaggleBin, filepath.Dir(thisfile))
-	if err := build.Run(); err != nil {
-		msg := fmt.Sprintf("cannot %s: %v", build.Args, err)
+	args := []string{"build"}
+	if len(tags) > 0 {
+		args = append(args, "-tags", strings.Join(tags, ","))
+	}
+	args = append(args, "-o", buildDir, filepath.Dir(thisfile))
+
+	if err := exec.Command("go", args...).Run(); err != nil {
+		msg := fmt.Sprintf("cannot go %s: %v", args, err)
 		panic(msg)
 	}
 
-	snagglePanic = filepath.Join(buildTmp, "snaggle-panic")
-	build = exec.Command("go", "build", "-tags", "testpanic", "-o", snagglePanic, filepath.Dir(thisfile))
-	if err := build.Run(); err != nil {
-		msg := fmt.Sprintf("cannot %s: %v", build.Args, err)
-		panic(msg)
-	}
+	return filepath.Join(buildDir, "snaggle")
 
+}
+
+func TestMain(m *testing.M) {
+	snaggleBin = build(nil)
+	defer removeBuildDir(snaggleBin)
 	m.Run()
 }
 
@@ -97,20 +102,11 @@ func TestInvalidNumberArgs(t *testing.T) {
 }
 
 func TestPanic(t *testing.T) {
-	_, thisfile, _, _ := runtime.Caller(0)
-	buildTmp, err := os.MkdirTemp(os.TempDir(), filepath.Base(thisfile))
-	if err != nil {
-		panic("Cannot create temporary directory for build output")
-	}
-	build := exec.Command("go", "build", "-tags", "testpanic", "-o", buildTmp, filepath.Dir(thisfile))
-	if err := build.Run(); err != nil {
-		msg := fmt.Sprintf("cannot %s: %v", build.Args, err)
-		panic(msg)
-	}
-	snaggleBin = filepath.Join(buildTmp, "snaggle")
+	panicBin := build([]string{"testpanic"})
+	defer removeBuildDir(panicBin)
 
 	Assert := assert.New(t)
-	snaggle := exec.Command(snaggleBin, "src", "dst")
+	snaggle := exec.Command(panicBin, "src", "dst")
 	out, err := snaggle.Output()
 	t.Logf("Stdout: %s", out)
 	var exitcode *exec.ExitError
