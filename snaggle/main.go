@@ -33,6 +33,7 @@ func main() {
 	switch {
 	case err == nil:
 		os.Exit(0)
+	// Safer would be to create a snaggle error and errors.As that for Exit(1)
 	case strings.Contains(err.Error(), "accepts"):
 		os.Exit(2)
 	default:
