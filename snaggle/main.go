@@ -15,6 +15,8 @@ import (
 func init() {
 	log.Default().SetOutput(os.Stdout)
 	rootCmd.SetErrPrefix("snaggle")
+	helpTemplate := []string{rootCmd.HelpTemplate(), helpNotes, exitCodes}
+	rootCmd.SetHelpTemplate(strings.Join(helpTemplate, "\n"))
 }
 
 func PanicHandler(exitcode int) {
@@ -49,18 +51,27 @@ var rootCmd = &cobra.Command{
 Snaggle is designed to help create minimal runtime containers from pre-existing installations.
 It may work for other use cases and I'd be interested to hear about them at:
 https://github.com/MusicalNinjaDad/snaggle
-
-Snaggle will hardlink (or copy, see notes):
-- FILE -> DESTINATION/bin
-- All dynamically linked dependencies -> DESTINATION/lib64
-
-Note:
-Hardlinks will be created if possible.
-If for some reason this is not possible, for example FILE & DESTINATION are on different filesystems,
-a copy will be performed preserving filemode and attempting to preserve ownership.
 `,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return snaggle.Snaggle(args[0], args[1])
 	},
 }
+
+var helpNotes = `
+Snaggle will hardlink (or copy, see notes):
+- FILE -> DESTINATION/bin
+- All dynamically linked dependencies -> DESTINATION/lib64
+
+Note:
+Hardlinks will be created if possible.
+If for some reason this is not possible, for example source & destination are on different filesystems,
+a copy will be performed preserving filemode and attempting to preserve ownership.
+`
+
+var exitCodes = `Exit Codes:
+  0: Success
+  1: Error
+  2: Invalid command
+  3: Panic
+`
