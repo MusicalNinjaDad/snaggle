@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -15,17 +17,24 @@ import (
 	. "github.com/MusicalNinjaDad/snaggle/internal/testing"
 )
 
+var snaggleBin string
+
+func init() {
+	_, thisfile, _, _ := runtime.Caller(0)
+	buildTmp, err := os.MkdirTemp(os.TempDir(), filepath.Base(thisfile))
+	if err != nil {
+		panic("Cannot create temporary directory for build output")
+	}
+	build := exec.Command("go", "build", "-o", buildTmp, filepath.Dir(thisfile))
+	if err := build.Run(); err != nil {
+		msg := fmt.Sprintf("cannot %s: %v", build.Args, err)
+		panic(msg)
+	}
+	snaggleBin = filepath.Join(buildTmp, "snaggle")
+}
+
 func TestCommonBinaries(t *testing.T) {
 	tests := CommonBinaries(t)
-
-	buildTmp := t.TempDir()
-	_, thisfile, _, _ := runtime.Caller(0)
-	srcDir := filepath.Dir(thisfile)
-	build := exec.Command("go", "build", "-o", buildTmp, srcDir)
-	if err := build.Run(); err != nil {
-		t.Fatalf("cannot %s: %v", build.Args, err)
-	}
-	snaggleBin := filepath.Join(buildTmp, "snaggle")
 
 	for _, tc := range tests {
 		t.Run(tc.Description, func(t *testing.T) {
