@@ -17,20 +17,39 @@ import (
 	. "github.com/MusicalNinjaDad/snaggle/internal/testing"
 )
 
-var snaggleBin string
+var (
+	snaggleBin   string
+	snagglePanic string
+)
 
-func init() {
+func TestMain(m *testing.M) {
 	_, thisfile, _, _ := runtime.Caller(0)
 	buildTmp, err := os.MkdirTemp(os.TempDir(), filepath.Base(thisfile))
 	if err != nil {
 		panic("Cannot create temporary directory for build output")
 	}
-	build := exec.Command("go", "build", "-o", buildTmp, filepath.Dir(thisfile))
+	defer func() {
+		if err := os.RemoveAll(buildTmp); err != nil {
+			msg := fmt.Sprintf("cannot remove temporary directory used for build output: %v", err)
+			panic(msg)
+		}
+	}()
+
+	snaggleBin = filepath.Join(buildTmp, "snaggle")
+	build := exec.Command("go", "build", "-o", snaggleBin, filepath.Dir(thisfile))
 	if err := build.Run(); err != nil {
 		msg := fmt.Sprintf("cannot %s: %v", build.Args, err)
 		panic(msg)
 	}
-	snaggleBin = filepath.Join(buildTmp, "snaggle")
+
+	snagglePanic = filepath.Join(buildTmp, "snaggle-panic")
+	build = exec.Command("go", "build", "-tags", "testpanic", "-o", snagglePanic, filepath.Dir(thisfile))
+	if err := build.Run(); err != nil {
+		msg := fmt.Sprintf("cannot %s: %v", build.Args, err)
+		panic(msg)
+	}
+
+	m.Run()
 }
 
 func TestCommonBinaries(t *testing.T) {
