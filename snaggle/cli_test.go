@@ -3,6 +3,7 @@ package main
 import (
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -16,11 +17,21 @@ import (
 
 func TestCommonBinaries(t *testing.T) {
 	tests := CommonBinaries(t)
+
+	buildTmp := t.TempDir()
+	_, thisfile, _, _ := runtime.Caller(0)
+	srcDir := filepath.Dir(thisfile)
+	build := exec.Command("go", "build", "-o", buildTmp, srcDir)
+	if err := build.Run(); err != nil {
+		t.Fatalf("cannot %s: %v", build.Args, err)
+	}
+	snaggleBin := filepath.Join(buildTmp, "snaggle")
+
 	for _, tc := range tests {
 		t.Run(tc.Description, func(t *testing.T) {
 			Assert := assert.New(t)
 			tmp := WorkspaceTempDir(t)
-			snaggle := exec.Command("./snaggle", tc.ExpectedElf.Path, tmp)
+			snaggle := exec.Command(snaggleBin, tc.ExpectedElf.Path, tmp)
 
 			binPath := filepath.Join(tmp, "bin", filepath.Base(tc.ExpectedElf.Name))
 			expectedOut := make([]string, 0, 1+len(tc.ExpectedElf.Dependencies))

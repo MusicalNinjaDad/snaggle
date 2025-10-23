@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -31,9 +32,9 @@ Hardlinks will be created if possible.
 If for some reason this is not possible, for example FILE & DESTINATION are on different filesystems,
 a copy will be performed preserving filemode and attempting to preserve ownership.
 `,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("FOO")
+	},
 }
 
 func init() {
