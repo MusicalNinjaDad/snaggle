@@ -14,6 +14,7 @@ import (
 
 func init() {
 	log.Default().SetOutput(os.Stdout)
+	rootCmd.SetErrPrefix("snaggle")
 }
 
 func PanicHandler(exitcode int) {
