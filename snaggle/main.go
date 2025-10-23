@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"runtime/debug"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -28,7 +29,12 @@ func PanicHandler(exitcode int) {
 func main() {
 	defer PanicHandler(3)
 	err := rootCmd.Execute()
-	if err != nil {
+	switch {
+	case err == nil:
+		os.Exit(0)
+	case strings.Contains(err.Error(), "accepts"):
+		os.Exit(2)
+	default:
 		os.Exit(1)
 	}
 }
