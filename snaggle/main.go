@@ -53,7 +53,6 @@ a copy will be performed preserving filemode and attempting to preserve ownershi
 `,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		panic("foo2")
 		return snaggle.Snaggle(args[0], args[1])
 	},
 }

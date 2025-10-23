@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/ameghdadian/x/iter"
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 
 	. "github.com/MusicalNinjaDad/snaggle/internal"
@@ -79,16 +78,12 @@ func TestInvalidNumberArgs(t *testing.T) {
 }
 
 func TestPanic(t *testing.T) {
-	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
-		panic("foo")
-	}
-
 	_, thisfile, _, _ := runtime.Caller(0)
 	buildTmp, err := os.MkdirTemp(os.TempDir(), filepath.Base(thisfile))
 	if err != nil {
 		panic("Cannot create temporary directory for build output")
 	}
-	build := exec.Command("go", "build", "-o", buildTmp, filepath.Dir(thisfile))
+	build := exec.Command("go", "build", "-tags", "testpanic", "-o", buildTmp, filepath.Dir(thisfile))
 	if err := build.Run(); err != nil {
 		msg := fmt.Sprintf("cannot %s: %v", build.Args, err)
 		panic(msg)
@@ -106,5 +101,5 @@ func TestPanic(t *testing.T) {
 	Assert.Equal(3, exitcode.ExitCode())
 	Assert.Contains(stderr, "Sorry someone panicked!")
 	Assert.Contains(stderr, "This is what we know ...")
-	Assert.Contains(stderr, "--panic flag")
+	Assert.Contains(stderr, "you got a special testing build that always panics. (Tip: don't build with `-tags testpanic`)")
 }
