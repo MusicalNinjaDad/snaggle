@@ -101,6 +101,10 @@ func TestPanic(t *testing.T) {
 	t.Logf("Stdout: %s", out)
 	var exitcode *exec.ExitError
 	Assert.ErrorAs(err, &exitcode)
-	t.Logf("Stderr: %s", exitcode.Stderr)
+	stderr := slices.Collect(iter.Map((strings.Lines(string(exitcode.Stderr))), strings.TrimSpace))
+	t.Logf("Stderr: %s", stderr)
 	Assert.Equal(3, exitcode.ExitCode())
+	Assert.Contains(stderr, "Sorry someone panicked!")
+	Assert.Contains(stderr, "This is what we know ...")
+	Assert.Contains(stderr, "--panic flag")
 }
