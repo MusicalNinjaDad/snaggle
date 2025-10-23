@@ -15,16 +15,18 @@ func init() {
 	log.Default().SetOutput(os.Stdout)
 }
 
+func PanicHandler(exitcode int) {
+	if panicking := recover(); panicking != nil {
+		fmt.Fprintln(os.Stderr, "Sorry someone panicked!")
+		fmt.Fprintln(os.Stderr, "This is what we know ...")
+		fmt.Fprintln(os.Stderr, panicking)
+		fmt.Fprintln(os.Stderr, string(debug.Stack()))
+		os.Exit(exitcode)
+	}
+}
+
 func main() {
-	defer func() {
-		if panicking := recover(); panicking != nil {
-			fmt.Fprintln(os.Stderr, "Sorry someone panicked!")
-			fmt.Fprintln(os.Stderr, "This is what we know ...")
-			fmt.Fprintln(os.Stderr, panicking)
-			fmt.Fprintln(os.Stderr, string(debug.Stack()))
-			os.Exit(3)
-		}
-	}()
+	defer PanicHandler(3)
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
