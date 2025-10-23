@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"runtime/debug"
 
 	"github.com/spf13/cobra"
 
@@ -14,6 +16,15 @@ func init() {
 }
 
 func main() {
+	defer func() {
+		if panicking := recover(); panicking != nil {
+			fmt.Fprintln(os.Stderr, "Sorry someone panicked!")
+			fmt.Fprintln(os.Stderr, "This is what we know ...")
+			fmt.Fprintln(os.Stderr, panicking)
+			fmt.Fprintln(os.Stderr, string(debug.Stack()))
+			os.Exit(3)
+		}
+	}()
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
@@ -40,6 +51,7 @@ a copy will be performed preserving filemode and attempting to preserve ownershi
 `,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		panic("foo2")
 		return snaggle.Snaggle(args[0], args[1])
 	},
 }
