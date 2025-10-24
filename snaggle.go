@@ -20,6 +20,8 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/MusicalNinjaDad/snaggle/elf"
 	"github.com/MusicalNinjaDad/snaggle/internal"
 )
@@ -150,13 +152,14 @@ func Snaggle(path string, root string) error {
 	}
 	binDir := filepath.Join(root, "bin")
 	libDir := filepath.Join(root, "lib64")
-	if err = link(path, binDir); err != nil {
-		return err
-	}
+
+	linkerrs := new(errgroup.Group)
+
+	linkerrs.Go(func() error { return link(path, binDir) })
 	for _, lib := range file.Dependencies {
-		if err = link(lib, libDir); err != nil {
-			return err
-		}
+		linkerrs.Go(func() error { return link(lib, libDir) })
 	}
-	return nil
+	// TODO: #37 improve error handling with context, error collector, rollback
+	//       (probably requires link to return path of file created, if created)
+	return linkerrs.Wait()
 }
