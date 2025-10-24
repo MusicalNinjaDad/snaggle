@@ -54,11 +54,11 @@ func init() {
 	rootCmd.SetHelpTemplate(strings.Join(helpTemplate, "\n"))
 }
 
-// defer PanicHandler to get meaningful output to stderr and control over the exitcode on panic
+// defer panicHandler to get meaningful output to stderr and control over the exitcode on panic
 //
-// PanicHandler calls os.Exit(exitcode) - so defer it as early as possible, any remaining functions
+// panicHandler calls os.Exit(exitcode) - so defer it as early as possible, any remaining functions
 // in the defer queue will be skipped
-func PanicHandler(exitcode int) {
+func panicHandler(exitcode int) {
 	if panicking := recover(); panicking != nil {
 		fmt.Fprintln(os.Stderr, "Sorry someone panicked!")
 		fmt.Fprintln(os.Stderr, "This is what we know ...")
@@ -69,7 +69,7 @@ func PanicHandler(exitcode int) {
 }
 
 func main() {
-	defer PanicHandler(3)
+	defer panicHandler(3)
 	err := rootCmd.Execute()
 	switch {
 	case err == nil:
