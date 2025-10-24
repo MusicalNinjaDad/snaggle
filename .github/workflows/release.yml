@@ -2,17 +2,15 @@ name: Package & release
 
 on:
   push:
-    paths: .github/workflows/release.yml
-    # tags:
-    #   v*
-  workflow_dispatch:
+    tags:
+      v*
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build_and_publish:
+  docker:
     runs-on: ubuntu-latest
 
     permissions:
