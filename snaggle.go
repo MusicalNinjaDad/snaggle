@@ -159,5 +159,7 @@ func Snaggle(path string, root string) error {
 	for _, lib := range file.Dependencies {
 		linkerrs.Go(func() error { return link(lib, libDir) })
 	}
+	// TODO: #37 improve error handling with context, error collector, rollback
+	//       (probably requires link to return path of file created, if created)
 	return linkerrs.Wait()
 }
