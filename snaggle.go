@@ -20,6 +20,8 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/MusicalNinjaDad/snaggle/elf"
 	"github.com/MusicalNinjaDad/snaggle/internal"
 )
@@ -150,6 +152,9 @@ func Snaggle(path string, root string) error {
 	}
 	binDir := filepath.Join(root, "bin")
 	libDir := filepath.Join(root, "lib64")
+
+	linkerrs := new(errgroup.Group)
+
 	if err = link(path, binDir); err != nil {
 		return err
 	}
