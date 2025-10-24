@@ -68,5 +68,7 @@ jobs:
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build .
           sha256sum snaggle > snaggle.sha256
       - name: Create github release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh release create ${{ github.action_ref }} --generate-notes './snaggle/snaggle#Snaggle ${{ github.action_ref }}'  './snaggle/snaggle.sha256#SHA256 Checksum'
