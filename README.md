@@ -52,6 +52,15 @@ Exit Codes:
 
 1. Install with `go install https://github.com/MusicalNinjaDad/snaggle@latest`
 
+## Planned improvements
+
+Future versions will:
+
+- add heuristics to identify the best location for each file to make it easier to run snaggle to copy a library & dependencies
+- provide a guaranteed error type from the snaggle library & make exit code handling more robust in the cli
+- provide standard profiles for apps with non-linked dependencies such as SSL certs, locales, gconv etc.
+- provide an option to copy an app & supporting libs & files which have been manually installed in /opt
+
 ## Why Go?
 
 Historically this started as a python script, but I had to learn Go at some point - and this seemed like a good one. Plus it's much easier to `ADD` and use a single statically linked binary than a script and supporting interpreter.
