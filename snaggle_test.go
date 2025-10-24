@@ -1,6 +1,7 @@
 package snaggle_test
 
 import (
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -48,6 +49,29 @@ func TestCommonBinaries(t *testing.T) {
 			}
 
 			Assert.ElementsMatch(expectedOut, slices.Collect(iter.Map((strings.Lines(stdout.String())), strings.TrimSpace)))
+		})
+	}
+}
+
+func BenchmarkCommonBinaries(b *testing.B) {
+	tests := CommonBinaries(b)
+	log.SetOutput(io.Discard)
+	b.Cleanup(func() { log.SetOutput(os.Stdout) })
+
+	for _, tc := range tests {
+		b.Run(tc.Description, func(b *testing.B) {
+			basetmp := WorkspaceTempDir(b)
+			i := 0
+			for b.Loop() {
+				i++
+				tmp, err := os.MkdirTemp(basetmp, tc.Description)
+				if err != nil {
+					b.Fatalf("creating %s (%v): %v", tmp, i, err)
+				}
+				if err := snaggle.Snaggle(tc.ExpectedElf.Path, tmp); err != nil {
+					b.Fatalf("running %s (%v): %v", tc.Description, i, err)
+				}
+			}
 		})
 	}
 }
