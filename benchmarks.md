@@ -37,3 +37,41 @@ BenchmarkCommonBinaries/PIE_nested_dependencies-20            38          336162
 PASS
 ok      github.com/MusicalNinjaDad/snaggle      5.469s
 ```
+
+## goroutines with errgroup (bd130b640045e4c8f644353aeb05dcb482242f88)
+
+```text
+ninjacoder@5747a297e3a1:/workspaces/snaggle$ go test -bench .
+goos: linux
+goarch: amd64
+pkg: github.com/MusicalNinjaDad/snaggle
+cpu: 13th Gen Intel(R) Core(TM) i7-13700H
+BenchmarkCommonBinaries/PIE_no_dependencies-20              1389            860392 ns/op
+BenchmarkCommonBinaries/Static_linked_executable-20         3597            324082 ns/op
+BenchmarkCommonBinaries/PIE_1_dependency-20                   94          12484150 ns/op
+BenchmarkCommonBinaries/PIE_nested_dependencies-20            79          15036758 ns/op
+PASS
+ok      github.com/MusicalNinjaDad/snaggle      5.182s
+ninjacoder@5747a297e3a1:/workspaces/snaggle$ go test -bench .
+goos: linux
+goarch: amd64
+pkg: github.com/MusicalNinjaDad/snaggle
+cpu: 13th Gen Intel(R) Core(TM) i7-13700H
+BenchmarkCommonBinaries/PIE_no_dependencies-20              1334            875738 ns/op
+BenchmarkCommonBinaries/Static_linked_executable-20         3555            315325 ns/op
+BenchmarkCommonBinaries/PIE_1_dependency-20                   98          12411629 ns/op
+BenchmarkCommonBinaries/PIE_nested_dependencies-20            67          15240031 ns/op
+PASS
+ok      github.com/MusicalNinjaDad/snaggle      4.977s
+ninjacoder@5747a297e3a1:/workspaces/snaggle$ go test -bench .
+goos: linux
+goarch: amd64
+pkg: github.com/MusicalNinjaDad/snaggle
+cpu: 13th Gen Intel(R) Core(TM) i7-13700H
+BenchmarkCommonBinaries/PIE_no_dependencies-20              1441            874761 ns/op
+BenchmarkCommonBinaries/Static_linked_executable-20         3718            313101 ns/op
+BenchmarkCommonBinaries/PIE_1_dependency-20                   85          13472919 ns/op
+BenchmarkCommonBinaries/PIE_nested_dependencies-20            78          15378742 ns/op
+PASS
+ok      github.com/MusicalNinjaDad/snaggle      5.234s
+```
