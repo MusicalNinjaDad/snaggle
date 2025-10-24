@@ -5,7 +5,7 @@ Had enough of every container you pull having a full OS available inside? Create
 ```text
 ninjacoder@5747a297e3a1:/workspaces/snaggle/snaggle$ ./snaggle --help
 
-Snag a copy of FILE and all its dependencies under DESTINATION/bin & DESTINATION/lib64
+Snag a copy of FILE and all its dependencies to DESTINATION/bin & DESTINATION/lib64
 
 Snaggle is designed to help create minimal runtime containers from pre-existing installations.
 It may work for other use cases and I'd be interested to hear about them at:
@@ -23,9 +23,15 @@ Snaggle will hardlink (or copy, see notes):
 - All dynamically linked dependencies -> DESTINATION/lib64
 
 Note:
-Hardlinks will be created if possible.
-If for some reason this is not possible, for example source & destination are on different filesystems,
-a copy will be performed preserving filemode and attempting to preserve ownership.
+- Future versions intend to provide improved heuristics for destination paths, currently calling
+  Snaggle(path/to/a.library.so) will place a.library.so in root/bin and you need to move it manually
+- Hardlinks will be created if possible.
+- A copy will be performed if hardlinking fails for one of the following reasons:
+  - path & root are on different filesystems
+  - the user does not have permission to hardlink (e.g.
+    https://docs.kernel.org/admin-guide/sysctl/fs.html#protected-hardlinks)
+- Copies will retain the original filemode
+- Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
 
 Exit Codes:
   0: Success
