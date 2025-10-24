@@ -1,6 +1,14 @@
-// This is not designed work on non-linux systems - don't try it unless you want to have fun with unexpected
-// and unhandled os error types.
-
+// Snag a copy of a ELF binary and all its dependencies to another/path/bin & another/path//lib64.
+//
+// This is the main implementation of the command-line application `snaggle`, for use as a library in
+// other code and scripts.
+//
+// Snaggle is designed to help create minimal runtime containers from pre-existing installations.
+// It may work for other use cases and I'd be interested to hear about them at:
+// https://github.com/MusicalNinjaDad/snaggle
+//
+// WARNING: This is not designed work on non-linux systems - don't try it unless you want to have fun
+// with unexpected and unhandled os error types.
 package snaggle
 
 import (
@@ -110,7 +118,31 @@ func copy(sourcePath string, target string) error {
 	return err
 }
 
-// Parse file and build a minimal /bin & /lib under root
+// Snaggle parses the file given by path and build minimal /bin & /lib64 under root.
+//
+// Snaggle will hardlink (or copy, see notes):
+//   - path -> root/bin
+//   - All dynamically linked dependencies -> root/lib64
+//
+// For example:
+//
+//	_ = Snaggle("/bin/which", "/runtime") // you probably want to handle any error, not ignore it
+//	// Results in:
+//	//  /runtime/bin/which
+//	//  /runtime/lib64/libc.so.6
+//	//  /runtime/lib64/libpcre2-8.so.0
+//	//  /runtime/lib64/libselinux.so.1
+//
+// # Notes:
+//
+//   - Future versions intend to provide improved heuristics for destination paths, currently calling
+//     Snaggle(path/to/a.library.so) will place a.library.so in root/bin and you need to move it manually
+//   - Hardlinks will be created if possible.
+//   - A copy will be performed if hardlinking fails for one of the following reasons:
+//   - path & root are on different filesystems
+//   - the user does not have permission to hardlink (e.g. https://docs.kernel.org/admin-guide/sysctl/fs.html#protected-hardlinks)
+//   - Copies will retain the original filemode
+//   - Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
 func Snaggle(path string, root string) error {
 	file, err := elf.New(path)
 	if err != nil {

@@ -1,3 +1,28 @@
+// Parses an ELF binary providing additional details vs. [debug/elf]
+//
+// # Errors:
+//
+// All errors returned will be of the type [ErrElf].
+//
+// # Usage:
+//
+// Construct a new [Elf] struct with [elf.New]
+//
+//	bin, err := elf.New(path)
+//
+//	bin is an Elf with the following structure:
+//	{
+//		Name: base filename
+//		Path: absolute path
+//		Class: 32-bit or 64-bit?
+//		Type: EXE, BIN, PIE, ...
+//		Interpreter: path to requested interpeter
+//		Dependencies: slice of paths to dependencies as identified and found by the interpreter
+//	}
+//
+// # Note:
+//
+// Only accepts static binaries or dynamic binaries which use ld-linux*.so as the interpreter
 package elf
 
 import (
@@ -16,10 +41,9 @@ import (
 )
 
 // All errors returned will be of the type ErrElf.
-
 //   - ErrElf can store multiple errors for a single Elf struct. Use .Join() to add an error.
 //   - Will PANIC! if .Error is called and no errors are contained
-//   - Will not == nil, even if empty. Use .IsEmpty() to check and then manually return something, nil
+//   - Will not == nil, even if empty. Use .IsEmpty() to check and then manually return (something, nil)
 //
 // To extract the path use [errors.As] followed by .Path()
 //
@@ -34,10 +58,15 @@ type ErrElf struct {
 	errs []error
 }
 
-// Error returned when the provided file is not a valid Elf.
-var ErrInvalidElf = errors.New("invalid ELF file")
+// # Primary Errors
+var (
+	// Error returned when the provided file is not a valid Elf.
+	ErrInvalidElf = errors.New("invalid ELF file")
+	// Error wrapping a failure when calling `ld-linux*.so` (like `ldd`) to identify dependencies
+	ErrLdd = errors.New("ldd failed to execute")
+)
 
-// Specific errors which wrap ErrInvalidElf
+// # Specific errors which wrap [ErrInvalidElf]
 var (
 	// Error returned if dynamic ELF has a bad entry for the interpreter
 	ErrBadInterpreter = fmt.Errorf("%w: bad interpreter", ErrInvalidElf)
@@ -46,9 +75,6 @@ var (
 	// Error returned if the interpreter is not `ld-linux*.so`
 	ErrUnsupportedInterpreter = fmt.Errorf("%w: %w (unsupported interpreter)", ErrInvalidElf, errors.ErrUnsupported)
 )
-
-// Error wrapping a failure when calling `ld-linux*.so` (like `ldd`) to identify dependencies
-var ErrLdd = errors.New("ldd failed to execute")
 
 // A parsed Elf binary
 type Elf struct {
@@ -68,28 +94,33 @@ type Elf struct {
 	Dependencies []string
 }
 
+// 32 or 64 bit?
+//   - See https://man7.org/linux/man-pages/man5/elf.5.html#:~:text=.%20%20(3%3A%20%27F%27)-,EI_CLASS,-The%20fifth%20byte
 type EI_CLASS byte
 
+// # Values for [EI_CLASS]
 const (
 	ELFNONE = debug_elf.ELFCLASSNONE // 0
 	ELF32   = debug_elf.ELFCLASS32   // 1
 	ELF64   = debug_elf.ELFCLASS64   // 2
 )
 
+// Binary type
+//
 // Think carefully before directly comparing to bitmask (2^n) values. See value descriptions for individual hints.
 type Type byte
 
+// # Bitmask values for [Type]
+//
+// Think carefully before directly comparing to bitmask (2^n) values. See value descriptions for individual hints.
 const (
-	// Bitmask values
-	// --------------
-
 	UNDEF = 0 // Undefined
 	EXE   = 1 // Executable: Use Elf.IsExe() to catch _any_ type of executable
 	DYN   = 2 // Dynamic: Use Elf.IsDyn() to catch _any_ type of dynamically linked binary
+)
 
-	// Meaningful combination values
-	// -----------------------------
-
+// # Meaningful combination values for [Type]
+const (
 	PIE = 3 // EXE + DYN
 )
 
