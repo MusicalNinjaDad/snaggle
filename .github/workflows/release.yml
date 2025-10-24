@@ -2,6 +2,7 @@ name: Package & release
 
 on:
   push:
+    paths: .github/workflows/release.yml
     tags:
       v*
   workflow_dispatch:
