@@ -155,13 +155,9 @@ func Snaggle(path string, root string) error {
 
 	linkerrs := new(errgroup.Group)
 
-	if err = link(path, binDir); err != nil {
-		return err
-	}
+	linkerrs.Go(func() error { return link(path, binDir) })
 	for _, lib := range file.Dependencies {
-		if err = link(lib, libDir); err != nil {
-			return err
-		}
+		linkerrs.Go(func() error { return link(lib, libDir) })
 	}
-	return nil
+	return linkerrs.Wait()
 }

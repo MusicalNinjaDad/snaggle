@@ -47,7 +47,7 @@ func TestCommonBinaries(t *testing.T) {
 				assert.Truef(t, same, "%s & %s are different files", original, copy)
 			}
 
-			Assert.Equal(expectedOut, slices.Collect(iter.Map((strings.Lines(stdout.String())), strings.TrimSpace)))
+			Assert.ElementsMatch(expectedOut, slices.Collect(iter.Map((strings.Lines(stdout.String())), strings.TrimSpace)))
 		})
 	}
 }
