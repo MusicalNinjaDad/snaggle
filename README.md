@@ -48,7 +48,7 @@ Exit Codes:
     COPY --from ghcr.io/MusicalNinjaDad/snaggle /snaggle /bin/
     ```
 
-1. Grab the the latest release binary from github [MusicalNinjaDad/snaggle](https://github.com/MusicalNinjaDad/snaggle)
+1. Grab the latest release binary from GitHub [MusicalNinjaDad/snaggle](https://github.com/MusicalNinjaDad/snaggle)
 
 1. Install with `go install https://github.com/MusicalNinjaDad/snaggle@latest`
 
