@@ -39,7 +39,7 @@ func TestdataPath(path string) string {
 //
 // This is (almost) guaranteed to be on the same filesystem as `./internal/testdata` and therefore
 // allow for valid hardlinks.
-func WorkspaceTempDir(t *testing.T) string {
+func WorkspaceTempDir(t testing.TB) string {
 	t.Helper()
 	tmpRoot := TestdataPath(".tmp")
 	err := os.Mkdir(tmpRoot, os.ModePerm)

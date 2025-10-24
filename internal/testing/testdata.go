@@ -28,7 +28,7 @@ type binaryDetails struct {
 //		 	Exe         bool
 //			Lib         bool
 //		}
-func CommonBinaries(t *testing.T) []binaryDetails {
+func CommonBinaries(t testing.TB) []binaryDetails {
 	t.Helper()
 	return []binaryDetails{
 		{
