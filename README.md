@@ -2,6 +2,50 @@
 
 Had enough of every container you pull having a full OS available inside? Create your own minimal app container easily by snaggling the binary and linked libraries.
 
+```text
+ninjacoder@5747a297e3a1:/workspaces/snaggle/snaggle$ ./snaggle --help
+
+Snag a copy of FILE and all its dependencies under DESTINATION/bin & DESTINATION/lib64
+
+Snaggle is designed to help create minimal runtime containers from pre-existing installations.
+It may work for other use cases and I'd be interested to hear about them at:
+https://github.com/MusicalNinjaDad/snaggle
+
+Usage:
+  snaggle FILE DESTINATION [flags]
+
+Flags:
+  -h, --help   help for snaggle
+
+
+Snaggle will hardlink (or copy, see notes):
+- FILE -> DESTINATION/bin
+- All dynamically linked dependencies -> DESTINATION/lib64
+
+Note:
+Hardlinks will be created if possible.
+If for some reason this is not possible, for example source & destination are on different filesystems,
+a copy will be performed preserving filemode and attempting to preserve ownership.
+
+Exit Codes:
+  0: Success
+  1: Error
+  2: Invalid command
+  3: Panic
+```
+
+## Installing snaggle
+
+1. In a container:
+
+    ```docker
+    COPY --from ghcr.io/MusicalNinjaDad/snaggle /snaggle /bin/
+    ```
+
+1. Grab the the latest release binary from github [MusicalNinjaDad/snaggle](https://github.com/MusicalNinjaDad/snaggle)
+
+1. Install with `go install https://github.com/MusicalNinjaDad/snaggle@latest`
+
 ## Why Go?
 
 Historically this started as a python script, but I had to learn Go at some point - and this seemed like a good one. Plus it's much easier to `ADD` and use a single statically linked binary than a script and supporting interpreter.
