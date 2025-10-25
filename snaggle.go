@@ -58,7 +58,7 @@ func link(sourcePath string, targetDir string) error {
 	case errors.Is(err, syscall.EXDEV) || errors.Is(err, syscall.EPERM):
 		err = copy(sourcePath, target)
 	// File already exists - not an err if it's identical
-	case errors.Is(err, syscall.EEXIST) && !internal.SameFile(sourcePath, target):
+	case errors.Is(err, syscall.EEXIST) && internal.SameFile(sourcePath, target):
 		err = nil
 	}
 
