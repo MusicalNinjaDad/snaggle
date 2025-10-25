@@ -69,6 +69,10 @@ func TestCommonBinaries(t *testing.T) {
 			binPath := filepath.Join(tmp, "bin", filepath.Base(tc.ExpectedElf.Name))
 			expectedOut := make([]string, 0, 1+len(tc.ExpectedElf.Dependencies))
 			expectedOut = append(expectedOut, tc.ExpectedElf.Path+" -> "+binPath)
+			// ugly - should be in the tc - needs a tidy
+			if tc.ExpectedElf.IsDyn() && !tc.ExpectedElf.IsLib() {
+				expectedOut = append(expectedOut, tc.ExpectedElf.Interpreter+" -> "+filepath.Join(tmp, P_ld_linux))
+			}
 			var libCopies []string
 			for _, lib := range tc.ExpectedElf.Dependencies {
 				copy := filepath.Join(tmp, "lib64", filepath.Base(lib))
