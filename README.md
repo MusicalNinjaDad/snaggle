@@ -48,13 +48,9 @@ Exit Codes:
   COPY --from=ghcr.io/MusicalNinjaDad/snaggle /snaggle /bin/
   ```
 
-Note: Attestation available with github CLI: `gh attestation verify oci://ghcr.io/musicalninjadad/snaggle:latest -R MusicalNinjaDad/snaggle`
-
 ### Download
 
 > Grab the latest release binary (& SHA) from GitHub [`MusicalNinjaDad/snaggle/releases`](https://github.com/MusicalNinjaDad/snaggle/releases)
-
-Note: Attestation available with github CLI: `gh attestation verify path/to/downloaded/snaggle -R MusicalNinjaDad/snaggle`
 
 ### Go install
 
