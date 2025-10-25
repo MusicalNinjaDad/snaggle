@@ -2,9 +2,6 @@ name: Test usage in docker build
 
 on:
   push:
-    paths:
-      .github/workflows/test_docker.yml
-      test.Dockerfile
   pull_request:
   workflow_dispatch:
 
