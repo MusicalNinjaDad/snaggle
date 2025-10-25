@@ -1,0 +1,43 @@
+name: Test usage in docker build
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build devcontainer image to use as base
+        id: devcontainer
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: ./.devcontainer
+          push: false
+          load: true
+          tags: snaggle_devcontainer
+
+      - name: Build snaggle docker image
+        id: snaggle
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: .
+          push: false
+          load: true
+          tags: snaggle
+
+      - name: Build test docker image
+        id: test_image
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: .
+          file: test.Dockerfile
+          push: false
+          load: true
+          tags: test
+
+      - name: Test
+        run: docker run test | grep ^/bin/which$
