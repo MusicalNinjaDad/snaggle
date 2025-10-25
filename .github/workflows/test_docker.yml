@@ -1,7 +1,6 @@
 name: Test usage in docker build
 
 on:
-  push:
   pull_request:
   workflow_dispatch:
 
