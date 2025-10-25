@@ -7,7 +7,7 @@ WORKDIR /runtime
 RUN snaggle /sbin/bash . \
  && snaggle /sbin/which .
 
-FROM scratch as runtime
+FROM scratch AS runtime
 
 USER 1000
 COPY --from=base /runtime /
