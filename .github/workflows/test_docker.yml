@@ -1,0 +1,50 @@
+name: Test usage in docker build
+
+on:
+  push:
+    paths: .github/workflows/test_docker.yml
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build devcontainer image to use as base
+        id: devcontainer
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: ./.devcontainer
+          push: false
+          load: true
+          tags: snaggle_devcontainer
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build snaggle docker image
+        id: snaggle
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: .
+          push: false
+          load: true
+          tags: snaggle
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build test docker image
+        id: test_image
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: ./test.Dockerfile
+          push: false
+          load: true
+          tags: test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test
+        run: docker run test | grep ^/bin/which$
