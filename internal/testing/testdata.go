@@ -28,10 +28,10 @@ type binaryDetails struct {
 //		 	Exe         bool
 //			Lib         bool
 //		}
-func CommonBinaries(t testing.TB) []binaryDetails {
+func CommonBinaries(t testing.TB) map[string]binaryDetails {
 	t.Helper()
-	return []binaryDetails{
-		{
+	return map[string]binaryDetails{
+		"PIE_0": {
 			Description: "PIE no dependencies",
 			ExpectedElf: elf.Elf{
 				Name:         "hello_pie",
@@ -45,7 +45,7 @@ func CommonBinaries(t testing.TB) []binaryDetails {
 			Exe:     true,
 			Lib:     false,
 		},
-		{
+		"static": {
 			Description: "Static linked executable",
 			ExpectedElf: elf.Elf{
 				Name:         "hello_static",
@@ -59,7 +59,7 @@ func CommonBinaries(t testing.TB) []binaryDetails {
 			Exe:     true,
 			Lib:     false,
 		},
-		{
+		"PIE_1": {
 			Description: "PIE 1 dependency",
 			ExpectedElf: elf.Elf{
 				Name:         "which",
@@ -73,7 +73,7 @@ func CommonBinaries(t testing.TB) []binaryDetails {
 			Exe:     true,
 			Lib:     false,
 		},
-		{
+		"PIE_Many": {
 			Description: "PIE nested dependencies",
 			ExpectedElf: elf.Elf{
 				Name:         "id",
@@ -86,6 +86,20 @@ func CommonBinaries(t testing.TB) []binaryDetails {
 			Dynamic: true,
 			Exe:     true,
 			Lib:     false,
+		},
+		"dyn_lib": {
+			Description: "Dynamic library (.so)",
+			ExpectedElf: elf.Elf{
+				Name:         "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
+				Path:         P_ctypes_so,
+				Class:        elf.EI_CLASS(elf.ELF64),
+				Type:         elf.Type(elf.DYN),
+				Interpreter:  "",
+				Dependencies: []string{P_libc, P_libm, P_libpthread},
+			},
+			Dynamic: true,
+			Exe:     false,
+			Lib:     true,
 		},
 	}
 }

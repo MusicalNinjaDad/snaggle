@@ -29,6 +29,9 @@ go.work
 # our in-container GOPATH (visible in workspace tree)
 .go
 
-.tmp
-
+# our cli binary
 snaggle/snaggle
+
+# include testdata EXCEPT .tmp
+!internal/testdata/**
+.tmp
