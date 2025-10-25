@@ -10,6 +10,9 @@ RUN snaggle /sbin/bash . \
 FROM scratch AS runtime
 
 USER 1000
+ENV PATH="/bin"
+
 COPY --from=base /runtime /
+
 ENTRYPOINT [ "/bin/bash" ]
 CMD [ "-c", "'which which'" ]
