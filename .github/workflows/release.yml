@@ -83,7 +83,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create ${{ github.action_ref }} --generate-notes 'snaggle#Snaggle ${{ github.action_ref }}'  'snaggle.sha256#SHA256 Checksum'
+          gh release create ${{ github.ref_name }} --generate-notes 'snaggle#Snaggle ${{ github.ref_name }}'  'snaggle.sha256#SHA256 Checksum'
       - name: Attest
         uses: actions/attest-build-provenance@v3
         with:
