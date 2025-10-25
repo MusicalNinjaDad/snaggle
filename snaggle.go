@@ -157,7 +157,9 @@ func Snaggle(path string, root string) error {
 
 	linkerrs.Go(func() error { return link(path, binDir) })
 	// TODO: #50 make linking interpreter safer
-	linkerrs.Go(func() error { return link(file.Interpreter, libDir) }) // currently OK - as it sits in /lib64 ... but ...
+	if file.Interpreter != "" {
+		linkerrs.Go(func() error { return link(file.Interpreter, libDir) }) // currently OK - as it sits in /lib64 ... but ...
+	}
 	for _, lib := range file.Dependencies {
 		linkerrs.Go(func() error { return link(lib, libDir) })
 	}
