@@ -2,6 +2,9 @@ name: CI
 
 on:
   push:
+    paths:
+      - '**.go'
+      - .github/workflows/ci.yml
   pull_request:
 
 jobs:
