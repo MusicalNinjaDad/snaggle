@@ -52,13 +52,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-      - name: Attest
-        uses: actions/attest-build-provenance@v3
-        id: attest
-        with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
 
   github:
     runs-on: ubuntu-latest
@@ -77,14 +70,9 @@ jobs:
         working-directory: ${{ github.workspace }}/snaggle
         run: |
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build .
-          sha256sum snaggle > snaggle.sha256
       - name: Create github release
         working-directory: ${{ github.workspace }}/snaggle
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create ${{ github.ref_name }} --generate-notes 'snaggle#Snaggle ${{ github.ref_name }}'  'snaggle.sha256#SHA256 Checksum'
-      - name: Attest
-        uses: actions/attest-build-provenance@v3
-        with:
-          subject-checksums: snaggle.sha256
+          gh release create ${{ github.ref_name }} --generate-notes 'snaggle#Snaggle ${{ github.ref_name }}'

@@ -1,5 +1,11 @@
 # Changelog snaggle
 
+## [v0.1.1] - fix release machinery
+
+### Fixes
+
+- removed attestations from automated release process
+
 ## [v0.1.0] - initial CLI (Go)
 
 ### Features
