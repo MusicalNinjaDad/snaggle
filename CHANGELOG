@@ -1,5 +1,11 @@
 # Changelog snaggle
 
+## [v0.1.3] - fix error snaggling a dynamic library
+
+### Fixes
+
+- [#47](https://github.com/MusicalNinjaDad/snaggle/issues/47) "Unable to snag dynamic .so files"
+
 ## [v0.1.2] - fix error when target file exists
 
 ### Fixes
