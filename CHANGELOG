@@ -1,0 +1,22 @@
+# Changelog snaggle
+
+## [v0.1.0] - initial CLI (Go)
+
+### Features
+
+- CLI `snaggle FILE DESTINATION` to snag a copy of FILE and all its dependencies to DESTINATION/bin & DESTINATION/lib64
+  - Hardlinks will be created if possible.
+  - A copy will be performed if hardlinking fails for one of the following reasons:
+    - path & root are on different filesystems
+    - the user does not have permission to hardlink (e.g.
+      https://docs.kernel.org/admin-guide/sysctl/fs.html#protected-hardlinks)
+  - Copies will retain the original filemode
+  - Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
+- Library `snaggle` providing same functionality
+- Library `elf` with parsing functionality
+
+## [v0.0.1] - python script
+
+### Features
+
+- Original script using lddwrap
