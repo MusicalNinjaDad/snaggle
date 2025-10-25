@@ -75,3 +75,13 @@ func BenchmarkCommonBinaries(b *testing.B) {
 		})
 	}
 }
+
+func TestFileExists(t *testing.T) {
+	Assert := assert.New(t)
+	tc := CommonBinaries(t)[2]
+	tmp := WorkspaceTempDir(t)
+	for range 2 {
+		err := snaggle.Snaggle(tc.ExpectedElf.Path, tmp)
+		Assert.NoError(err)
+	}
+}
