@@ -72,7 +72,7 @@ jobs:
         with:
           go-version: stable
       - name: Install dependencies
-        run: go get .
+        run: go mod download
       - name: Build snaggle
         working-directory: ${{ github.workspace }}/snaggle
         run: |

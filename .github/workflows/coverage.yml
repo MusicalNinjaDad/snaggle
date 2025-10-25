@@ -19,7 +19,7 @@ jobs:
         with:
           go-version: stable
       - name: Install dependencies
-        run: go get .
+        run: go mod download
       - name: Test
         run: go test -v -coverprofile=coverage.out -coverpkg=$(go list ./... | paste -sd ",") ./...
       - name: Upload coverage to Codecov
