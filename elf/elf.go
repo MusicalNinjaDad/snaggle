@@ -296,7 +296,9 @@ func interpreter(elffile *debug_elf.File) (string, error) {
 //     linked ELF will lead to a segfault (which gets caught and returned as an error).
 //   - WARNING: Behaviour is *undefined* for interpreters except `ld-linux.so*`
 func ldd(path string, interpreter string) ([]string, error) {
-	if !internal.Ld_linux_64_RE.MatchString(interpreter) {
+	if interpreter == "" {
+		interpreter = internal.P_ld_linux
+	} else if !internal.Ld_linux_64_RE.MatchString(interpreter) {
 		return nil, fmt.Errorf("%w '%s'", ErrUnsupportedInterpreter, interpreter)
 	}
 
