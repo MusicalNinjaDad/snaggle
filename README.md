@@ -42,15 +42,23 @@ Exit Codes:
 
 ## Installing snaggle
 
-1. In a container:
+### In a container (easiest)
 
-    ```docker
-    COPY --from ghcr.io/MusicalNinjaDad/snaggle /snaggle /bin/
-    ```
+  ```docker
+  COPY --from=ghcr.io/MusicalNinjaDad/snaggle /snaggle /bin/
+  ```
 
-1. Grab the latest release binary from GitHub [MusicalNinjaDad/snaggle](https://github.com/MusicalNinjaDad/snaggle)
+Note: Attestation available with github CLI: `gh attestation verify oci://ghcr.io/musicalninjadad/snaggle:latest -R MusicalNinjaDad/snaggle`
 
-1. Install with `go install https://github.com/MusicalNinjaDad/snaggle@latest`
+### Download
+
+> Grab the latest release binary (& SHA) from GitHub [`MusicalNinjaDad/snaggle/releases`](https://github.com/MusicalNinjaDad/snaggle/releases)
+
+Note: Attestation available with github CLI: `gh attestation verify path/to/downloaded/snaggle -R MusicalNinjaDad/snaggle`
+
+### Go install
+
+> Install with `go install https://github.com/MusicalNinjaDad/snaggle@latest`
 
 ## Planned improvements
 

@@ -1,0 +1,2 @@
+# All the dot dirs & configs (.go, .git, .github, .devcontainer, .pre-commit, .gitignore, ...)
+.*
