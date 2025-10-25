@@ -1,5 +1,11 @@
 # Changelog snaggle
 
+## [v0.1.2] - fix error when target file exists
+
+### Fixes
+
+- [#43](https://github.com/MusicalNinjaDad/snaggle/issues/43) "Fails in multistage build when re-linking libc.so.6 (file exists)"
+
 ## [v0.1.1] - fix release machinery
 
 ### Fixes
