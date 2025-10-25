@@ -45,7 +45,7 @@ Exit Codes:
 ### In a container (easiest)
 
   ```docker
-  COPY --from=ghcr.io/MusicalNinjaDad/snaggle /snaggle /bin/
+  COPY --from=ghcr.io/musicalninjadad/snaggle /snaggle /bin/
   ```
 
 ### Download
