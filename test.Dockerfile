@@ -5,7 +5,7 @@ COPY --from=snaggle /snaggle /bin/
 
 WORKDIR /runtime
 RUN snaggle /sbin/bash . \
- && snaggle /sbin/which .
+    && snaggle /sbin/which .
 
 FROM scratch AS runtime
 
@@ -14,5 +14,5 @@ ENV PATH="/bin"
 
 COPY --from=base /runtime /
 
-ENTRYPOINT [ "/bin/bash" ]
-CMD [ "-c", "'which which'" ]
+SHELL [ "/bin/bash", "-c" ]
+ENTRYPOINT which which
