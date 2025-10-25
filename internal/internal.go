@@ -140,7 +140,9 @@ const P_ld_linux = "/lib64/ld-linux-x86-64.so.2"
 // Paths to common libraries
 var (
 	P_libc       = findLib("libc.so.6")
+	P_libm       = findLib("libm.so.6")
 	P_libpcre2_8 = findLib("libpcre2-8.so.0")
+	P_libpthread = findLib("libpthread.so.0")
 	P_libselinux = findLib("libselinux.so.1")
 )
 
@@ -163,6 +165,7 @@ var (
 	P_which        = TestdataPath("which")
 	P_id           = TestdataPath("id")
 	P_ldd          = TestdataPath("ldd")
+	P_ctypes_so    = TestdataPath("_ctypes_test.cpython-314-x86_64-linux-gnu.so")
 )
 
 // Test helper: Provides a temporary file which exists but has no read permission

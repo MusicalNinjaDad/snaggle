@@ -87,5 +87,19 @@ func CommonBinaries(t testing.TB) map[string]binaryDetails {
 			Exe:     true,
 			Lib:     false,
 		},
+		"dyn_lib": {
+			Description: "Dynamic library (.so)",
+			ExpectedElf: elf.Elf{
+				Name:         "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
+				Path:         P_ctypes_so,
+				Class:        elf.EI_CLASS(elf.ELF64),
+				Type:         elf.Type(elf.DYN),
+				Interpreter:  "",
+				Dependencies: []string{P_libc, P_libm, P_libpthread},
+			},
+			Dynamic: true,
+			Exe:     false,
+			Lib:     true,
+		},
 	}
 }
