@@ -114,26 +114,34 @@ func hashFile(path string) ([]byte, error) {
 
 // Are two files identical?, Returns false on any fs/io errors.
 func SameFile(path1 string, path2 string) bool {
-	same, err := sameInode(path1, path2)
+	same, err := sameFile(path1, path2)
 	if err != nil {
 		return false
+	}
+	return same
+}
+
+func sameFile(path1 string, path2 string) (bool, error) {
+	same, err := sameInode(path1, path2)
+	if err != nil {
+		return false, err
 	}
 	if !same {
 		same, err = sameHash(path1, path2)
 		if err != nil {
-			return false
+			return false, err
 		}
 		file1, err1 := os.Stat(path1)
 		file2, err2 := os.Stat(path2)
 		if err1 != nil || err2 != nil {
-			return false
+			return false, err
 		}
 		same = same && (file1.Mode() == file2.Mode())
-		// This will usually fail unless the copy was performed as root
+		// This check would usually fail unless the copy was performed as root
 		// same = same && (file1.Sys().(*syscall.Stat_t).Uid == file2.Sys().(*syscall.Stat_t).Uid)
 		// same = same && (file1.Sys().(*syscall.Stat_t).Gid == file2.Sys().(*syscall.Stat_t).Gid)
 	}
-	return same
+	return same, err
 }
 
 // Path to interpreter
