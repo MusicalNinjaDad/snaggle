@@ -4,7 +4,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -30,20 +29,11 @@ func TestCommonBinaries(t *testing.T) {
 
 			tmp := WorkspaceTempDir(t)
 
-			binPath := filepath.Join(tmp, "bin", filepath.Base(tc.Elf.Name))
-			var libCopies []string
-			for _, lib := range tc.Elf.Dependencies {
-				copy := filepath.Join(tmp, "lib64", filepath.Base(lib))
-				libCopies = append(libCopies, copy)
-			}
-
-			expectedOut := ExpectedOutput(tc, tmp)
+			expectedOut, expectedFiles := ExpectedOutput(tc, tmp)
 
 			err := snaggle.Snaggle(tc.Elf.Path, tmp)
 			Assert.NoError(err)
-			AssertSameInode(t, tc.Elf.Path, binPath)
-			for idx, copy := range libCopies {
-				original := tc.Elf.Dependencies[idx]
+			for original, copy := range expectedFiles {
 				same := SameFile(original, copy)
 				assert.Truef(t, same, "%s & %s are different files", original, copy)
 			}

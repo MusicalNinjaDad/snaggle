@@ -119,22 +119,31 @@ func CommonBinaries(t testing.TB) map[string]binaryDetails {
 	}
 }
 
-// Identify the expected Stdout when snaggling a test case to tmp
-func ExpectedOutput(tc binaryDetails, tmp string) (stdout []string) {
-	files := 1 // snaggled Elf
-	files += len(tc.Elf.Dependencies)
+// Identify the expected outputs when snaggling a test case to tmp
+func ExpectedOutput(tc binaryDetails, tmp string) (stdout []string, files map[string]string) {
+	numFiles := 1 // snaggled Elf
+	numFiles += len(tc.Elf.Dependencies)
 	if tc.HasInterpreter {
-		files++
+		numFiles++
 	}
-	stdout = make([]string, 0, files)
-	binPath := filepath.Join(tmp, "bin")
-	stdout = append(stdout, LinkMessage(tc.Elf.Path, filepath.Join(binPath, tc.Elf.Name)))
+	stdout = make([]string, 0, numFiles)
+	files = make(map[string]string, numFiles)
+
+	binPath := filepath.Join(tmp, "bin", tc.Elf.Name)
+	stdout = append(stdout, LinkMessage(tc.Elf.Path, binPath))
+	files[tc.Elf.Path] = binPath
+
 	if tc.HasInterpreter {
-		stdout = append(stdout, LinkMessage(tc.Elf.Interpreter, filepath.Join(tmp, tc.Elf.Interpreter)))
+		interpPath := filepath.Join(tmp, tc.Elf.Interpreter)
+		stdout = append(stdout, LinkMessage(tc.Elf.Interpreter, interpPath))
+		files[tc.Elf.Interpreter] = interpPath
 	}
-	libPath := filepath.Join(tmp, "lib64")
+
+	libBasePath := filepath.Join(tmp, "lib64")
 	for _, lib := range tc.Elf.Dependencies {
-		stdout = append(stdout, LinkMessage(lib, filepath.Join(libPath, filepath.Base(lib))))
+		libPath := filepath.Join(libBasePath, filepath.Base(lib))
+		stdout = append(stdout, LinkMessage(lib, libPath))
+		files[lib] = libPath
 	}
 	return
 }
