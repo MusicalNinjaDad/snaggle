@@ -18,13 +18,15 @@ import (
 )
 
 func TestCommonBinaries(t *testing.T) {
+	var stdout strings.Builder
+	log.SetOutput(&stdout)
+	t.Cleanup(func() { log.SetOutput(os.Stdout) })
+
 	tests := CommonBinaries(t)
 
 	for _, tc := range tests {
 		t.Run(tc.Description, func(t *testing.T) {
-			var stdout strings.Builder
-			log.SetOutput(&stdout)
-			t.Cleanup(func() { log.SetOutput(os.Stdout) })
+			t.Cleanup(func() { stdout.Reset() })
 
 			Assert := assert.New(t)
 			tmp := WorkspaceTempDir(t)
