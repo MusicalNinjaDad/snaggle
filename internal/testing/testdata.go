@@ -4,6 +4,7 @@ package testing
 
 //nolint:staticcheck
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/MusicalNinjaDad/snaggle/elf"
@@ -102,4 +103,24 @@ func CommonBinaries(t testing.TB) map[string]binaryDetails {
 			Lib:     true,
 		},
 	}
+}
+
+// Identify the expected Stdout when snaggling a test case to tmp
+func ExpectedOutput(tc binaryDetails, tmp string) (stdout []string) {
+	files := 1 // snaggled Elf
+	files += len(tc.Elf.Dependencies)
+	if tc.Elf.Type == elf.PIE {
+		files++ // interpreter
+	}
+	stdout = make([]string, 0, files)
+	binPath := filepath.Join(tmp, "bin")
+	stdout = append(stdout, LinkMessage(tc.Elf.Path, filepath.Join(binPath, tc.Elf.Name)))
+	if tc.Elf.Type == elf.PIE {
+		stdout = append(stdout, LinkMessage(tc.Elf.Interpreter, filepath.Join(tmp, tc.Elf.Interpreter)))
+	}
+	libPath := filepath.Join(tmp, "lib64")
+	for _, lib := range tc.Elf.Dependencies {
+		stdout = append(stdout, LinkMessage(lib, filepath.Join(libPath, filepath.Base(lib))))
+	}
+	return
 }

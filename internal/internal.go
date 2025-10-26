@@ -189,3 +189,8 @@ func PermissionDenied(t *testing.T, filename string) *os.File {
 func StripLines(multiline string) []string {
 	return slices.Collect(iter.Map(strings.Lines(multiline), strings.TrimSpace))
 }
+
+// Build a message about a link attempt for stdout
+func LinkMessage(from string, to string) string {
+	return from + " -> " + to
+}
