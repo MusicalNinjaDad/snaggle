@@ -144,6 +144,19 @@ func sameFile(path1 string, path2 string) (bool, error) {
 	return same, err
 }
 
+func AssertSameFile(t *testing.T, path1 string, path2 string, mustBeLink bool) {
+	t.Helper()
+	var same bool
+	var err error
+	if mustBeLink {
+		same, err = sameInode(path1, path2)
+	} else {
+		same, err = sameFile(path1, path2)
+	}
+	assert.NoError(t, err)
+	assert.Truef(t, same, "%s & %s are different files", path1, path2)
+}
+
 // Path to interpreter
 const P_ld_linux = "/lib64/ld-linux-x86-64.so.2"
 
