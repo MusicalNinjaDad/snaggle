@@ -13,11 +13,12 @@ import (
 )
 
 type binaryDetails struct {
-	Description string // test run name
-	Elf         elf.Elf
-	Dynamic     bool
-	Exe         bool
-	Lib         bool
+	Description    string // test run name
+	Elf            elf.Elf
+	Dynamic        bool
+	Exe            bool
+	Lib            bool
+	HasInterpreter bool
 }
 
 var commonElfs = map[string]elf.Elf{
@@ -76,39 +77,44 @@ func CommonBinaries(t testing.TB) map[string]binaryDetails {
 	t.Helper()
 	return map[string]binaryDetails{
 		"PIE_0": {
-			Description: "PIE no dependencies",
-			Elf:         commonElfs["hello_pie"],
-			Dynamic:     true,
-			Exe:         true,
-			Lib:         false,
+			Description:    "PIE no dependencies",
+			Elf:            commonElfs["hello_pie"],
+			Dynamic:        true,
+			Exe:            true,
+			Lib:            false,
+			HasInterpreter: true,
 		},
 		"static": {
-			Description: "Static linked executable",
-			Elf:         commonElfs["hello_static"],
-			Dynamic:     false,
-			Exe:         true,
-			Lib:         false,
+			Description:    "Static linked executable",
+			Elf:            commonElfs["hello_static"],
+			Dynamic:        false,
+			Exe:            true,
+			Lib:            false,
+			HasInterpreter: false,
 		},
 		"PIE_1": {
-			Description: "PIE 1 dependency",
-			Elf:         commonElfs["which"],
-			Dynamic:     true,
-			Exe:         true,
-			Lib:         false,
+			Description:    "PIE 1 dependency",
+			Elf:            commonElfs["which"],
+			Dynamic:        true,
+			Exe:            true,
+			Lib:            false,
+			HasInterpreter: true,
 		},
 		"PIE_Many": {
-			Description: "PIE nested dependencies",
-			Elf:         commonElfs["id"],
-			Dynamic:     true,
-			Exe:         true,
-			Lib:         false,
+			Description:    "PIE nested dependencies",
+			Elf:            commonElfs["id"],
+			Dynamic:        true,
+			Exe:            true,
+			Lib:            false,
+			HasInterpreter: true,
 		},
 		"dyn_lib": {
-			Description: "Dynamic library (.so)",
-			Elf:         commonElfs["ctypes_so"],
-			Dynamic:     true,
-			Exe:         false,
-			Lib:         true,
+			Description:    "Dynamic library (.so)",
+			Elf:            commonElfs["ctypes_so"],
+			Dynamic:        true,
+			Exe:            false,
+			Lib:            true,
+			HasInterpreter: false,
 		},
 	}
 }
@@ -117,13 +123,13 @@ func CommonBinaries(t testing.TB) map[string]binaryDetails {
 func ExpectedOutput(tc binaryDetails, tmp string) (stdout []string) {
 	files := 1 // snaggled Elf
 	files += len(tc.Elf.Dependencies)
-	if tc.Elf.Type == elf.PIE {
-		files++ // interpreter
+	if tc.HasInterpreter {
+		files++
 	}
 	stdout = make([]string, 0, files)
 	binPath := filepath.Join(tmp, "bin")
 	stdout = append(stdout, LinkMessage(tc.Elf.Path, filepath.Join(binPath, tc.Elf.Name)))
-	if tc.Elf.Type == elf.PIE {
+	if tc.HasInterpreter {
 		stdout = append(stdout, LinkMessage(tc.Elf.Interpreter, filepath.Join(tmp, tc.Elf.Interpreter)))
 	}
 	libPath := filepath.Join(tmp, "lib64")
