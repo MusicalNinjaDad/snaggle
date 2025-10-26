@@ -33,6 +33,7 @@ RUN groupadd --gid ${USER_GID} ${USERNAME} \
 # Man pages for all the stuff which is already installed, man itself and basic manpages
 RUN dnf -y install \
     awk \
+    glibc-all-langpacks \
     man \
     man-db \
     man-pages \
