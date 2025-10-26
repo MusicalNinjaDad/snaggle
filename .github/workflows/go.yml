@@ -10,18 +10,17 @@ on:
 jobs:
   skip_check:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' }}
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
       - id: skip_check
         uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf #v5.3.1
         with:
-          concurrent_skipping: 'same_content'
+          concurrent_skipping: 'same_content_newer'
 
   test:
     needs: skip_check
-    if: needs.skip_check.outputs.should_skip != 'true' && ${{ !cancelled() }}
+    if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -34,7 +33,7 @@ jobs:
         run: go test -v ./...
   lint:
     needs: skip_check
-    if: needs.skip_check.outputs.should_skip != 'true' && ${{ !cancelled() }}
+    if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
