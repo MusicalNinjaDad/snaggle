@@ -67,7 +67,7 @@ var commonElfs = map[string]elf.Elf{
 //
 //	 type binaryDetails struct {
 //			Description string // test run name
-//		   	ExpectedElf elf.Elf
+//		   	Elf			elf.Elf
 //		   	Dynamic     bool
 //		 	Exe         bool
 //			Lib         bool
