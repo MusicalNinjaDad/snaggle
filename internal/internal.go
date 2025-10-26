@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"slices"
 	"strings"
@@ -26,9 +25,6 @@ func Libpathcmp(path1 string, path2 string) int {
 	}
 	return strings.Compare(path1, path2)
 }
-
-// Regex to check if this is a 64-bit version of `ld-linux*.so`, matches /lib64(/more/directories)/ld-linux*.so(.*)
-var Ld_linux_64_RE = regexp.MustCompile(`^\/lib64(?:\/.+|)\/ld-linux.*\.so(?:\..+|)$`)
 
 // Test helper: construct the correct absolute value of path, where path is relative to ./internal/testdata
 func TestdataPath(path string) string {
@@ -163,30 +159,6 @@ func AssertSameFile(t *testing.T, path1 string, path2 string, mustBeLink bool) {
 	}
 	assert.NoError(t, err)
 	assert.Truef(t, same, "%s & %s are different files", path1, path2)
-}
-
-// Path to interpreter
-const P_ld_linux = "/lib64/ld-linux-x86-64.so.2"
-
-// Paths to common libraries
-var (
-	P_libc       = findLib("libc.so.6")
-	P_libm       = findLib("libm.so.6")
-	P_libpcre2_8 = findLib("libpcre2-8.so.0")
-	P_libpthread = findLib("libpthread.so.0")
-	P_libselinux = findLib("libselinux.so.1")
-)
-
-// searches /lib* & /usr/lib* to find filename.
-func findLib(filename string) (path string) {
-	searchPaths := []string{"/lib*/*/", "/usr/lib*/*/", "/lib*/", "/usr/lib*/"} // ld.so-like ordering
-	for _, dir := range searchPaths {
-		matches, _ := filepath.Glob(dir + filename) // only possible returned error is ErrBadPattern
-		if len(matches) > 0 {
-			return matches[0]
-		}
-	}
-	return ""
 }
 
 // Paths to our test binaries
