@@ -18,6 +18,8 @@ import (
 )
 
 func TestCommonBinaries(t *testing.T) {
+	Assert := assert.New(t)
+
 	var stdout strings.Builder
 	log.SetOutput(&stdout)
 	t.Cleanup(func() { log.SetOutput(os.Stdout) })
@@ -28,7 +30,6 @@ func TestCommonBinaries(t *testing.T) {
 		t.Run(tc.Description, func(t *testing.T) {
 			t.Cleanup(func() { stdout.Reset() })
 
-			Assert := assert.New(t)
 			tmp := WorkspaceTempDir(t)
 
 			binPath := filepath.Join(tmp, "bin", filepath.Base(tc.Elf.Name))
