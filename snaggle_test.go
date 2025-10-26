@@ -34,10 +34,12 @@ func TestCommonBinaries(t *testing.T) {
 			err := snaggle.Snaggle(tc.Elf.Path, tmp)
 			Assert.NoError(err)
 			for original, copy := range expectedFiles {
-				same := SameFile(original, copy)
-				assert.Truef(t, same, "%s & %s are different files", original, copy)
+				if original == tc.Elf.Path {
+					AssertSameInode(t, original, copy)
+				} else {
+					assert.Truef(t, SameFile(original, copy), "%s & %s are different files", original, copy)
+				}
 			}
-
 			Assert.ElementsMatch(expectedOut, StripLines(stdout.String()))
 		})
 	}
