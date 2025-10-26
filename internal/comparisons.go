@@ -45,7 +45,7 @@ func sameFile(path1 string, path2 string) (bool, error) {
 		// keep checking ...
 	}
 
-	same, err = sameFilemode(path1, path2)
+	same, err = sameModeAndSize(path1, path2)
 	switch {
 	case err != nil:
 		return false, err
@@ -75,13 +75,13 @@ func sameInode(path1 string, path2 string) (bool, error) {
 	return os.SameFile(file1, file2), nil
 }
 
-func sameFilemode(path1 string, path2 string) (bool, error) {
+func sameModeAndSize(path1 string, path2 string) (bool, error) {
 	file1, err1 := os.Stat(path1)
 	file2, err2 := os.Stat(path2)
 	if err1 != nil || err2 != nil {
 		return false, errors.Join(err1, err2)
 	}
-	return file1.Mode() == file2.Mode(), nil
+	return (file1.Mode() == file2.Mode()) && (file1.Size() == file2.Size()), nil
 }
 
 // Do both files have same SHA256?
