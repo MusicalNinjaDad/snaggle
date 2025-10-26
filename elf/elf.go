@@ -317,7 +317,7 @@ func ldd(path string, interpreter string) ([]string, error) {
 		}
 	}
 
-	slices.SortFunc(dependencies, internal.Libpathcmp)
+	slices.SortFunc(dependencies, libpathcmp)
 	return dependencies, nil
 }
 
@@ -351,7 +351,7 @@ func (e Elf) Diff(o Elf) []string {
 
 		switch field.Name {
 		case "Path":
-			if internal.Libpathcmp(selfVal.(string), otherVal.(string)) != 0 {
+			if libpathcmp(selfVal.(string), otherVal.(string)) != 0 {
 				diffs = append(diffs, fmt.Sprintf("%s differs for %s: %v != %v", field.Name, self.FieldByName("Name"), selfVal, otherVal))
 			}
 		case "Dependencies":
@@ -362,7 +362,7 @@ func (e Elf) Diff(o Elf) []string {
 			} else {
 				for idx, selfDep := range selfDeps {
 					otherDep := otherDeps[idx]
-					if internal.Libpathcmp(selfDep, otherDep) != 0 {
+					if libpathcmp(selfDep, otherDep) != 0 {
 						diffs = append(diffs, fmt.Sprintf("dependency %v differs for %s: %s != %s", idx, self.FieldByName("Name"), selfDep, otherDep))
 					}
 				}
@@ -374,6 +374,14 @@ func (e Elf) Diff(o Elf) []string {
 		}
 	}
 	return diffs
+}
+
+// If both paths are absolute: compares only the filename, otherwise compares the entire path.
+func libpathcmp(path1 string, path2 string) int {
+	if filepath.IsAbs(path1) && filepath.IsAbs(path2) {
+		return strings.Compare(filepath.Base(path1), filepath.Base(path2))
+	}
+	return strings.Compare(path1, path2)
 }
 
 func (e *ErrElf) Error() string {
