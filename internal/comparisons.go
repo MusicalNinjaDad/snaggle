@@ -22,6 +22,18 @@ func Libpathcmp(path1 string, path2 string) int {
 	return strings.Compare(path1, path2)
 }
 
+// Test Helper: validates that a slice dependency paths are equal without breaking cross-platform
+// portability (libs are potentially in different paths)
+func AssertDependenciesEqual(t *testing.T, expected []string, actual []string) {
+	t.Helper()
+	if len(expected) == 0 && len(actual) == 0 {
+		return // no dependencies
+	}
+	for idx, dep := range expected {
+		assert.Zerof(t, Libpathcmp(dep, actual[idx]), "dependency %v differs: %s != %s", idx, dep, actual[idx])
+	}
+}
+
 // Are two files identical?, Returns false on any fs/io errors.
 func SameFile(path1 string, path2 string) bool {
 	same, err := sameFile(path1, path2)
