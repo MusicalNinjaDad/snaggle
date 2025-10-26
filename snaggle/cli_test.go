@@ -58,38 +58,26 @@ func TestMain(m *testing.M) {
 }
 
 func TestCommonBinaries(t *testing.T) {
+	Assert := assert.New(t)
 	tests := CommonBinaries(t)
 
 	for _, tc := range tests {
 		t.Run(tc.Description, func(t *testing.T) {
-			Assert := assert.New(t)
 			tmp := WorkspaceTempDir(t)
 			snaggle := exec.Command(snaggleBin, tc.Elf.Path, tmp)
 
-			binPath := filepath.Join(tmp, "bin", filepath.Base(tc.Elf.Name))
-			expectedOut := make([]string, 0, 1+len(tc.Elf.Dependencies))
-			expectedOut = append(expectedOut, tc.Elf.Path+" -> "+binPath)
-			// ugly - should be in the tc - needs a tidy
-			if tc.Elf.IsDyn() && !tc.Elf.IsLib() {
-				expectedOut = append(expectedOut, tc.Elf.Interpreter+" -> "+filepath.Join(tmp, P_ld_linux))
-			}
-			var libCopies []string
-			for _, lib := range tc.Elf.Dependencies {
-				copy := filepath.Join(tmp, "lib64", filepath.Base(lib))
-				libCopies = append(libCopies, copy)
-				expectedOut = append(expectedOut, lib+" -> "+copy)
-			}
+			expectedOut, expectedFiles := ExpectedOutput(tc, tmp)
 
 			stdout, err := snaggle.Output()
 			Assert.NoError(err)
-			AssertSameInode(t, tc.Elf.Path, binPath)
-			for idx, copy := range libCopies {
-				original := tc.Elf.Dependencies[idx]
-				same := SameFile(original, copy)
-				assert.Truef(t, same, "%s & %s are different files", original, copy)
+			for original, copy := range expectedFiles {
+				if original == tc.Elf.Path {
+					AssertSameFile(t, original, copy, true)
+				} else {
+					AssertSameFile(t, original, copy, false)
+				}
 			}
-
-			Assert.ElementsMatch(expectedOut, slices.Collect(iter.Map((strings.Lines(string(stdout))), strings.TrimSpace)))
+			Assert.ElementsMatch(expectedOut, StripLines(string(stdout)))
 		})
 	}
 }
