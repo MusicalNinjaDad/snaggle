@@ -13,7 +13,7 @@ import (
 
 type binaryDetails struct {
 	Description string // test run name
-	ExpectedElf elf.Elf
+	Elf         elf.Elf
 	Dynamic     bool
 	Exe         bool
 	Lib         bool
@@ -33,7 +33,7 @@ func CommonBinaries(t testing.TB) map[string]binaryDetails {
 	return map[string]binaryDetails{
 		"PIE_0": {
 			Description: "PIE no dependencies",
-			ExpectedElf: elf.Elf{
+			Elf: elf.Elf{
 				Name:         "hello_pie",
 				Path:         P_hello_pie,
 				Class:        elf.EI_CLASS(elf.ELF64),
@@ -47,7 +47,7 @@ func CommonBinaries(t testing.TB) map[string]binaryDetails {
 		},
 		"static": {
 			Description: "Static linked executable",
-			ExpectedElf: elf.Elf{
+			Elf: elf.Elf{
 				Name:         "hello_static",
 				Path:         P_hello_static,
 				Class:        elf.EI_CLASS(elf.ELF64),
@@ -61,7 +61,7 @@ func CommonBinaries(t testing.TB) map[string]binaryDetails {
 		},
 		"PIE_1": {
 			Description: "PIE 1 dependency",
-			ExpectedElf: elf.Elf{
+			Elf: elf.Elf{
 				Name:         "which",
 				Path:         P_which,
 				Class:        elf.EI_CLASS(elf.ELF64),
@@ -75,7 +75,7 @@ func CommonBinaries(t testing.TB) map[string]binaryDetails {
 		},
 		"PIE_Many": {
 			Description: "PIE nested dependencies",
-			ExpectedElf: elf.Elf{
+			Elf: elf.Elf{
 				Name:         "id",
 				Path:         P_id,
 				Class:        elf.EI_CLASS(elf.ELF64),
@@ -89,7 +89,7 @@ func CommonBinaries(t testing.TB) map[string]binaryDetails {
 		},
 		"dyn_lib": {
 			Description: "Dynamic library (.so)",
-			ExpectedElf: elf.Elf{
+			Elf: elf.Elf{
 				Name:         "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
 				Path:         P_ctypes_so,
 				Class:        elf.EI_CLASS(elf.ELF64),
