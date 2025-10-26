@@ -123,25 +123,41 @@ func SameFile(path1 string, path2 string) bool {
 
 func sameFile(path1 string, path2 string) (bool, error) {
 	same, err := sameInode(path1, path2)
-	if err != nil {
+	switch {
+	case err != nil:
 		return false, err
+	case same:
+		return true, nil
+	case !same:
+		// keep checking ...
 	}
-	if !same {
-		same, err = sameHash(path1, path2)
-		if err != nil {
-			return false, err
-		}
-		file1, err1 := os.Stat(path1)
-		file2, err2 := os.Stat(path2)
-		if err1 != nil || err2 != nil {
-			return false, err
-		}
-		same = same && (file1.Mode() == file2.Mode())
-		// This check would usually fail unless the copy was performed as root
-		// same = same && (file1.Sys().(*syscall.Stat_t).Uid == file2.Sys().(*syscall.Stat_t).Uid)
-		// same = same && (file1.Sys().(*syscall.Stat_t).Gid == file2.Sys().(*syscall.Stat_t).Gid)
+
+	same, err = sameFilemode(path1, path2)
+	switch {
+	case err != nil:
+		return false, err
+	case same:
+		// keep checking ...
+	case !same:
+		return false, nil
 	}
-	return same, err
+
+	same, err = sameHash(path1, path2)
+	switch {
+	case err != nil:
+		return false, err
+	default:
+		return same, err
+	}
+}
+
+func sameFilemode(path1 string, path2 string) (bool, error) {
+	file1, err1 := os.Stat(path1)
+	file2, err2 := os.Stat(path2)
+	if err1 != nil || err2 != nil {
+		return false, errors.Join(err1, err2)
+	}
+	return file1.Mode() == file2.Mode(), nil
 }
 
 func AssertSameFile(t *testing.T, path1 string, path2 string, mustBeLink bool) {
