@@ -79,14 +79,6 @@ func sameInode(path1 string, path2 string) (bool, error) {
 	return os.SameFile(file1, file2), nil
 }
 
-// Test Helper: validates that two paths point to the same inode
-func AssertSameInode(t *testing.T, path1 string, path2 string) {
-	t.Helper()
-	same, err := sameInode(path1, path2)
-	assert.NoError(t, err)
-	assert.Truef(t, same, "%s & %s are different files", path1, path2)
-}
-
 // Do both files have same SHA256?
 func sameHash(path1 string, path2 string) (bool, error) {
 	sha1, err1 := hashFile(path1)
