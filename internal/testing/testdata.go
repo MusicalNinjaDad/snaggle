@@ -20,6 +20,49 @@ type binaryDetails struct {
 	Lib         bool
 }
 
+var commonElfs = map[string]elf.Elf{
+	"hello_pie": {
+		Name:         "hello_pie",
+		Path:         P_hello_pie,
+		Class:        elf.EI_CLASS(elf.ELF64),
+		Type:         elf.Type(elf.PIE),
+		Interpreter:  P_ld_linux,
+		Dependencies: nil,
+	},
+	"hello_static": {
+		Name:         "hello_static",
+		Path:         P_hello_static,
+		Class:        elf.EI_CLASS(elf.ELF64),
+		Type:         elf.Type(elf.EXE),
+		Interpreter:  "",
+		Dependencies: nil,
+	},
+	"which": {
+		Name:         "which",
+		Path:         P_which,
+		Class:        elf.EI_CLASS(elf.ELF64),
+		Type:         elf.Type(elf.PIE),
+		Interpreter:  P_ld_linux,
+		Dependencies: []string{P_libc},
+	},
+	"id": {
+		Name:         "id",
+		Path:         P_id,
+		Class:        elf.EI_CLASS(elf.ELF64),
+		Type:         elf.Type(elf.PIE),
+		Interpreter:  P_ld_linux,
+		Dependencies: []string{P_libc, P_libpcre2_8, P_libselinux},
+	},
+	"ctypes_so": {
+		Name:         "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
+		Path:         P_ctypes_so,
+		Class:        elf.EI_CLASS(elf.ELF64),
+		Type:         elf.Type(elf.DYN),
+		Interpreter:  "",
+		Dependencies: []string{P_libc, P_libm, P_libpthread},
+	},
+}
+
 // Test Helper: provides a set of common binaries to use in table tests
 //
 //	 type binaryDetails struct {
@@ -34,73 +77,38 @@ func CommonBinaries(t testing.TB) map[string]binaryDetails {
 	return map[string]binaryDetails{
 		"PIE_0": {
 			Description: "PIE no dependencies",
-			Elf: elf.Elf{
-				Name:         "hello_pie",
-				Path:         P_hello_pie,
-				Class:        elf.EI_CLASS(elf.ELF64),
-				Type:         elf.Type(elf.PIE),
-				Interpreter:  P_ld_linux,
-				Dependencies: nil,
-			},
-			Dynamic: true,
-			Exe:     true,
-			Lib:     false,
+			Elf:         commonElfs["hello_pie"],
+			Dynamic:     true,
+			Exe:         true,
+			Lib:         false,
 		},
 		"static": {
 			Description: "Static linked executable",
-			Elf: elf.Elf{
-				Name:         "hello_static",
-				Path:         P_hello_static,
-				Class:        elf.EI_CLASS(elf.ELF64),
-				Type:         elf.Type(elf.EXE),
-				Interpreter:  "",
-				Dependencies: nil,
-			},
-			Dynamic: false,
-			Exe:     true,
-			Lib:     false,
+			Elf:         commonElfs["hello_static"],
+			Dynamic:     false,
+			Exe:         true,
+			Lib:         false,
 		},
 		"PIE_1": {
 			Description: "PIE 1 dependency",
-			Elf: elf.Elf{
-				Name:         "which",
-				Path:         P_which,
-				Class:        elf.EI_CLASS(elf.ELF64),
-				Type:         elf.Type(elf.PIE),
-				Interpreter:  P_ld_linux,
-				Dependencies: []string{P_libc},
-			},
-			Dynamic: true,
-			Exe:     true,
-			Lib:     false,
+			Elf:         commonElfs["which"],
+			Dynamic:     true,
+			Exe:         true,
+			Lib:         false,
 		},
 		"PIE_Many": {
 			Description: "PIE nested dependencies",
-			Elf: elf.Elf{
-				Name:         "id",
-				Path:         P_id,
-				Class:        elf.EI_CLASS(elf.ELF64),
-				Type:         elf.Type(elf.PIE),
-				Interpreter:  P_ld_linux,
-				Dependencies: []string{P_libc, P_libpcre2_8, P_libselinux},
-			},
-			Dynamic: true,
-			Exe:     true,
-			Lib:     false,
+			Elf:         commonElfs["id"],
+			Dynamic:     true,
+			Exe:         true,
+			Lib:         false,
 		},
 		"dyn_lib": {
 			Description: "Dynamic library (.so)",
-			Elf: elf.Elf{
-				Name:         "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
-				Path:         P_ctypes_so,
-				Class:        elf.EI_CLASS(elf.ELF64),
-				Type:         elf.Type(elf.DYN),
-				Interpreter:  "",
-				Dependencies: []string{P_libc, P_libm, P_libpthread},
-			},
-			Dynamic: true,
-			Exe:     false,
-			Lib:     true,
+			Elf:         commonElfs["ctypes_so"],
+			Dynamic:     true,
+			Exe:         false,
+			Lib:         true,
 		},
 	}
 }
