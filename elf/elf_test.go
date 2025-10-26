@@ -15,14 +15,14 @@ func TestCommonBinaries(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.Description, func(t *testing.T) {
-			path := tc.ExpectedElf.Path
+			path := tc.Elf.Path
 			Assert := assert.New(t)
 			parsed, err := elf.New(path)
 			Assert.NoError(err)
 			Assert.Equal(tc.Exe, parsed.IsExe())
 			Assert.Equal(tc.Lib, parsed.IsLib())
 			Assert.Equal(tc.Dynamic, parsed.IsDyn())
-			Assert.Nil(parsed.Diff(tc.ExpectedElf))
+			Assert.Nil(parsed.Diff(tc.Elf))
 		})
 	}
 }
