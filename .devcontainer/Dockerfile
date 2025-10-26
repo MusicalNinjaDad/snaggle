@@ -30,21 +30,22 @@ RUN groupadd --gid ${USER_GID} ${USERNAME} \
 # Install ...
 # ---
 
-# Man pages for all the stuff which is already installed, man itself and basic manpages
-RUN dnf -y install \
+# Man itself, basic manpages (and awk we need next)
+RUN dnf install \
     awk \
     man \
     man-db \
     man-pages \
-&& dnf -y update \
-&& dnf -y reinstall --skip-unavailable $(dnf list --installed | awk '{print $1}')
-
-# Basic development tools
-RUN dnf -y install \
+&& dnf update \
+# man pages for all the stuff which is already installed
+&& dnf reinstall --skip-unavailable $(dnf list --installed | awk '{print $1}') \
+# basic development tools
+&& dnf install \
     bash-completion \
     curl \
     gh \
     git \
+    glibc-all-langpacks \
     just \
     ping \
     which
@@ -59,7 +60,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 RUN uv tool install pre-commit
 
 # Go
-RUN dnf -y install \
+RUN dnf install \
     golang \
     golangci-lint \
     golang-x-tools-goimports
