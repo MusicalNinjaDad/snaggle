@@ -5,11 +5,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 
-	"github.com/ameghdadian/x/iter"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/MusicalNinjaDad/snaggle"
@@ -55,7 +53,7 @@ func TestCommonBinaries(t *testing.T) {
 				assert.Truef(t, same, "%s & %s are different files", original, copy)
 			}
 
-			Assert.ElementsMatch(expectedOut, slices.Collect(iter.Map((strings.Lines(stdout.String())), strings.TrimSpace)))
+			Assert.ElementsMatch(expectedOut, StripLines(stdout.String()))
 		})
 	}
 }

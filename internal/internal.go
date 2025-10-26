@@ -14,6 +14,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ameghdadian/x/iter"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -181,4 +183,9 @@ func PermissionDenied(t *testing.T, filename string) *os.File {
 		t.Fatal(err)
 	}
 	return noaccess
+}
+
+// StripLines converts a multiline string into a []string without line termination or indentation.
+func StripLines(multiline string) []string {
+	return slices.Collect(iter.Map(strings.Lines(multiline), strings.TrimSpace))
 }
