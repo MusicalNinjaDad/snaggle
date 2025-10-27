@@ -101,31 +101,51 @@ func TestDirectory(t *testing.T) {
 	log.SetOutput(&stdout)
 	t.Cleanup(func() { log.SetOutput(os.Stdout) })
 
-	Assert := assert.New(t)
-	tmp := WorkspaceTempDir(t)
+	for _, recursive := range []bool{false, true} {
+		var testname string
+		if recursive {
+			testname = "recursive"
+		} else {
+			testname = "flat"
+		}
 
-	contents := CommonBinaries(t)
-	dir := TestdataPath(".")
-	inplace := false
+		t.Run(testname, func(t *testing.T) {
+			t.Cleanup(func() { stdout.Reset() })
 
-	var expectedOut []string
-	var expectedFiles = make(map[string]string)
+			Assert := assert.New(t)
+			tmp := WorkspaceTempDir(t)
 
-	for _, bin := range contents {
-		stdout, files := ExpectedOutput(bin, tmp, inplace)
-		expectedOut = append(expectedOut, stdout...)
-		maps.Insert(expectedFiles, maps.All(files))
+			contents := CommonBinaries(t)
+			if recursive {
+				contents["subdir"] = Hello_dynamic
+			}
+			dir := TestdataPath(".")
+			inplace := false
+
+			var expectedOut []string
+			var expectedFiles = make(map[string]string)
+
+			for _, bin := range contents {
+				stdout, files := ExpectedOutput(bin, tmp, inplace)
+				expectedOut = append(expectedOut, stdout...)
+				maps.Insert(expectedFiles, maps.All(files))
+			}
+
+			var err error
+			if recursive {
+				err = snaggle.Snaggle(dir, tmp, snaggle.Recursive())
+			} else {
+				err = snaggle.Snaggle(dir, tmp)
+			}
+
+			Assert.NoError(err)
+
+			for original, copy := range expectedFiles {
+				AssertSameFile(t, original, copy)
+			}
+
+			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
+			Assert.ElementsMatch(expectedOut, StripLines(stdout.String()))
+		})
 	}
-
-	err := snaggle.Snaggle(dir, tmp)
-
-	Assert.NoError(err)
-
-	for original, copy := range expectedFiles {
-		AssertSameFile(t, original, copy)
-	}
-
-	AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
-	Assert.ElementsMatch(expectedOut, StripLines(stdout.String()))
-
 }

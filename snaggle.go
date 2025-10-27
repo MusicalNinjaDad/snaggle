@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -146,7 +147,7 @@ func copy(sourcePath string, target string) error {
 //   - the user does not have permission to hardlink (e.g. https://docs.kernel.org/admin-guide/sysctl/fs.html#protected-hardlinks)
 //   - Copies will retain the original filemode
 //   - Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
-func Snaggle(path string, root string, opts ...option) error {
+func Snaggle(path string, root string, opts ...Option) error {
 	var options options
 	for _, optfn := range opts {
 		optfn(&options)
@@ -161,26 +162,38 @@ func Snaggle(path string, root string, opts ...option) error {
 	}
 
 	if stat.IsDir() {
-		files, err := os.ReadDir(path)
-		if err != nil {
-			return err
-		}
-		for _, file := range files {
-			if !file.IsDir() {
+		snagit := func(path string, entry fs.DirEntry, _ error) error {
+			if !entry.IsDir() {
 				var badelf *debug_elf.FormatError
-				path := filepath.Join(path, file.Name())
 				err := snaggle(path, binDir, libDir, options)
 				switch {
 				case err == nil:
-					continue // snagged
+					return nil // snagged
 				case errors.As(err, &badelf):
-					continue // not an ELF
+					return nil // not an ELF
 				default:
 					return err
 				}
 			}
+			return nil
 		}
-		return nil
+
+		switch {
+		case options.recursive:
+			return filepath.WalkDir(path, snagit)
+		default:
+			files, err := os.ReadDir(path)
+			if err != nil {
+				return err
+			}
+			for _, file := range files {
+				path := filepath.Join(path, file.Name())
+				if err := snagit(path, file, nil); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
 	} else {
 		return snaggle(path, binDir, libDir, options)
 	}
@@ -221,11 +234,15 @@ func snaggle(path string, binDir string, libDir string, options options) error {
 
 // options used by [Snaggle]
 type options struct {
-	inplace bool // snag in place, only snag dependencies & interpreter
+	inplace   bool // snag in place, only snag dependencies & interpreter
+	recursive bool // recurse subdirectories & snag everything
 }
 
-// option setting functions
-type option func(*options)
+// Option setting functions
+type Option func(*options)
 
 // Snag in place: only snag dependencies & interpreter
-func Inplace() option { return func(o *options) { o.inplace = true } }
+func Inplace() Option { return func(o *options) { o.inplace = true } }
+
+// Snag recursively: only works when snaggling a directory
+func Recursive() Option { return func(o *options) { o.recursive = true } }

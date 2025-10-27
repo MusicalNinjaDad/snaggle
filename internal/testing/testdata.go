@@ -62,6 +62,23 @@ var commonElfs = map[string]elf.Elf{
 		Interpreter:  "",
 		Dependencies: []string{P_libc, P_libm, P_libpthread},
 	},
+	"hello_dynamic": {
+		Name:         "hello",
+		Path:         P_hello_dynamic,
+		Class:        elf.EI_CLASS(elf.ELF64),
+		Type:         elf.PIE,
+		Interpreter:  P_ld_linux,
+		Dependencies: []string{P_libc},
+	},
+}
+
+var Hello_dynamic = binaryDetails{
+	Description:    "In subdirectory",
+	Elf:            commonElfs["hello_dynamic"],
+	Dynamic:        true,
+	Exe:            true,
+	Lib:            false,
+	HasInterpreter: true,
 }
 
 // Test Helper: provides a set of common binaries to use in table tests

@@ -70,11 +70,12 @@ func TestCommonBinaries(t *testing.T) {
 			t.Run(testname, func(t *testing.T) {
 				Assert := assert.New(t)
 				tmp := WorkspaceTempDir(t)
-				snaggle := exec.Command(snaggleBin, tc.Elf.Path, tmp)
+				snaggle := exec.Command(snaggleBin)
 
 				if inplace {
 					snaggle.Args = append(snaggle.Args, "--inplace")
 				}
+				snaggle.Args = append(snaggle.Args, tc.Elf.Path, tmp)
 
 				expectedOut, expectedFiles := ExpectedOutput(tc, tmp, inplace)
 				stdout, err := snaggle.Output()
@@ -127,4 +128,55 @@ func TestPanic(t *testing.T) {
 	Assert.Contains(stderr, "Sorry someone panicked!")
 	Assert.Contains(stderr, "This is what we know ...")
 	Assert.Contains(stderr, "you got a special testing build that always panics. (Tip: don't build with `-tags testpanic`)")
+}
+
+func TestDirectory(t *testing.T) {
+	for _, recursive := range []bool{false, true} {
+		var testname string
+		if recursive {
+			testname = "recursive"
+		} else {
+			testname = "flat"
+		}
+
+		t.Run(testname, func(t *testing.T) {
+			Assert := assert.New(t)
+			tmp := WorkspaceTempDir(t)
+			dir := TestdataPath(".")
+
+			snaggle := exec.Command(snaggleBin)
+			if recursive {
+				snaggle.Args = append(snaggle.Args, "--recursive")
+			}
+			snaggle.Args = append(snaggle.Args, dir, tmp)
+
+			contents := CommonBinaries(t)
+			if recursive {
+				contents["subdir"] = Hello_dynamic
+			}
+
+			var expectedOut []string
+			var expectedFiles = make(map[string]string)
+			for _, bin := range contents {
+				stdout, files := ExpectedOutput(bin, tmp, inplace)
+				expectedOut = append(expectedOut, stdout...)
+				maps.Insert(expectedFiles, maps.All(files))
+			}
+
+			stdout, err := snaggle.Output()
+
+			if !Assert.NoError(err) {
+				var exiterr *exec.ExitError
+				Assert.ErrorAs(err, &exiterr)
+				t.Logf("Stderr: %s", exiterr.Stderr)
+			}
+
+			for original, copy := range expectedFiles {
+				AssertSameFile(t, original, copy)
+			}
+
+			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
+			Assert.ElementsMatch(expectedOut, StripLines(string(stdout)))
+		})
+	}
 }
