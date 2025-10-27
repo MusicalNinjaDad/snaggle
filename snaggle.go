@@ -171,3 +171,12 @@ func Snaggle(path string, root string) error {
 	//       (probably requires link to return path of file created, if created)
 	return linkerrs.Wait()
 }
+
+// options used by [Snaggle]
+type options struct {
+	inplace bool // snag in place, only snag dependencies & interpreter
+}
+
+type option func(*options)
+
+func Inplace() option { return func(o *options) { o.inplace = true } }
