@@ -116,6 +116,9 @@ func TestDirectory(t *testing.T) {
 			tmp := WorkspaceTempDir(t)
 
 			contents := CommonBinaries(t)
+			if recursive {
+				contents["subdir"] = Hello_dynamic
+			}
 			dir := TestdataPath(".")
 			inplace := false
 
