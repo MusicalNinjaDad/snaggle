@@ -146,6 +146,10 @@ func copy(sourcePath string, target string) error {
 //   - Copies will retain the original filemode
 //   - Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
 func Snaggle(path string, root string, opts ...option) error {
+	return snaggle(path, root, opts...)
+}
+
+func snaggle(path string, root string, opts ...option) error {
 	file, err := elf.New(path)
 	if err != nil {
 		return err
