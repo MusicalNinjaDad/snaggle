@@ -100,14 +100,14 @@ https://github.com/MusicalNinjaDad/snaggle
 `,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		switch {
-		case inplace:
-			return snaggle.Snaggle(args[0], args[1], snaggle.Inplace())
-		case recursive:
-			return snaggle.Snaggle(args[0], args[1], snaggle.Recursive())
-		default:
-			return snaggle.Snaggle(args[0], args[1])
+		var options []snaggle.Option
+		if inplace {
+			options = append(options, snaggle.Inplace())
 		}
+		if recursive {
+			options = append(options, snaggle.Recursive())
+		}
+		return snaggle.Snaggle(args[0], args[1], options...)
 	},
 }
 

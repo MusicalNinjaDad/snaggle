@@ -147,7 +147,7 @@ func copy(sourcePath string, target string) error {
 //   - the user does not have permission to hardlink (e.g. https://docs.kernel.org/admin-guide/sysctl/fs.html#protected-hardlinks)
 //   - Copies will retain the original filemode
 //   - Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
-func Snaggle(path string, root string, opts ...option) error {
+func Snaggle(path string, root string, opts ...Option) error {
 	var options options
 	for _, optfn := range opts {
 		optfn(&options)
@@ -238,11 +238,11 @@ type options struct {
 	recursive bool // recurse subdirectories & snag everything
 }
 
-// option setting functions
-type option func(*options)
+// Option setting functions
+type Option func(*options)
 
 // Snag in place: only snag dependencies & interpreter
-func Inplace() option { return func(o *options) { o.inplace = true } }
+func Inplace() Option { return func(o *options) { o.inplace = true } }
 
 // Snag recursively: only works when snaggling a directory
-func Recursive() option { return func(o *options) { o.recursive = true } }
+func Recursive() Option { return func(o *options) { o.recursive = true } }
