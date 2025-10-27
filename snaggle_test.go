@@ -15,8 +15,6 @@ import (
 )
 
 func TestCommonBinaries(t *testing.T) {
-	Assert := assert.New(t)
-
 	var stdout strings.Builder
 	log.SetOutput(&stdout)
 	t.Cleanup(func() { log.SetOutput(os.Stdout) })
@@ -27,17 +25,18 @@ func TestCommonBinaries(t *testing.T) {
 		t.Run(tc.Description, func(t *testing.T) {
 			t.Cleanup(func() { stdout.Reset() })
 
+			Assert := assert.New(t)
 			tmp := WorkspaceTempDir(t)
 
 			expectedOut, expectedFiles := ExpectedOutput(tc, tmp)
-
 			err := snaggle.Snaggle(tc.Elf.Path, tmp)
+
 			Assert.NoError(err)
 			for original, copy := range expectedFiles {
 				if original == tc.Elf.Path {
-					AssertSameFile(t, original, copy, true)
+					AssertLinkedFile(t, original, copy)
 				} else {
-					AssertSameFile(t, original, copy, false)
+					AssertSameFile(t, original, copy)
 				}
 			}
 			Assert.ElementsMatch(expectedOut, StripLines(stdout.String()))

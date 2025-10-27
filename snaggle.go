@@ -155,7 +155,11 @@ func Snaggle(path string, root string) error {
 
 	linkerrs := new(errgroup.Group)
 
-	linkerrs.Go(func() error { return link(path, binDir) })
+	if file.IsExe() {
+		linkerrs.Go(func() error { return link(path, binDir) })
+	} else {
+		linkerrs.Go(func() error { return link(path, libDir) })
+	}
 	// TODO: #50 make linking interpreter safer
 	if file.Interpreter != "" {
 		linkerrs.Go(func() error { return link(file.Interpreter, libDir) }) // currently OK - as it sits in /lib64 ... but ...
