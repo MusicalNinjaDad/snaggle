@@ -41,7 +41,7 @@ func TestCommonBinaries(t *testing.T) {
 				var err error
 				switch {
 				case inplace:
-					err = snaggle.Snaggle(tc.Elf.Path, tmp, snaggle.Inplace())
+					err = snaggle.Snaggle(tc.Elf.Path, tmp, snaggle.InPlace())
 				default:
 					err = snaggle.Snaggle(tc.Elf.Path, tmp)
 				}

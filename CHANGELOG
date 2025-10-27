@@ -1,5 +1,13 @@
 # Changelog snaggle
 
+## [v0.2.0] - snaggle directories & snaggle in-place
+
+### Features
+
+- passing a directory to snaggle will snag all ELF binaries under that location
+- adding --recursive (cli) / Recursive() (library) will also recurse subdirectories
+- adding --in-place (cli) / InPlace() (library) will only snag dependencies
+
 ## [v0.1.4] - fix missing interpreter
 
 ### Fixes
