@@ -122,10 +122,13 @@ func copy(sourcePath string, target string) error {
 	return err
 }
 
-// Snaggle parses the file given by path and build minimal /bin & /lib64 under root.
+// Snaggle parses the file(s) given by path and build minimal /bin & /lib64 under root.
+//
+// If path refers to a directory, all valid ELF binaries directly under path will be snagged.
+// Provide the Option [Recursive()] to recurse subdirectories.
 //
 // Snaggle will hardlink (or copy, see notes):
-//   - path -> root/bin
+//   - path -> root/bin (executables) or path/lib64 (libraries), unless the Option [InPlace()] is provided
 //   - All dynamically linked dependencies -> root/lib64
 //
 // For example:
@@ -139,8 +142,6 @@ func copy(sourcePath string, target string) error {
 //
 // # Notes:
 //
-//   - Future versions intend to provide improved heuristics for destination paths, currently calling
-//     Snaggle(path/to/a.library.so) will place a.library.so in root/bin and you need to move it manually
 //   - Hardlinks will be created if possible.
 //   - A copy will be performed if hardlinking fails for one of the following reasons:
 //   - path & root are on different filesystems
@@ -242,7 +243,7 @@ type options struct {
 type Option func(*options)
 
 // Snag in place: only snag dependencies & interpreter
-func Inplace() Option { return func(o *options) { o.inplace = true } }
+func InPlace() Option { return func(o *options) { o.inplace = true } }
 
 // Snag recursively: only works when snaggling a directory
 func Recursive() Option { return func(o *options) { o.recursive = true } }

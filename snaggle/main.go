@@ -1,38 +1,53 @@
-// The commandline version of snaggle, for running during container builds etc.
-//
-//	Snag a copy of FILE and all its dependencies to DESTINATION/bin & DESTINATION/lib64
-//
-//	Snaggle is designed to help create minimal runtime containers from pre-existing installations.
-//	It may work for other use cases and I'd be interested to hear about them at:
-//	https://github.com/MusicalNinjaDad/snaggle
-//
-//	Usage:
-//	snaggle FILE DESTINATION [flags]
-//
-//	Flags:
-//	-h, --help   help for snaggle
-//
-//
-//	Snaggle will hardlink (or copy, see notes):
-//	- FILE -> DESTINATION/bin
-//	- All dynamically linked dependencies -> DESTINATION/lib64
-//
-//	Note:
-//	- Future versions intend to provide improved heuristics for destination paths, currently calling
-//	  Snaggle(path/to/a.library.so) will place a.library.so in root/bin and you need to move it manually
-//	- Hardlinks will be created if possible.
-//	- A copy will be performed if hardlinking fails for one of the following reasons:
-//	- path & root are on different filesystems
-//	- the user does not have permission to hardlink (e.g.
-//	  https://docs.kernel.org/admin-guide/sysctl/fs.html#protected-hardlinks)
-//	- Copies will retain the original filemode
-//	- Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
-//
-//	Exit Codes:
-//	  0: Success
-//	  1: Error
-//	  2: Invalid command
-//	  3: Panic
+/*
+The commandline version of snaggle, for running during container builds etc.
+
+Snag a copy of a binary and all its dependencies to DESTINATION/bin & DESTINATION/lib64
+
+Snaggle is designed to help create minimal runtime containers from pre-existing installations.
+It may work for other use cases and I'd be interested to hear about them at:
+https://github.com/MusicalNinjaDad/snaggle
+
+Usage:
+
+	snaggle [--in-place] FILE DESTINATION
+	snaggle [--in-place] [--recursive] DIRECTORY DESTINATION
+
+Flags:
+
+	-h, --help        help for snaggle
+	    --in-place    Snag in place: only snag dependencies & interpreter
+	-r, --recursive   Recurse subdirectories & snag everything
+
+In the form "snaggle FILE DESTINATION":
+
+	FILE and all dependecies will be snagged to DESTINATION.
+	An error will be returned if FILE is not a valid ELF binary.
+
+In the form "snaggle DIRECTORY DESTINATION":
+
+	All valid ELF binaries in DIRECTORY, and all their dependencies, will be snagged to DESTINATION.
+
+Snaggle will hardlink (or copy, see notes):
+- Executables              -> DESTINATION/bin
+- Dynamic libraries (*.so) -> DESTINATION/lib64
+
+Note:
+- Hardlinks will be created if possible.
+- A copy will be performed if hardlinking fails for one of the following reasons:
+  - FILE/DIRECTORY & DESTINATION are on different filesystems
+  - the user does not have permission to hardlink (e.g.
+    https://docs.kernel.org/admin-guide/sysctl/fs.html#protected-hardlinks)
+
+- Copies will retain the original filemode
+- Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
+
+Exit Codes:
+
+	0: Success
+	1: Error
+	2: Invalid command
+	3: Panic
+*/
 package main
 
 import (
@@ -90,9 +105,9 @@ func main() {
 }
 
 var rootCmd = &cobra.Command{
-	Use:   "snaggle FILE DESTINATION",
-	Short: "Snag a copy of FILE and all its dependencies to DESTINATION/bin & DESTINATION/lib64",
-	Long: `Snag a copy of FILE and all its dependencies to DESTINATION/bin & DESTINATION/lib64
+	Use:                   strings.Join(usages, "\n  "),
+	DisableFlagsInUseLine: true,
+	Long: `Snag a copy of a binary and all its dependencies to DESTINATION/bin & DESTINATION/lib64
 
 Snaggle is designed to help create minimal runtime containers from pre-existing installations.
 It may work for other use cases and I'd be interested to hear about them at:
@@ -102,7 +117,7 @@ https://github.com/MusicalNinjaDad/snaggle
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var options []snaggle.Option
 		if inplace {
-			options = append(options, snaggle.Inplace())
+			options = append(options, snaggle.InPlace())
 		}
 		if recursive {
 			options = append(options, snaggle.Recursive())
@@ -111,17 +126,27 @@ https://github.com/MusicalNinjaDad/snaggle
 	},
 }
 
+var usages = []string{
+	"snaggle [--in-place] FILE DESTINATION",
+	"snaggle [--in-place] [--recursive] DIRECTORY DESTINATION",
+}
+
 var helpNotes = `
+In the form "snaggle FILE DESTINATION":
+  FILE and all dependecies will be snagged to DESTINATION.
+  An error will be returned if FILE is not a valid ELF binary.
+
+In the form "snaggle DIRECTORY DESTINATION":
+  All valid ELF binaries in DIRECTORY, and all their dependencies, will be snagged to DESTINATION.
+
 Snaggle will hardlink (or copy, see notes):
-- FILE -> DESTINATION/bin
-- All dynamically linked dependencies -> DESTINATION/lib64
+- Executables              -> DESTINATION/bin
+- Dynamic libraries (*.so) -> DESTINATION/lib64
 
 Note:
-- Future versions intend to provide improved heuristics for destination paths, currently calling
-  Snaggle(path/to/a.library.so) will place a.library.so in root/bin and you need to move it manually
 - Hardlinks will be created if possible.
 - A copy will be performed if hardlinking fails for one of the following reasons:
-  - path & root are on different filesystems
+  - FILE/DIRECTORY & DESTINATION are on different filesystems
   - the user does not have permission to hardlink (e.g.
     https://docs.kernel.org/admin-guide/sysctl/fs.html#protected-hardlinks)
 - Copies will retain the original filemode
