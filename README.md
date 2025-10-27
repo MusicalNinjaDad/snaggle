@@ -3,31 +3,38 @@
 Had enough of every container you pull having a full OS available inside? Create your own minimal app container easily by snaggling the binary and linked libraries.
 
 ```text
-ninjacoder@5747a297e3a1:/workspaces/snaggle/snaggle$ ./snaggle --help
-
-Snag a copy of FILE and all its dependencies to DESTINATION/bin & DESTINATION/lib64
+ninjacoder@f52ce3a5f188:/workspaces/snaggle/snaggle$ ./snaggle --help
+Snag a copy of a binary and all its dependencies to DESTINATION/bin & DESTINATION/lib64
 
 Snaggle is designed to help create minimal runtime containers from pre-existing installations.
 It may work for other use cases and I'd be interested to hear about them at:
 https://github.com/MusicalNinjaDad/snaggle
 
 Usage:
-  snaggle FILE DESTINATION [flags]
+  snaggle [--in-place] FILE DESTINATION
+  snaggle [--in-place] [--recursive] DIRECTORY DESTINATION
 
 Flags:
-  -h, --help   help for snaggle
+  -h, --help        help for snaggle
+      --in-place    Snag in place: only snag dependencies & interpreter
+  -r, --recursive   Recurse subdirectories & snag everything
 
+
+In the form "snaggle FILE DESTINATION":
+  FILE and all dependencies will be snagged to DESTINATION.
+  An error will be returned if FILE is not a valid ELF binary.
+
+In the form "snaggle DIRECTORY DESTINATION":
+  All valid ELF binaries in DIRECTORY, and all their dependencies, will be snagged to DESTINATION.
 
 Snaggle will hardlink (or copy, see notes):
-- FILE -> DESTINATION/bin
-- All dynamically linked dependencies -> DESTINATION/lib64
+- Executables              -> DESTINATION/bin
+- Dynamic libraries (*.so) -> DESTINATION/lib64
 
 Note:
-- Future versions intend to provide improved heuristics for destination paths, currently calling
-  Snaggle(path/to/a.library.so) will place a.library.so in root/bin and you need to move it manually
 - Hardlinks will be created if possible.
 - A copy will be performed if hardlinking fails for one of the following reasons:
-  - path & root are on different filesystems
+  - FILE/DIRECTORY & DESTINATION are on different filesystems
   - the user does not have permission to hardlink (e.g.
     https://docs.kernel.org/admin-guide/sysctl/fs.html#protected-hardlinks)
 - Copies will retain the original filemode
@@ -60,10 +67,8 @@ Exit Codes:
 
 Future versions will:
 
-- add heuristics to identify the best location for each file to make it easier to run snaggle to copy a library & dependencies
 - provide a guaranteed error type from the snaggle library & make exit code handling more robust in the cli
 - provide standard profiles for apps with non-linked dependencies such as SSL certs, locales, gconv etc.
-- provide an option to copy an app & supporting libs & files which have been manually installed in /opt
 
 ## Why Go?
 
