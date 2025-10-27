@@ -37,7 +37,14 @@ func TestCommonBinaries(t *testing.T) {
 				tmp := WorkspaceTempDir(t)
 
 				expectedOut, expectedFiles := ExpectedOutput(tc, tmp, inplace)
-				err := snaggle.Snaggle(tc.Elf.Path, tmp)
+
+				var err error
+				switch {
+				case inplace:
+					err = snaggle.Snaggle(tc.Elf.Path, tmp, snaggle.Inplace())
+				default:
+					err = snaggle.Snaggle(tc.Elf.Path, tmp)
+				}
 
 				Assert.NoError(err)
 				for original, copy := range expectedFiles {

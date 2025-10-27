@@ -145,7 +145,7 @@ func copy(sourcePath string, target string) error {
 //   - the user does not have permission to hardlink (e.g. https://docs.kernel.org/admin-guide/sysctl/fs.html#protected-hardlinks)
 //   - Copies will retain the original filemode
 //   - Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
-func Snaggle(path string, root string) error {
+func Snaggle(path string, root string, opts ...option) error {
 	file, err := elf.New(path)
 	if err != nil {
 		return err
@@ -177,6 +177,8 @@ type options struct {
 	inplace bool // snag in place, only snag dependencies & interpreter
 }
 
+// option setting functions
 type option func(*options)
 
+// Snag in place: only snag dependencies & interpreter
 func Inplace() option { return func(o *options) { o.inplace = true } }
