@@ -2,11 +2,9 @@ package snaggle_test
 
 import (
 	"io"
-	"io/fs"
 	"log"
 	"maps"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -50,15 +48,8 @@ func TestCommonBinaries(t *testing.T) {
 						AssertSameFile(t, original, copy)
 					}
 				}
-				tmpContents := make([]string, 0, len(expectedFiles))
-				err = filepath.WalkDir(tmp, func(path string, entry fs.DirEntry, err error) error {
-					if !entry.IsDir() {
-						tmpContents = append(tmpContents, path)
-					}
-					return err
-				})
-				Assert.NoError(err)
-				Assert.Equal(slices.Collect(maps.Values(expectedFiles)), tmpContents)
+
+				AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
 				Assert.ElementsMatch(expectedOut, StripLines(stdout.String()))
 			})
 		}
