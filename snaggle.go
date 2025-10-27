@@ -160,7 +160,6 @@ func Snaggle(path string, root string, opts ...option) error {
 	}
 
 	if stat.IsDir() {
-		snagerrs := new(errgroup.Group)
 		files, err := os.ReadDir(path)
 		if err != nil {
 			return err
@@ -168,10 +167,13 @@ func Snaggle(path string, root string, opts ...option) error {
 		for _, file := range files {
 			if !file.IsDir() {
 				path := filepath.Join(path, file.Name())
-				snagerrs.Go(func() error { return snaggle(path, binDir, libDir, options) })
+				err := snaggle(path, binDir, libDir, options)
+				if err != nil {
+					return err
+				}
 			}
 		}
-		return snagerrs.Wait()
+		return nil
 	} else {
 		return snaggle(path, binDir, libDir, options)
 	}
