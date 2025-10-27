@@ -73,7 +73,7 @@ func TestCommonBinaries(t *testing.T) {
 				snaggle := exec.Command(snaggleBin)
 
 				if inplace {
-					snaggle.Args = append(snaggle.Args, "--inplace")
+					snaggle.Args = append(snaggle.Args, "--in-place")
 				}
 				snaggle.Args = append(snaggle.Args, tc.Elf.Path, tmp)
 

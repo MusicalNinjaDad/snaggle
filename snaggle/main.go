@@ -57,7 +57,7 @@ func init() {
 	rootCmd.SetErrPrefix("snaggle")
 	helpTemplate := []string{rootCmd.HelpTemplate(), helpNotes, exitCodes}
 	rootCmd.SetHelpTemplate(strings.Join(helpTemplate, "\n"))
-	rootCmd.Flags().BoolVar(&inplace, "inplace", false, "Snag in place: only snag dependencies & interpreter")
+	rootCmd.Flags().BoolVar(&inplace, "in-place", false, "Snag in place: only snag dependencies & interpreter")
 	rootCmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "Recurse subdirectories & snag everything")
 }
 
