@@ -12,6 +12,7 @@
 package snaggle
 
 import (
+	debug_elf "debug/elf"
 	"errors"
 	"fmt"
 	"io"
@@ -146,11 +147,6 @@ func copy(sourcePath string, target string) error {
 //   - Copies will retain the original filemode
 //   - Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
 func Snaggle(path string, root string, opts ...option) error {
-	file, err := elf.New(path)
-	if err != nil {
-		return err
-	}
-
 	var options options
 	for _, optfn := range opts {
 		optfn(&options)
@@ -158,6 +154,43 @@ func Snaggle(path string, root string, opts ...option) error {
 
 	binDir := filepath.Join(root, "bin")
 	libDir := filepath.Join(root, "lib64")
+
+	stat, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+
+	if stat.IsDir() {
+		files, err := os.ReadDir(path)
+		if err != nil {
+			return err
+		}
+		for _, file := range files {
+			if !file.IsDir() {
+				var badelf *debug_elf.FormatError
+				path := filepath.Join(path, file.Name())
+				err := snaggle(path, binDir, libDir, options)
+				switch {
+				case err == nil:
+					continue // snagged
+				case errors.As(err, &badelf):
+					continue // not an ELF
+				default:
+					return err
+				}
+			}
+		}
+		return nil
+	} else {
+		return snaggle(path, binDir, libDir, options)
+	}
+}
+
+func snaggle(path string, binDir string, libDir string, options options) error {
+	file, err := elf.New(path)
+	if err != nil {
+		return err
+	}
 
 	linkerrs := new(errgroup.Group)
 

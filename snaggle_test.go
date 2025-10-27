@@ -95,3 +95,37 @@ func TestFileExists(t *testing.T) {
 		Assert.NoError(err)
 	}
 }
+
+func TestDirectory(t *testing.T) {
+	var stdout strings.Builder
+	log.SetOutput(&stdout)
+	t.Cleanup(func() { log.SetOutput(os.Stdout) })
+
+	Assert := assert.New(t)
+	tmp := WorkspaceTempDir(t)
+
+	contents := CommonBinaries(t)
+	dir := TestdataPath(".")
+	inplace := false
+
+	var expectedOut []string
+	var expectedFiles = make(map[string]string)
+
+	for _, bin := range contents {
+		stdout, files := ExpectedOutput(bin, tmp, inplace)
+		expectedOut = append(expectedOut, stdout...)
+		maps.Insert(expectedFiles, maps.All(files))
+	}
+
+	err := snaggle.Snaggle(dir, tmp)
+
+	Assert.NoError(err)
+
+	for original, copy := range expectedFiles {
+		AssertSameFile(t, original, copy)
+	}
+
+	AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
+	Assert.ElementsMatch(expectedOut, StripLines(stdout.String()))
+
+}
