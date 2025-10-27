@@ -11,12 +11,13 @@ import (
 
 // Paths to our test binaries
 var (
-	P_hello_pie    = TestdataPath("hello_pie")
-	P_hello_static = TestdataPath("hello_static")
-	P_which        = TestdataPath("which")
-	P_id           = TestdataPath("id")
-	P_ldd          = TestdataPath("ldd")
-	P_ctypes_so    = TestdataPath("_ctypes_test.cpython-314-x86_64-linux-gnu.so")
+	P_hello_pie     = TestdataPath("hello_pie")
+	P_hello_static  = TestdataPath("hello_static")
+	P_which         = TestdataPath("which")
+	P_id            = TestdataPath("id")
+	P_ldd           = TestdataPath("ldd")
+	P_ctypes_so     = TestdataPath("_ctypes_test.cpython-314-x86_64-linux-gnu.so")
+	P_hello_dynamic = TestdataPath("hello/hello")
 )
 
 // Test helper: Provides a temporary file which exists but has no read permission
