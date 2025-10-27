@@ -67,10 +67,8 @@ Exit Codes:
 
 Future versions will:
 
-- add heuristics to identify the best location for each file to make it easier to run snaggle to copy a library & dependencies
 - provide a guaranteed error type from the snaggle library & make exit code handling more robust in the cli
 - provide standard profiles for apps with non-linked dependencies such as SSL certs, locales, gconv etc.
-- provide an option to copy an app & supporting libs & files which have been manually installed in /opt
 
 ## Why Go?
 
