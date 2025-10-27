@@ -47,11 +47,16 @@ import (
 	"github.com/MusicalNinjaDad/snaggle"
 )
 
+var (
+	inplace bool
+)
+
 func init() {
 	log.Default().SetOutput(os.Stdout)
 	rootCmd.SetErrPrefix("snaggle")
 	helpTemplate := []string{rootCmd.HelpTemplate(), helpNotes, exitCodes}
 	rootCmd.SetHelpTemplate(strings.Join(helpTemplate, "\n"))
+	rootCmd.Flags().BoolVar(&inplace, "inplace", false, "Snag in place: only snag dependencies & interpreter")
 }
 
 // defer panicHandler to get meaningful output to stderr and control over the exitcode on panic
@@ -93,7 +98,12 @@ https://github.com/MusicalNinjaDad/snaggle
 `,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return snaggle.Snaggle(args[0], args[1])
+		switch {
+		case inplace:
+			return snaggle.Snaggle(args[0], args[1], snaggle.Inplace())
+		default:
+			return snaggle.Snaggle(args[0], args[1])
+		}
 	},
 }
 

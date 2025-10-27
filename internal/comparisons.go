@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 
@@ -112,4 +114,19 @@ func hashFile(path string) ([]byte, error) {
 		return nil, err
 	}
 	return hash.Sum(nil), nil
+}
+
+func AssertDirectoryContents(t *testing.T, expected []string, dir string) {
+	t.Helper()
+	a := assert.New(t)
+	contents := make([]string, 0, len(expected))
+	err := filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
+		if !entry.IsDir() {
+			contents = append(contents, path)
+		}
+		return err // lazy - append may have already happened but not important.
+	})
+	if a.NoError(err) {
+		a.ElementsMatch(expected, contents) // expected is coming from a map, so has non-deterministic ordering
+	}
 }

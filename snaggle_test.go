@@ -3,7 +3,9 @@ package snaggle_test
 import (
 	"io"
 	"log"
+	"maps"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
@@ -21,26 +23,43 @@ func TestCommonBinaries(t *testing.T) {
 
 	tests := CommonBinaries(t)
 
-	for _, tc := range tests {
-		t.Run(tc.Description, func(t *testing.T) {
-			t.Cleanup(func() { stdout.Reset() })
-
-			Assert := assert.New(t)
-			tmp := WorkspaceTempDir(t)
-
-			expectedOut, expectedFiles := ExpectedOutput(tc, tmp)
-			err := snaggle.Snaggle(tc.Elf.Path, tmp)
-
-			Assert.NoError(err)
-			for original, copy := range expectedFiles {
-				if original == tc.Elf.Path {
-					AssertLinkedFile(t, original, copy)
-				} else {
-					AssertSameFile(t, original, copy)
-				}
+	for _, inplace := range []bool{false, true} {
+		for _, tc := range tests {
+			testname := tc.Description
+			if inplace {
+				testname += "_inplace"
 			}
-			Assert.ElementsMatch(expectedOut, StripLines(stdout.String()))
-		})
+
+			t.Run(testname, func(t *testing.T) {
+				t.Cleanup(func() { stdout.Reset() })
+
+				Assert := assert.New(t)
+				tmp := WorkspaceTempDir(t)
+
+				expectedOut, expectedFiles := ExpectedOutput(tc, tmp, inplace)
+
+				var err error
+				switch {
+				case inplace:
+					err = snaggle.Snaggle(tc.Elf.Path, tmp, snaggle.Inplace())
+				default:
+					err = snaggle.Snaggle(tc.Elf.Path, tmp)
+				}
+
+				Assert.NoError(err)
+
+				for original, copy := range expectedFiles {
+					if original == tc.Elf.Path {
+						AssertLinkedFile(t, original, copy)
+					} else {
+						AssertSameFile(t, original, copy)
+					}
+				}
+
+				AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
+				Assert.ElementsMatch(expectedOut, StripLines(stdout.String()))
+			})
+		}
 	}
 }
 

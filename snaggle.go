@@ -145,29 +145,54 @@ func copy(sourcePath string, target string) error {
 //   - the user does not have permission to hardlink (e.g. https://docs.kernel.org/admin-guide/sysctl/fs.html#protected-hardlinks)
 //   - Copies will retain the original filemode
 //   - Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
-func Snaggle(path string, root string) error {
+func Snaggle(path string, root string, opts ...option) error {
 	file, err := elf.New(path)
 	if err != nil {
 		return err
 	}
+
+	var options options
+	for _, optfn := range opts {
+		optfn(&options)
+	}
+
 	binDir := filepath.Join(root, "bin")
 	libDir := filepath.Join(root, "lib64")
 
 	linkerrs := new(errgroup.Group)
 
-	if file.IsExe() {
-		linkerrs.Go(func() error { return link(path, binDir) })
-	} else {
-		linkerrs.Go(func() error { return link(path, libDir) })
+	switch {
+	case options.inplace:
+		// do not link file
+	default:
+		if file.IsExe() {
+			linkerrs.Go(func() error { return link(path, binDir) })
+		} else {
+			linkerrs.Go(func() error { return link(path, libDir) })
+		}
 	}
+
 	// TODO: #50 make linking interpreter safer
 	if file.Interpreter != "" {
 		linkerrs.Go(func() error { return link(file.Interpreter, libDir) }) // currently OK - as it sits in /lib64 ... but ...
 	}
+
 	for _, lib := range file.Dependencies {
 		linkerrs.Go(func() error { return link(lib, libDir) })
 	}
+
 	// TODO: #37 improve error handling with context, error collector, rollback
 	//       (probably requires link to return path of file created, if created)
 	return linkerrs.Wait()
 }
+
+// options used by [Snaggle]
+type options struct {
+	inplace bool // snag in place, only snag dependencies & interpreter
+}
+
+// option setting functions
+type option func(*options)
+
+// Snag in place: only snag dependencies & interpreter
+func Inplace() option { return func(o *options) { o.inplace = true } }
