@@ -21,26 +21,34 @@ func TestCommonBinaries(t *testing.T) {
 
 	tests := CommonBinaries(t)
 
-	for _, tc := range tests {
-		t.Run(tc.Description, func(t *testing.T) {
-			t.Cleanup(func() { stdout.Reset() })
-
-			Assert := assert.New(t)
-			tmp := WorkspaceTempDir(t)
-
-			expectedOut, expectedFiles := ExpectedOutput(tc, tmp)
-			err := snaggle.Snaggle(tc.Elf.Path, tmp)
-
-			Assert.NoError(err)
-			for original, copy := range expectedFiles {
-				if original == tc.Elf.Path {
-					AssertLinkedFile(t, original, copy)
-				} else {
-					AssertSameFile(t, original, copy)
-				}
+	for _, inplace := range []bool{false, true} {
+		for _, tc := range tests {
+			testname := tc.Description
+			if inplace {
+				testname += "_inplace"
 			}
-			Assert.ElementsMatch(expectedOut, StripLines(stdout.String()))
-		})
+
+			t.Run(testname, func(t *testing.T) {
+				t.Cleanup(func() { stdout.Reset() })
+
+				Assert := assert.New(t)
+				tmp := WorkspaceTempDir(t)
+
+				expectedOut, expectedFiles := ExpectedOutput(tc, tmp, inplace)
+				err := snaggle.Snaggle(tc.Elf.Path, tmp)
+
+				Assert.NoError(err)
+				for original, copy := range expectedFiles {
+					if original == tc.Elf.Path {
+						AssertLinkedFile(t, original, copy)
+						Assert.Falsef(inplace, "%s was snagged to %s despite inplace snaggle", original, copy)
+					} else {
+						AssertSameFile(t, original, copy)
+					}
+				}
+				Assert.ElementsMatch(expectedOut, StripLines(stdout.String()))
+			})
+		}
 	}
 }
 

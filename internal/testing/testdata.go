@@ -120,7 +120,7 @@ func CommonBinaries(t testing.TB) map[string]binaryDetails {
 }
 
 // Identify the expected outputs when snaggling a test case to tmp
-func ExpectedOutput(tc binaryDetails, tmp string) (stdout []string, files map[string]string) {
+func ExpectedOutput(tc binaryDetails, tmp string, inplace bool) (stdout []string, files map[string]string) {
 	numFiles := 1 // snaggled Elf
 	numFiles += len(tc.Elf.Dependencies)
 	if tc.HasInterpreter {
@@ -132,14 +132,20 @@ func ExpectedOutput(tc binaryDetails, tmp string) (stdout []string, files map[st
 	binBasePath := filepath.Join(tmp, "bin")
 	libBasePath := filepath.Join(tmp, "lib64")
 
-	var elfPath string
-	if tc.Exe {
-		elfPath = filepath.Join(binBasePath, tc.Elf.Name)
-	} else {
-		elfPath = filepath.Join(libBasePath, tc.Elf.Name)
+	switch inplace {
+	case true:
+		// Don't expect base ELF to be snagged
+	case false:
+		var elfPath string
+		if tc.Exe {
+			elfPath = filepath.Join(binBasePath, tc.Elf.Name)
+		} else {
+			elfPath = filepath.Join(libBasePath, tc.Elf.Name)
+		}
+
+		stdout = append(stdout, LinkMessage(tc.Elf.Path, elfPath))
+		files[tc.Elf.Path] = elfPath
 	}
-	stdout = append(stdout, LinkMessage(tc.Elf.Path, elfPath))
-	files[tc.Elf.Path] = elfPath
 
 	if tc.HasInterpreter {
 		interpPath := filepath.Join(tmp, tc.Elf.Interpreter)

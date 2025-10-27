@@ -66,7 +66,7 @@ func TestCommonBinaries(t *testing.T) {
 			tmp := WorkspaceTempDir(t)
 			snaggle := exec.Command(snaggleBin, tc.Elf.Path, tmp)
 
-			expectedOut, expectedFiles := ExpectedOutput(tc, tmp)
+			expectedOut, expectedFiles := ExpectedOutput(tc, tmp, false)
 			stdout, err := snaggle.Output()
 
 			Assert.NoError(err)
