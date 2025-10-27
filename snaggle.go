@@ -150,6 +150,12 @@ func Snaggle(path string, root string, opts ...option) error {
 	if err != nil {
 		return err
 	}
+
+	var options options
+	for _, optfn := range opts {
+		optfn(&options)
+	}
+
 	binDir := filepath.Join(root, "bin")
 	libDir := filepath.Join(root, "lib64")
 
