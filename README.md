@@ -21,7 +21,7 @@ Flags:
 
 
 In the form "snaggle FILE DESTINATION":
-  FILE and all dependecies will be snagged to DESTINATION.
+  FILE and all dependencies will be snagged to DESTINATION.
   An error will be returned if FILE is not a valid ELF binary.
 
 In the form "snaggle DIRECTORY DESTINATION":
