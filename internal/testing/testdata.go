@@ -129,9 +129,17 @@ func ExpectedOutput(tc binaryDetails, tmp string) (stdout []string, files map[st
 	stdout = make([]string, 0, numFiles)
 	files = make(map[string]string, numFiles)
 
-	binPath := filepath.Join(tmp, "bin", tc.Elf.Name)
-	stdout = append(stdout, LinkMessage(tc.Elf.Path, binPath))
-	files[tc.Elf.Path] = binPath
+	binBasePath := filepath.Join(tmp, "bin")
+	libBasePath := filepath.Join(tmp, "lib64")
+
+	var elfPath string
+	if tc.Exe {
+		elfPath = filepath.Join(binBasePath, tc.Elf.Name)
+	} else {
+		elfPath = filepath.Join(libBasePath, tc.Elf.Name)
+	}
+	stdout = append(stdout, LinkMessage(tc.Elf.Path, elfPath))
+	files[tc.Elf.Path] = elfPath
 
 	if tc.HasInterpreter {
 		interpPath := filepath.Join(tmp, tc.Elf.Interpreter)
@@ -139,7 +147,6 @@ func ExpectedOutput(tc binaryDetails, tmp string) (stdout []string, files map[st
 		files[tc.Elf.Interpreter] = interpPath
 	}
 
-	libBasePath := filepath.Join(tmp, "lib64")
 	for _, lib := range tc.Elf.Dependencies {
 		libPath := filepath.Join(libBasePath, filepath.Base(lib))
 		stdout = append(stdout, LinkMessage(lib, libPath))
