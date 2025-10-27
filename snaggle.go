@@ -12,6 +12,7 @@
 package snaggle
 
 import (
+	debug_elf "debug/elf"
 	"errors"
 	"fmt"
 	"io"
@@ -166,9 +167,15 @@ func Snaggle(path string, root string, opts ...option) error {
 		}
 		for _, file := range files {
 			if !file.IsDir() {
+				var badelf *debug_elf.FormatError
 				path := filepath.Join(path, file.Name())
 				err := snaggle(path, binDir, libDir, options)
-				if err != nil {
+				switch {
+				case err == nil:
+					continue // snagged
+				case errors.As(err, &badelf):
+					continue // not an ELF
+				default:
 					return err
 				}
 			}
