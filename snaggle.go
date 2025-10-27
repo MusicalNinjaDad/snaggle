@@ -161,18 +161,26 @@ func Snaggle(path string, root string, opts ...option) error {
 
 	linkerrs := new(errgroup.Group)
 
-	if file.IsExe() {
-		linkerrs.Go(func() error { return link(path, binDir) })
-	} else {
-		linkerrs.Go(func() error { return link(path, libDir) })
+	switch {
+	case options.inplace:
+		// do not link file
+	default:
+		if file.IsExe() {
+			linkerrs.Go(func() error { return link(path, binDir) })
+		} else {
+			linkerrs.Go(func() error { return link(path, libDir) })
+		}
 	}
+
 	// TODO: #50 make linking interpreter safer
 	if file.Interpreter != "" {
 		linkerrs.Go(func() error { return link(file.Interpreter, libDir) }) // currently OK - as it sits in /lib64 ... but ...
 	}
+
 	for _, lib := range file.Dependencies {
 		linkerrs.Go(func() error { return link(lib, libDir) })
 	}
+
 	// TODO: #37 improve error handling with context, error collector, rollback
 	//       (probably requires link to return path of file created, if created)
 	return linkerrs.Wait()
