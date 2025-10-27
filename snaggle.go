@@ -154,7 +154,27 @@ func Snaggle(path string, root string, opts ...option) error {
 	binDir := filepath.Join(root, "bin")
 	libDir := filepath.Join(root, "lib64")
 
-	return snaggle(path, binDir, libDir, options)
+	stat, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+
+	if stat.IsDir() {
+		snagerrs := new(errgroup.Group)
+		files, err := os.ReadDir(path)
+		if err != nil {
+			return err
+		}
+		for _, file := range files {
+			if !file.IsDir() {
+				path := filepath.Join(path, file.Name())
+				snagerrs.Go(func() error { return snaggle(path, binDir, libDir, options) })
+			}
+		}
+		return snagerrs.Wait()
+	} else {
+		return snaggle(path, binDir, libDir, options)
+	}
 }
 
 func snaggle(path string, binDir string, libDir string, options options) error {
