@@ -131,7 +131,12 @@ func TestDirectory(t *testing.T) {
 				maps.Insert(expectedFiles, maps.All(files))
 			}
 
-			err := snaggle.Snaggle(dir, tmp)
+			var err error
+			if recursive {
+				err = snaggle.Snaggle(dir, tmp, snaggle.Recursive())
+			} else {
+				err = snaggle.Snaggle(dir, tmp)
+			}
 
 			Assert.NoError(err)
 

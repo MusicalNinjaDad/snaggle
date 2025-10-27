@@ -161,26 +161,31 @@ func Snaggle(path string, root string, opts ...option) error {
 	}
 
 	if stat.IsDir() {
-		files, err := os.ReadDir(path)
-		if err != nil {
-			return err
-		}
-		for _, file := range files {
-			if !file.IsDir() {
-				var badelf *debug_elf.FormatError
-				path := filepath.Join(path, file.Name())
-				err := snaggle(path, binDir, libDir, options)
-				switch {
-				case err == nil:
-					continue // snagged
-				case errors.As(err, &badelf):
-					continue // not an ELF
-				default:
-					return err
+		switch {
+		case options.recursive:
+			return nil
+		default:
+			files, err := os.ReadDir(path)
+			if err != nil {
+				return err
+			}
+			for _, file := range files {
+				if !file.IsDir() {
+					var badelf *debug_elf.FormatError
+					path := filepath.Join(path, file.Name())
+					err := snaggle(path, binDir, libDir, options)
+					switch {
+					case err == nil:
+						continue // snagged
+					case errors.As(err, &badelf):
+						continue // not an ELF
+					default:
+						return err
+					}
 				}
 			}
+			return nil
 		}
-		return nil
 	} else {
 		return snaggle(path, binDir, libDir, options)
 	}
@@ -221,7 +226,8 @@ func snaggle(path string, binDir string, libDir string, options options) error {
 
 // options used by [Snaggle]
 type options struct {
-	inplace bool // snag in place, only snag dependencies & interpreter
+	inplace   bool // snag in place, only snag dependencies & interpreter
+	recursive bool // recurse subdirectories & snag everything
 }
 
 // option setting functions
@@ -229,3 +235,6 @@ type option func(*options)
 
 // Snag in place: only snag dependencies & interpreter
 func Inplace() option { return func(o *options) { o.inplace = true } }
+
+// Snag recursively: only works when snaggling a directory
+func Recursive() option { return func(o *options) { o.recursive = true } }
