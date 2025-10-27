@@ -70,11 +70,12 @@ func TestCommonBinaries(t *testing.T) {
 			t.Run(testname, func(t *testing.T) {
 				Assert := assert.New(t)
 				tmp := WorkspaceTempDir(t)
-				snaggle := exec.Command(snaggleBin, tc.Elf.Path, tmp)
+				snaggle := exec.Command(snaggleBin)
 
 				if inplace {
 					snaggle.Args = append(snaggle.Args, "--inplace")
 				}
+				snaggle.Args = append(snaggle.Args, tc.Elf.Path, tmp)
 
 				expectedOut, expectedFiles := ExpectedOutput(tc, tmp, inplace)
 				stdout, err := snaggle.Output()
@@ -143,10 +144,11 @@ func TestDirectory(t *testing.T) {
 			tmp := WorkspaceTempDir(t)
 			dir := TestdataPath(".")
 
-			snaggle := exec.Command(snaggleBin, dir, tmp)
+			snaggle := exec.Command(snaggleBin)
 			if recursive {
 				snaggle.Args = append(snaggle.Args, "--recursive")
 			}
+			snaggle.Args = append(snaggle.Args, dir, tmp)
 
 			contents := CommonBinaries(t)
 			if recursive {
