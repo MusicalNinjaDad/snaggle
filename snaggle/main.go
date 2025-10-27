@@ -48,7 +48,8 @@ import (
 )
 
 var (
-	inplace bool
+	inplace   bool
+	recursive bool
 )
 
 func init() {
@@ -57,6 +58,7 @@ func init() {
 	helpTemplate := []string{rootCmd.HelpTemplate(), helpNotes, exitCodes}
 	rootCmd.SetHelpTemplate(strings.Join(helpTemplate, "\n"))
 	rootCmd.Flags().BoolVar(&inplace, "inplace", false, "Snag in place: only snag dependencies & interpreter")
+	rootCmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "Recurse subdirectories & snag everything")
 }
 
 // defer panicHandler to get meaningful output to stderr and control over the exitcode on panic
@@ -101,6 +103,8 @@ https://github.com/MusicalNinjaDad/snaggle
 		switch {
 		case inplace:
 			return snaggle.Snaggle(args[0], args[1], snaggle.Inplace())
+		case recursive:
+			return snaggle.Snaggle(args[0], args[1], snaggle.Recursive())
 		default:
 			return snaggle.Snaggle(args[0], args[1])
 		}
