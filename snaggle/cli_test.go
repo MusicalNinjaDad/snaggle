@@ -60,25 +60,39 @@ func TestMain(m *testing.M) {
 func TestCommonBinaries(t *testing.T) {
 	tests := CommonBinaries(t)
 
-	for _, tc := range tests {
-		t.Run(tc.Description, func(t *testing.T) {
-			Assert := assert.New(t)
-			tmp := WorkspaceTempDir(t)
-			snaggle := exec.Command(snaggleBin, tc.Elf.Path, tmp)
-
-			expectedOut, expectedFiles := ExpectedOutput(tc, tmp, false)
-			stdout, err := snaggle.Output()
-
-			Assert.NoError(err)
-			for original, copy := range expectedFiles {
-				if original == tc.Elf.Path {
-					AssertLinkedFile(t, original, copy)
-				} else {
-					AssertSameFile(t, original, copy)
-				}
+	for _, inplace := range []bool{false, true} {
+		for _, tc := range tests {
+			testname := tc.Description
+			if inplace {
+				testname += "_inplace"
 			}
-			Assert.ElementsMatch(expectedOut, StripLines(string(stdout)))
-		})
+			t.Run(testname, func(t *testing.T) {
+				Assert := assert.New(t)
+				tmp := WorkspaceTempDir(t)
+				snaggle := exec.Command(snaggleBin, tc.Elf.Path, tmp)
+
+				if inplace {
+					snaggle.Args = append(snaggle.Args, "--inplace")
+				}
+
+				expectedOut, expectedFiles := ExpectedOutput(tc, tmp, false)
+				stdout, err := snaggle.Output()
+
+				if !Assert.NoError(err) {
+					var exiterr *exec.ExitError
+					Assert.ErrorAs(err, &exiterr)
+					t.Logf("Stderr: %s", exiterr.Stderr)
+				}
+				for original, copy := range expectedFiles {
+					if original == tc.Elf.Path {
+						AssertLinkedFile(t, original, copy)
+					} else {
+						AssertSameFile(t, original, copy)
+					}
+				}
+				Assert.ElementsMatch(expectedOut, StripLines(string(stdout)))
+			})
+		}
 	}
 }
 
