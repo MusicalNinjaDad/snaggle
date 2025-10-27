@@ -38,8 +38,10 @@ func TestFileErrors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			Assert := assert.New(t)
 			var errelf *ErrElf
+
 			parsed, err := New(tc.path)
 			// We should have basic info in ALL cases
+
 			Assert.Equal(parsed.Name, tc.filename)
 			Assert.Equal(parsed.Path, tc.path)
 
@@ -72,7 +74,9 @@ func TestInvalidElf(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			Assert := assert.New(t)
 			var errelf *ErrElf
+
 			parsed, err := New(tc.path)
+
 			// We should have basic info in ALL cases
 			Assert.Equal(parsed.Name, tc.filename)
 			Assert.Equal(parsed.Path, tc.path)
@@ -118,7 +122,9 @@ func TestLddErrors(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			Assert := assert.New(t)
+
 			dependencies, err := ldd(tc.path, tc.interpreter)
+
 			Assert.Nil(dependencies)
 			for _, e := range tc.errs {
 				Assert.ErrorIs(err, e)
