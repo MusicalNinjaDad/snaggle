@@ -146,15 +146,6 @@ func copy(sourcePath string, target string) error {
 //   - Copies will retain the original filemode
 //   - Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
 func Snaggle(path string, root string, opts ...option) error {
-	return snaggle(path, root, opts...)
-}
-
-func snaggle(path string, root string, opts ...option) error {
-	file, err := elf.New(path)
-	if err != nil {
-		return err
-	}
-
 	var options options
 	for _, optfn := range opts {
 		optfn(&options)
@@ -162,6 +153,15 @@ func snaggle(path string, root string, opts ...option) error {
 
 	binDir := filepath.Join(root, "bin")
 	libDir := filepath.Join(root, "lib64")
+
+	return snaggle(path, binDir, libDir, options)
+}
+
+func snaggle(path string, binDir string, libDir string, options options) error {
+	file, err := elf.New(path)
+	if err != nil {
+		return err
+	}
 
 	linkerrs := new(errgroup.Group)
 
