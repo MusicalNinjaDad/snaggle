@@ -162,41 +162,34 @@ func Snaggle(path string, root string, opts ...option) error {
 	}
 
 	if stat.IsDir() {
+		snagit := func(path string, entry fs.DirEntry, _ error) error {
+			if !entry.IsDir() {
+				var badelf *debug_elf.FormatError
+				err := snaggle(path, binDir, libDir, options)
+				switch {
+				case err == nil:
+					return nil // snagged
+				case errors.As(err, &badelf):
+					return nil // not an ELF
+				default:
+					return err
+				}
+			}
+			return nil
+		}
+
 		switch {
 		case options.recursive:
-			return filepath.WalkDir(path, func(path string, entry fs.DirEntry, _ error) error {
-				if !entry.IsDir() {
-					var badelf *debug_elf.FormatError
-					err := snaggle(path, binDir, libDir, options)
-					switch {
-					case err == nil:
-						return nil // snagged
-					case errors.As(err, &badelf):
-						return nil // not an ELF
-					default:
-						return err
-					}
-				}
-				return nil
-			})
+			return filepath.WalkDir(path, snagit)
 		default:
 			files, err := os.ReadDir(path)
 			if err != nil {
 				return err
 			}
 			for _, file := range files {
-				if !file.IsDir() {
-					var badelf *debug_elf.FormatError
-					path := filepath.Join(path, file.Name())
-					err := snaggle(path, binDir, libDir, options)
-					switch {
-					case err == nil:
-						continue // snagged
-					case errors.As(err, &badelf):
-						continue // not an ELF
-					default:
-						return err
-					}
+				path := filepath.Join(path, file.Name())
+				if err := snagit(path, file, nil); err != nil {
+					return err
 				}
 			}
 			return nil
