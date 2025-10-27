@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -75,7 +76,7 @@ func TestCommonBinaries(t *testing.T) {
 					snaggle.Args = append(snaggle.Args, "--inplace")
 				}
 
-				expectedOut, expectedFiles := ExpectedOutput(tc, tmp, false)
+				expectedOut, expectedFiles := ExpectedOutput(tc, tmp, inplace)
 				stdout, err := snaggle.Output()
 
 				if !Assert.NoError(err) {
@@ -83,6 +84,7 @@ func TestCommonBinaries(t *testing.T) {
 					Assert.ErrorAs(err, &exiterr)
 					t.Logf("Stderr: %s", exiterr.Stderr)
 				}
+
 				for original, copy := range expectedFiles {
 					if original == tc.Elf.Path {
 						AssertLinkedFile(t, original, copy)
@@ -90,6 +92,8 @@ func TestCommonBinaries(t *testing.T) {
 						AssertSameFile(t, original, copy)
 					}
 				}
+
+				AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
 				Assert.ElementsMatch(expectedOut, StripLines(string(stdout)))
 			})
 		}
