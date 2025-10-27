@@ -34,13 +34,13 @@ func PermissionDenied(t *testing.T, filename string) *os.File {
 	return noaccess
 }
 
-// Constructs a TempDir under `./internal/testdata/.tmp`
+// Constructs a TempDir under `./.tmp`
 //
 // This is (almost) guaranteed to be on the same filesystem as `./internal/testdata` and therefore
 // allow for valid hardlinks.
 func WorkspaceTempDir(t testing.TB) string {
 	t.Helper()
-	tmpRoot := TestdataPath(".tmp")
+	tmpRoot := TestdataPath("../../.tmp")
 	err := os.Mkdir(tmpRoot, os.ModePerm)
 	if err != nil && !errors.Is(err, os.ErrExist) {
 		t.Fatal("Failed to create ./.tmp. Error: ", err)
