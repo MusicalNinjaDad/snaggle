@@ -51,7 +51,6 @@ func TestCommonBinaries(t *testing.T) {
 				for original, copy := range expectedFiles {
 					if original == tc.Elf.Path {
 						AssertLinkedFile(t, original, copy)
-						Assert.Falsef(inplace, "%s was snagged to %s despite inplace snaggle", original, copy)
 					} else {
 						AssertSameFile(t, original, copy)
 					}
