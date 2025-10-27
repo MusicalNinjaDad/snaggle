@@ -98,7 +98,12 @@ https://github.com/MusicalNinjaDad/snaggle
 `,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return snaggle.Snaggle(args[0], args[1])
+		switch {
+		case inplace:
+			return snaggle.Snaggle(args[0], args[1], snaggle.Inplace())
+		default:
+			return snaggle.Snaggle(args[0], args[1])
+		}
 	},
 }
 
