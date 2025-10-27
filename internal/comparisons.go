@@ -21,15 +21,20 @@ func SameFile(path1 string, path2 string) bool {
 	return same
 }
 
-func AssertSameFile(t *testing.T, path1 string, path2 string, mustBeLink bool) {
+func AssertSameFile(t *testing.T, path1 string, path2 string) {
 	t.Helper()
-	var same bool
-	var err error
-	if mustBeLink {
-		same, err = sameInode(path1, path2)
-	} else {
-		same, err = sameFile(path1, path2)
-	}
+
+	same, err := sameFile(path1, path2)
+
+	assert.NoError(t, err)
+	assert.Truef(t, same, "%s & %s are different files", path1, path2)
+}
+
+func AssertLinkedFile(t *testing.T, path1 string, path2 string) {
+	t.Helper()
+
+	same, err := sameInode(path1, path2)
+
 	assert.NoError(t, err)
 	assert.Truef(t, same, "%s & %s are different files", path1, path2)
 }

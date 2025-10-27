@@ -72,9 +72,9 @@ func TestCommonBinaries(t *testing.T) {
 			Assert.NoError(err)
 			for original, copy := range expectedFiles {
 				if original == tc.Elf.Path {
-					AssertSameFile(t, original, copy, true)
+					AssertLinkedFile(t, original, copy)
 				} else {
-					AssertSameFile(t, original, copy, false)
+					AssertSameFile(t, original, copy)
 				}
 			}
 			Assert.ElementsMatch(expectedOut, StripLines(string(stdout)))
