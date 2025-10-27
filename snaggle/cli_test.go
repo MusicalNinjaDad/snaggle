@@ -128,3 +128,53 @@ func TestPanic(t *testing.T) {
 	Assert.Contains(stderr, "This is what we know ...")
 	Assert.Contains(stderr, "you got a special testing build that always panics. (Tip: don't build with `-tags testpanic`)")
 }
+
+func TestDirectory(t *testing.T) {
+	for _, recursive := range []bool{false, true} {
+		var testname string
+		if recursive {
+			testname = "recursive"
+		} else {
+			testname = "flat"
+		}
+
+		t.Run(testname, func(t *testing.T) {
+			Assert := assert.New(t)
+			tmp := WorkspaceTempDir(t)
+			dir := TestdataPath(".")
+
+			snaggle := exec.Command(snaggleBin, dir, tmp)
+			if recursive {
+				snaggle.Args = append(snaggle.Args, "--recursive")
+			}
+
+			contents := CommonBinaries(t)
+			if recursive {
+				contents["subdir"] = Hello_dynamic
+			}
+
+			var expectedOut []string
+			var expectedFiles = make(map[string]string)
+			for _, bin := range contents {
+				stdout, files := ExpectedOutput(bin, tmp, inplace)
+				expectedOut = append(expectedOut, stdout...)
+				maps.Insert(expectedFiles, maps.All(files))
+			}
+
+			stdout, err := snaggle.Output()
+
+			if !Assert.NoError(err) {
+				var exiterr *exec.ExitError
+				Assert.ErrorAs(err, &exiterr)
+				t.Logf("Stderr: %s", exiterr.Stderr)
+			}
+
+			for original, copy := range expectedFiles {
+				AssertSameFile(t, original, copy)
+			}
+
+			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
+			Assert.ElementsMatch(expectedOut, StripLines(string(stdout)))
+		})
+	}
+}
