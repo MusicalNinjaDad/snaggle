@@ -70,6 +70,14 @@ var commonElfs = map[string]elf.Elf{
 		Interpreter:  P_ld_linux,
 		Dependencies: []string{P_libc},
 	},
+	"ldd": {
+		Name:         "ldd",
+		Path:         P_ldd,
+		Class:        elf.EI_CLASS(elf.UNDEF),
+		Type:         elf.Type(elf.ELFNONE),
+		Interpreter:  "",
+		Dependencies: nil,
+	},
 }
 
 var Hello_dynamic = binaryDetails{
@@ -79,6 +87,15 @@ var Hello_dynamic = binaryDetails{
 	Exe:            true,
 	Lib:            false,
 	HasInterpreter: true,
+}
+
+var Ldd = binaryDetails{
+	Description:    "Not an ELF",
+	Elf:            commonElfs["ldd"],
+	Dynamic:        false,
+	Exe:            false,
+	Lib:            false,
+	HasInterpreter: false,
 }
 
 // Test Helper: provides a set of common binaries to use in table tests

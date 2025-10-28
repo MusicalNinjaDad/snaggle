@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/MusicalNinjaDad/snaggle"
+	"github.com/MusicalNinjaDad/snaggle/elf"
 	. "github.com/MusicalNinjaDad/snaggle/internal"
 	. "github.com/MusicalNinjaDad/snaggle/internal/testing"
 )
@@ -142,6 +143,55 @@ func TestDirectory(t *testing.T) {
 
 			for original, copy := range expectedFiles {
 				AssertSameFile(t, original, copy)
+			}
+
+			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
+			Assert.ElementsMatch(expectedOut, StripLines(stdout.String()))
+		})
+	}
+}
+
+func TestInvalidElf(t *testing.T) {
+	var stdout strings.Builder
+	log.SetOutput(&stdout)
+	t.Cleanup(func() { log.SetOutput(os.Stdout) })
+
+	tc := Ldd
+
+	for _, inplace := range []bool{false, true} {
+		var testname string
+		if inplace {
+			testname = "inplace"
+		} else {
+			testname = "link"
+		}
+
+		t.Run(testname, func(t *testing.T) {
+			t.Cleanup(func() { stdout.Reset() })
+
+			Assert := assert.New(t)
+			tmp := WorkspaceTempDir(t)
+
+			var ErrorType *snaggle.SnaggleError
+
+			expectedOut := make([]string, 0)
+			expectedFiles := make(map[string]string, 0)
+
+			var err error
+			switch {
+			case inplace:
+				err = snaggle.Snaggle(tc.Elf.Path, tmp, snaggle.InPlace())
+			default:
+				err = snaggle.Snaggle(tc.Elf.Path, tmp)
+			}
+
+			// In CLI test assert StdErr & exit code instead
+			if Assert.ErrorAs(err, &ErrorType) {
+				Assert.Equal(tc.Elf.Path, ErrorType.Src)
+				Assert.Equal("", ErrorType.Dst)
+				Assert.ErrorIs(err, elf.ErrInvalidElf)
+				Assert.ErrorContains(err, "invalid ELF file")
+				Assert.ErrorContains(err, "error(s) parsing "+tc.Elf.Path+":")
 			}
 
 			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)

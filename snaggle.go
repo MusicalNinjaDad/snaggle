@@ -247,3 +247,16 @@ func InPlace() Option { return func(o *options) { o.inplace = true } }
 
 // Snag recursively: only works when snaggling a directory
 func Recursive() Option { return func(o *options) { o.recursive = true } }
+
+type SnaggleError struct {
+	Src string // Source path
+	Dst string // Destination path
+	err error
+}
+
+func (e *SnaggleError) Error() string {
+	if e.err == nil {
+		return ""
+	}
+	return e.err.Error()
+}
