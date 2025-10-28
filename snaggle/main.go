@@ -51,6 +51,7 @@ Exit Codes:
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -92,14 +93,14 @@ func panicHandler(exitcode int) {
 func main() {
 	defer panicHandler(3)
 	err := rootCmd.Execute()
+	var snaggleError *snaggle.SnaggleError
 	switch {
 	case err == nil:
 		os.Exit(0)
-	// TODO: #73 Safer would be to create a snaggle error and errors.As that for Exit(1)
-	case strings.Contains(err.Error(), "accepts"):
-		os.Exit(2)
-	default:
+	case errors.As(err, &snaggleError):
 		os.Exit(1)
+	default:
+		os.Exit(2)
 	}
 }
 
