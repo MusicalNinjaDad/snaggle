@@ -205,7 +205,7 @@ func TestInvalidElf(t *testing.T) {
 
 			expectedOut := make([]string, 0)
 			expectedErr := []string{
-				"Error: error(s) parsing " + tc.Elf.Path + ":",
+				"Error: parsing " + tc.Elf.Path + ":",
 				"invalid ELF file: bad magic number '[35 33 47 117]' in record at byte 0x0",
 				"",
 			}

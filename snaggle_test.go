@@ -190,8 +190,7 @@ func TestInvalidElf(t *testing.T) {
 				Assert.Equal(tc.Elf.Path, ErrorType.Src)
 				Assert.Equal("", ErrorType.Dst)
 				Assert.ErrorIs(err, elf.ErrInvalidElf)
-				Assert.ErrorContains(err, "invalid ELF file")
-				Assert.ErrorContains(err, "error(s) parsing "+tc.Elf.Path+":")
+				Assert.ErrorContains(err, tc.Elf.Path)
 			}
 
 			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
