@@ -203,7 +203,7 @@ func Snaggle(path string, root string, opts ...Option) error {
 func snaggle(path string, binDir string, libDir string, options options) error {
 	file, err := elf.New(path)
 	if err != nil {
-		return err
+		return &SnaggleError{path, "", err}
 	}
 
 	linkerrs := new(errgroup.Group)
@@ -259,4 +259,8 @@ func (e *SnaggleError) Error() string {
 		return ""
 	}
 	return e.err.Error()
+}
+
+func (e *SnaggleError) Unwrap() error {
+	return e.err
 }
