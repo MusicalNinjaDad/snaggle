@@ -180,3 +180,47 @@ func TestDirectory(t *testing.T) {
 		})
 	}
 }
+
+func TestInvalidElf(t *testing.T) {
+	tc := Ldd
+
+	for _, inplace := range []bool{false, true} {
+		var testname string
+		if inplace {
+			testname = "inplace"
+		} else {
+			testname = "link"
+		}
+
+		t.Run(testname, func(t *testing.T) {
+			Assert := assert.New(t)
+			tmp := WorkspaceTempDir(t)
+
+			snaggle := exec.Command(snaggleBin)
+
+			if inplace {
+				snaggle.Args = append(snaggle.Args, "--in-place")
+			}
+			snaggle.Args = append(snaggle.Args, tc.Elf.Path, tmp)
+
+			expectedOut := make([]string, 0)
+			expectedErr := []string{
+				"error(s) parsing " + tc.Elf.Path + ":",
+				"  invalid ELF file: bad magic number '[35 33 47 117]' in record at byte 0x0",
+			}
+			expectedFiles := make(map[string]string, 0)
+
+			stdout, err := snaggle.Output()
+
+			if Assert.Error(err) {
+				var exiterr *exec.ExitError
+				Assert.ErrorAs(err, &exiterr)
+				Assert.Equal(strings.Join(expectedErr, "\n"), string(exiterr.Stderr))
+				Assert.Equal(1, exiterr.ExitCode())
+			}
+
+			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
+			Assert.ElementsMatch(expectedOut, StripLines(string(stdout)))
+		})
+	}
+}
