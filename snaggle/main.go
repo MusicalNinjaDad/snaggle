@@ -69,7 +69,6 @@ var (
 
 func init() {
 	log.Default().SetOutput(os.Stdout)
-	rootCmd.SetErrPrefix("snaggle")
 	helpTemplate := []string{rootCmd.HelpTemplate(), helpNotes, exitCodes}
 	rootCmd.SetHelpTemplate(strings.Join(helpTemplate, "\n"))
 	rootCmd.Flags().BoolVar(&inplace, "in-place", false, "Snag in place: only snag dependencies & interpreter")
@@ -106,6 +105,7 @@ func main() {
 
 var rootCmd = &cobra.Command{
 	Use:                   strings.Join(usages, "\n  "),
+	SilenceUsage:          true,
 	DisableFlagsInUseLine: true,
 	Long: `Snag a copy of a binary and all its dependencies to DESTINATION/bin & DESTINATION/lib64
 
