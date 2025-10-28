@@ -100,6 +100,7 @@ func main() {
 	case errors.As(err, &snaggleError):
 		os.Exit(1)
 	default:
+		println(rootCmd.UsageString())
 		os.Exit(2)
 	}
 }
@@ -114,7 +115,7 @@ Snaggle is designed to help create minimal runtime containers from pre-existing 
 It may work for other use cases and I'd be interested to hear about them at:
 https://github.com/MusicalNinjaDad/snaggle
 `,
-	Args: cobra.ExactArgs(2),
+	Args: ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var options []snaggle.Option
 		if inplace {
@@ -160,3 +161,12 @@ var exitCodes = `Exit Codes:
   2: Invalid command
   3: Panic
 `
+
+func ExactArgs(n int) cobra.PositionalArgs {
+	return func(cmd *cobra.Command, args []string) error {
+		if len(args) != n {
+			return fmt.Errorf("snaggle expects %d argument(s), %d received", n, len(args))
+		}
+		return nil
+	}
+}

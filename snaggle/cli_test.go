@@ -103,13 +103,29 @@ func TestCommonBinaries(t *testing.T) {
 
 func TestInvalidNumberArgs(t *testing.T) {
 	Assert := assert.New(t)
+
 	snaggle := exec.Command(snaggleBin, "src")
-	out, err := snaggle.Output()
-	t.Logf("Stdout: %s", out)
+
+	// would be added on .execute()
+	rootCmd.InitDefaultHelpFlag()
+	rootCmd.InitDefaultVersionFlag()
+
+	expectedErr := "Error: snaggle expects 2 argument(s), 1 received\n"
+	expectedErr += rootCmd.UsageString()
+	expectedErr += "\n"
+
+	stdout, err := snaggle.Output()
+
+	Assert.Empty(stdout)
+
 	var exitcode *exec.ExitError
-	Assert.ErrorAs(err, &exitcode)
-	t.Logf("Stderr: %s", exitcode.Stderr)
-	Assert.Equal(2, exitcode.ExitCode())
+	if Assert.ErrorAs(err, &exitcode) {
+		Assert.Equal(2, exitcode.ExitCode())
+		Assert.Equal(expectedErr, string(exitcode.Stderr))
+		t.Logf("Stderr:\n%s", exitcode.Stderr)
+		t.Logf("expected:\n%s", expectedErr)
+	}
+
 }
 
 func TestPanic(t *testing.T) {
@@ -218,6 +234,7 @@ func TestInvalidElf(t *testing.T) {
 				Assert.ErrorAs(err, &exiterr)
 				Assert.Equal(strings.Join(expectedErr, "\n"), string(exiterr.Stderr))
 				Assert.Equal(1, exiterr.ExitCode())
+				t.Logf("Stderr:\n%s", exiterr.Stderr)
 			}
 
 			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
