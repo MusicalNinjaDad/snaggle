@@ -2,11 +2,13 @@ package snaggle_test
 
 import (
 	"io"
+	"io/fs"
 	"log"
 	"maps"
 	"os"
 	"slices"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -192,6 +194,63 @@ func TestInvalidElf(t *testing.T) {
 				Assert.ErrorIs(err, elf.ErrInvalidElf)
 				Assert.ErrorContains(err, tc.Elf.Path)
 			}
+
+			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
+			Assert.ElementsMatch(expectedOut, StripLines(stdout.String()))
+		})
+	}
+}
+
+func TestRecurseFile(t *testing.T) {
+	var stdout strings.Builder
+	log.SetOutput(&stdout)
+	t.Cleanup(func() { log.SetOutput(os.Stdout) })
+
+	tc := Ldd
+
+	for _, inplace := range []bool{false, true} {
+		var testname string
+		if inplace {
+			testname = "inplace"
+		} else {
+			testname = "link"
+		}
+
+		t.Run(testname, func(t *testing.T) {
+			t.Cleanup(func() { stdout.Reset() })
+
+			Assert := assert.New(t)
+			tmp := WorkspaceTempDir(t)
+
+			var invocationError *snaggle.InvocationError
+			var pathError *fs.PathError
+			var snaggleError *snaggle.SnaggleError
+
+			expectedOut := make([]string, 0)
+			expectedFiles := make(map[string]string, 0)
+
+			var err error
+			switch {
+			case inplace:
+				err = snaggle.Snaggle(tc.Elf.Path, tmp, snaggle.InPlace(), snaggle.Recursive())
+			default:
+				err = snaggle.Snaggle(tc.Elf.Path, tmp, snaggle.Recursive())
+			}
+
+			// In CLI test assert StdErr & exit code instead
+			if Assert.ErrorAs(err, &invocationError) {
+				Assert.Equal(tc.Elf.Path, invocationError.Path)
+				Assert.Equal(tmp, invocationError.Target)
+				Assert.ErrorIs(err, snaggle.ErrRecurseFile)
+				if Assert.ErrorAs(err, &pathError) {
+					Assert.Equal("recurse", pathError.Op)
+					Assert.Equal(tc.Elf.Path, pathError.Path)
+					Assert.ErrorIs(pathError, syscall.ENOTDIR)
+				}
+			}
+
+			Assert.NotErrorAs(err, &snaggleError)
+			Assert.NotErrorIs(err, elf.ErrInvalidElf)
 
 			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
 			Assert.ElementsMatch(expectedOut, StripLines(stdout.String()))
