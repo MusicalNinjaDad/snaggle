@@ -11,7 +11,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ameghdadian/x/iter"
 	"github.com/stretchr/testify/assert"
 
 	. "github.com/MusicalNinjaDad/snaggle/internal"
@@ -103,13 +102,25 @@ func TestCommonBinaries(t *testing.T) {
 
 func TestInvalidNumberArgs(t *testing.T) {
 	Assert := assert.New(t)
+
 	snaggle := exec.Command(snaggleBin, "src")
-	out, err := snaggle.Output()
-	t.Logf("Stdout: %s", out)
-	var exitcode *exec.ExitError
-	Assert.ErrorAs(err, &exitcode)
-	t.Logf("Stderr: %s", exitcode.Stderr)
-	Assert.Equal(2, exitcode.ExitCode())
+
+	expectedErr := "Error: snaggle expects 2 argument(s), 1 received\n"
+	expectedErr += rootCmd.UsageString()
+	expectedErr += "\n"
+
+	stdout, err := snaggle.Output()
+
+	Assert.Empty(stdout)
+
+	var exitError *exec.ExitError
+	if Assert.ErrorAs(err, &exitError) {
+		Assert.Equal(2, exitError.ExitCode())
+		Assert.Equal(expectedErr, string(exitError.Stderr))
+	}
+
+	t.Logf("Stdout:\n%s", stdout)
+	t.Logf("Stderr:\n%s", exitError.Stderr)
 }
 
 func TestPanic(t *testing.T) {
@@ -117,17 +128,26 @@ func TestPanic(t *testing.T) {
 	defer removeBuildDir(panicBin)
 
 	Assert := assert.New(t)
+
 	snaggle := exec.Command(panicBin, "src", "dst")
-	out, err := snaggle.Output()
-	t.Logf("Stdout: %s", out)
-	var exitcode *exec.ExitError
-	Assert.ErrorAs(err, &exitcode)
-	stderr := slices.Collect(iter.Map((strings.Lines(string(exitcode.Stderr))), strings.TrimSpace))
-	t.Logf("Stderr: %s", stderr)
-	Assert.Equal(3, exitcode.ExitCode())
-	Assert.Contains(stderr, "Sorry someone panicked!")
-	Assert.Contains(stderr, "This is what we know ...")
-	Assert.Contains(stderr, "you got a special testing build that always panics. (Tip: don't build with `-tags testpanic`)")
+
+	expectedErr := "Sorry someone panicked!\n"
+	expectedErr += "This is what we know ...\n"
+	expectedErr += "you got a special testing build that always panics. (Tip: don't build with `-tags testpanic`)\n"
+
+	stdout, err := snaggle.Output()
+
+	Assert.Empty(stdout)
+
+	var exitError *exec.ExitError
+	if Assert.ErrorAs(err, &exitError) {
+		Assert.Equal(3, exitError.ExitCode())
+		Assert.True(strings.HasPrefix(string(exitError.Stderr), expectedErr), "stderr does not start as expected")
+		Assert.NotContains(string(exitError.Stderr), rootCmd.UsageString())
+	}
+
+	t.Logf("Stdout:\n%s", stdout)
+	t.Logf("Stderr:\n%s", exitError.Stderr)
 }
 
 func TestDirectory(t *testing.T) {
@@ -177,6 +197,96 @@ func TestDirectory(t *testing.T) {
 
 			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
 			Assert.ElementsMatch(expectedOut, StripLines(string(stdout)))
+		})
+	}
+}
+
+func TestInvalidElf(t *testing.T) {
+	tc := Ldd
+
+	for _, inplace := range []bool{false, true} {
+		var testname string
+		if inplace {
+			testname = "inplace"
+		} else {
+			testname = "link"
+		}
+
+		t.Run(testname, func(t *testing.T) {
+			Assert := assert.New(t)
+			tmp := WorkspaceTempDir(t)
+
+			snaggle := exec.Command(snaggleBin)
+
+			if inplace {
+				snaggle.Args = append(snaggle.Args, "--in-place")
+			}
+			snaggle.Args = append(snaggle.Args, tc.Elf.Path, tmp)
+
+			expectedOut := make([]string, 0)
+			expectedErr := []string{
+				"Error: parsing " + tc.Elf.Path + ":",
+				"invalid ELF file: bad magic number '[35 33 47 117]' in record at byte 0x0",
+				"",
+			}
+			expectedFiles := make(map[string]string, 0)
+
+			stdout, err := snaggle.Output()
+
+			if Assert.Error(err) {
+				var exiterr *exec.ExitError
+				Assert.ErrorAs(err, &exiterr)
+				Assert.Equal(strings.Join(expectedErr, "\n"), string(exiterr.Stderr))
+				Assert.Equal(1, exiterr.ExitCode())
+				t.Logf("Stderr:\n%s", exiterr.Stderr)
+			}
+
+			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
+			Assert.ElementsMatch(expectedOut, StripLines(string(stdout)))
+		})
+	}
+}
+
+func TestRecurseFile(t *testing.T) {
+	tc := Ldd
+
+	for _, inplace := range []bool{false, true} {
+		var testname string
+		if inplace {
+			testname = "inplace"
+		} else {
+			testname = "link"
+		}
+
+		t.Run(testname, func(t *testing.T) {
+			Assert := assert.New(t)
+			tmp := WorkspaceTempDir(t)
+
+			snaggle := exec.Command(snaggleBin)
+
+			if inplace {
+				snaggle.Args = append(snaggle.Args, "--in-place")
+			}
+			snaggle.Args = append(snaggle.Args, "--recursive", tc.Elf.Path, tmp)
+
+			expectedErr := "Error: --recursive " + tc.Elf.Path + ": not a directory\n"
+			expectedErr += rootCmd.UsageString()
+			expectedErr += "\n"
+
+			stdout, err := snaggle.Output()
+
+			Assert.Empty(stdout)
+
+			var exitError *exec.ExitError
+			if Assert.ErrorAs(err, &exitError) {
+				Assert.Equal(2, exitError.ExitCode())
+				Assert.Equal(expectedErr, string(exitError.Stderr))
+			}
+
+			AssertDirectoryContents(t, nil, tmp)
+
+			t.Logf("Stdout:\n%s", stdout)
+			t.Logf("Stderr:\n%s", exitError.Stderr)
 		})
 	}
 }

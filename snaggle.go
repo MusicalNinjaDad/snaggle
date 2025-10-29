@@ -196,6 +196,10 @@ func Snaggle(path string, root string, opts ...Option) error {
 			return nil
 		}
 	} else {
+		if options.recursive {
+			err = &fs.PathError{Op: "--recursive", Path: path, Err: syscall.ENOTDIR}
+			return &InvocationError{Path: path, Target: root, err: err}
+		}
 		return snaggle(path, binDir, libDir, options)
 	}
 }
@@ -203,7 +207,7 @@ func Snaggle(path string, root string, opts ...Option) error {
 func snaggle(path string, binDir string, libDir string, options options) error {
 	file, err := elf.New(path)
 	if err != nil {
-		return err
+		return &SnaggleError{path, "", err}
 	}
 
 	linkerrs := new(errgroup.Group)
@@ -247,3 +251,42 @@ func InPlace() Option { return func(o *options) { o.inplace = true } }
 
 // Snag recursively: only works when snaggling a directory
 func Recursive() Option { return func(o *options) { o.recursive = true } }
+
+// An error occurred during snaglling
+type SnaggleError struct {
+	Src string // Source path
+	Dst string // Destination path
+	err error
+}
+
+func (e *SnaggleError) Error() string {
+	if e.err == nil {
+		return ""
+	}
+	return e.err.Error()
+}
+
+func (e *SnaggleError) Unwrap() error {
+	return e.err
+}
+
+// Snaggle was invoked with semantically invalid inputs.
+// err will be formatted to read well when directly output to stderr during CLI invokation
+// E.g: invoking Snaggle(path/to/FILE, root, Recursive()) will wrap a
+// [&fs.PathError]{Op: "--recursive", Path: "path/to/FILE", Err: syscall.ENOTDIR}
+type InvocationError struct {
+	Path   string
+	Target string
+	err    error
+}
+
+func (e *InvocationError) Error() string {
+	if e.err == nil {
+		return ""
+	}
+	return e.err.Error()
+}
+
+func (e *InvocationError) Unwrap() error {
+	return e.err
+}

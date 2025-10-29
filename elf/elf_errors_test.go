@@ -50,7 +50,7 @@ func TestFileErrors(t *testing.T) {
 
 			Assert.ErrorAs(err, &errelf)
 			Assert.Equal(tc.path, errelf.Path())
-			Assert.ErrorContains(err, "error(s) parsing "+tc.path+":")
+			Assert.ErrorContains(err, "parsing "+tc.path+":")
 
 			Assert.NotErrorIs(err, ErrInvalidElf)
 		})
@@ -86,7 +86,7 @@ func TestInvalidElf(t *testing.T) {
 
 			Assert.ErrorAs(err, &errelf)
 			Assert.Equal(tc.path, errelf.Path())
-			Assert.ErrorContains(err, "error(s) parsing "+tc.path+":")
+			Assert.ErrorContains(err, "parsing "+tc.path+":")
 
 		})
 	}

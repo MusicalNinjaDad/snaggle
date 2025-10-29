@@ -51,6 +51,7 @@ Exit Codes:
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -69,11 +70,13 @@ var (
 
 func init() {
 	log.Default().SetOutput(os.Stdout)
-	rootCmd.SetErrPrefix("snaggle")
 	helpTemplate := []string{rootCmd.HelpTemplate(), helpNotes, exitCodes}
 	rootCmd.SetHelpTemplate(strings.Join(helpTemplate, "\n"))
 	rootCmd.Flags().BoolVar(&inplace, "in-place", false, "Snag in place: only snag dependencies & interpreter")
 	rootCmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "Recurse subdirectories & snag everything")
+	// These are called somewhere in execute - which is not available to integration tests
+	rootCmd.InitDefaultHelpFlag()
+	rootCmd.InitDefaultVersionFlag()
 }
 
 // defer panicHandler to get meaningful output to stderr and control over the exitcode on panic
@@ -93,19 +96,21 @@ func panicHandler(exitcode int) {
 func main() {
 	defer panicHandler(3)
 	err := rootCmd.Execute()
+	var snaggleError *snaggle.SnaggleError
 	switch {
 	case err == nil:
 		os.Exit(0)
-	// Safer would be to create a snaggle error and errors.As that for Exit(1)
-	case strings.Contains(err.Error(), "accepts"):
-		os.Exit(2)
-	default:
+	case errors.As(err, &snaggleError):
 		os.Exit(1)
+	default:
+		println(rootCmd.UsageString())
+		os.Exit(2)
 	}
 }
 
 var rootCmd = &cobra.Command{
 	Use:                   strings.Join(usages, "\n  "),
+	SilenceUsage:          true,
 	DisableFlagsInUseLine: true,
 	Long: `Snag a copy of a binary and all its dependencies to DESTINATION/bin & DESTINATION/lib64
 
@@ -113,7 +118,7 @@ Snaggle is designed to help create minimal runtime containers from pre-existing 
 It may work for other use cases and I'd be interested to hear about them at:
 https://github.com/MusicalNinjaDad/snaggle
 `,
-	Args: cobra.ExactArgs(2),
+	Args: ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var options []snaggle.Option
 		if inplace {
@@ -159,3 +164,12 @@ var exitCodes = `Exit Codes:
   2: Invalid command
   3: Panic
 `
+
+func ExactArgs(n int) cobra.PositionalArgs {
+	return func(cmd *cobra.Command, args []string) error {
+		if len(args) != n {
+			return fmt.Errorf("snaggle expects %d argument(s), %d received", n, len(args))
+		}
+		return nil
+	}
+}

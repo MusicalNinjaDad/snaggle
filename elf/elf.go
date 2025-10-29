@@ -386,7 +386,7 @@ func libpathcmp(path1 string, path2 string) int {
 
 func (e *ErrElf) Error() string {
 	if e.errs != nil {
-		return "error(s) parsing " + e.path + ":\n" + errors.Join(e.errs...).Error()
+		return "parsing " + e.path + ":\n" + errors.Join(e.errs...).Error()
 	}
 	panic("Don't call .Error() on an empty ErrElf")
 }
