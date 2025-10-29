@@ -11,7 +11,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ameghdadian/x/iter"
 	"github.com/stretchr/testify/assert"
 
 	. "github.com/MusicalNinjaDad/snaggle/internal"
@@ -129,17 +128,26 @@ func TestPanic(t *testing.T) {
 	defer removeBuildDir(panicBin)
 
 	Assert := assert.New(t)
+
 	snaggle := exec.Command(panicBin, "src", "dst")
-	out, err := snaggle.Output()
-	t.Logf("Stdout: %s", out)
-	var exitcode *exec.ExitError
-	Assert.ErrorAs(err, &exitcode)
-	stderr := slices.Collect(iter.Map((strings.Lines(string(exitcode.Stderr))), strings.TrimSpace))
-	t.Logf("Stderr: %s", stderr)
-	Assert.Equal(3, exitcode.ExitCode())
-	Assert.Contains(stderr, "Sorry someone panicked!")
-	Assert.Contains(stderr, "This is what we know ...")
-	Assert.Contains(stderr, "you got a special testing build that always panics. (Tip: don't build with `-tags testpanic`)")
+
+	expectedErr := "Sorry someone panicked!\n"
+	expectedErr += "This is what we know ...\n"
+	expectedErr += "you got a special testing build that always panics. (Tip: don't build with `-tags testpanic`)\n"
+
+	stdout, err := snaggle.Output()
+
+	Assert.Empty(stdout)
+
+	var exitError *exec.ExitError
+	if Assert.ErrorAs(err, &exitError) {
+		Assert.Equal(3, exitError.ExitCode())
+		Assert.True(strings.HasPrefix(string(exitError.Stderr), expectedErr), "stderr does not start as expected")
+		Assert.NotContains(string(exitError.Stderr), rootCmd.UsageString())
+	}
+
+	t.Logf("Stdout:\n%s", stdout)
+	t.Logf("Stderr:\n%s", exitError.Stderr)
 }
 
 func TestDirectory(t *testing.T) {
