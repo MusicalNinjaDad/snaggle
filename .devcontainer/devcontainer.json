@@ -50,6 +50,14 @@
                     "editor.quickSuggestions": {
                         "strings": "on"
                     }
+                },
+                "[go]": {
+                    "editor.insertSpaces": false,
+                    "editor.formatOnSave": true,
+                    "editor.codeActionsOnSave": {
+                        "source.organizeImports": "explicit"
+                    },
+                    "editor.rulers": [120]
                 }
             }
         }
