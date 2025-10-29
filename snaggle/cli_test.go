@@ -114,14 +114,14 @@ func TestInvalidNumberArgs(t *testing.T) {
 
 	Assert.Empty(stdout)
 
-	var exitcode *exec.ExitError
-	if Assert.ErrorAs(err, &exitcode) {
-		Assert.Equal(2, exitcode.ExitCode())
-		Assert.Equal(expectedErr, string(exitcode.Stderr))
-		t.Logf("Stderr:\n%s", exitcode.Stderr)
-		t.Logf("expected:\n%s", expectedErr)
+	var exitError *exec.ExitError
+	if Assert.ErrorAs(err, &exitError) {
+		Assert.Equal(2, exitError.ExitCode())
+		Assert.Equal(expectedErr, string(exitError.Stderr))
 	}
 
+	t.Logf("Stdout:\n%s", stdout)
+	t.Logf("Stderr:\n%s", exitError.Stderr)
 }
 
 func TestPanic(t *testing.T) {
