@@ -106,10 +106,6 @@ func TestInvalidNumberArgs(t *testing.T) {
 
 	snaggle := exec.Command(snaggleBin, "src")
 
-	// would be added on .execute()
-	rootCmd.InitDefaultHelpFlag()
-	rootCmd.InitDefaultVersionFlag()
-
 	expectedErr := "Error: snaggle expects 2 argument(s), 1 received\n"
 	expectedErr += rootCmd.UsageString()
 	expectedErr += "\n"

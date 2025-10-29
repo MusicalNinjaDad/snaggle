@@ -74,6 +74,9 @@ func init() {
 	rootCmd.SetHelpTemplate(strings.Join(helpTemplate, "\n"))
 	rootCmd.Flags().BoolVar(&inplace, "in-place", false, "Snag in place: only snag dependencies & interpreter")
 	rootCmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "Recurse subdirectories & snag everything")
+	// These are called somewhere in execute - which is not available to integration tests
+	rootCmd.InitDefaultHelpFlag()
+	rootCmd.InitDefaultVersionFlag()
 }
 
 // defer panicHandler to get meaningful output to stderr and control over the exitcode on panic
