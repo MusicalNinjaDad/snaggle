@@ -70,6 +70,9 @@ var (
 
 func init() {
 	log.Default().SetOutput(os.Stdout)
+	// Do not implement until we also add --verbose -> avoid breaking change of repurposing `-v`
+	// rootCmd.Version = snaggle.Version
+
 	helpTemplate := []string{rootCmd.HelpTemplate(), helpNotes, exitCodes}
 	rootCmd.SetHelpTemplate(strings.Join(helpTemplate, "\n"))
 	rootCmd.Flags().BoolVar(&inplace, "in-place", false, "Snag in place: only snag dependencies & interpreter")
