@@ -241,9 +241,8 @@ func TestRecurseFile(t *testing.T) {
 			if Assert.ErrorAs(err, &invocationError) {
 				Assert.Equal(tc.Elf.Path, invocationError.Path)
 				Assert.Equal(tmp, invocationError.Target)
-				Assert.ErrorIs(err, snaggle.ErrRecurseFile)
 				if Assert.ErrorAs(err, &pathError) {
-					Assert.Equal("recurse", pathError.Op)
+					Assert.Equal("--recursive", pathError.Op)
 					Assert.Equal(tc.Elf.Path, pathError.Path)
 					Assert.ErrorIs(pathError, syscall.ENOTDIR)
 				}

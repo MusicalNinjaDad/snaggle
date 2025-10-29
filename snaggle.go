@@ -197,7 +197,7 @@ func Snaggle(path string, root string, opts ...Option) error {
 		}
 	} else {
 		if options.recursive {
-			err = errors.Join(ErrRecurseFile, &fs.PathError{Op: "recurse", Path: path, Err: syscall.ENOTDIR})
+			err = &fs.PathError{Op: "--recursive", Path: path, Err: syscall.ENOTDIR}
 			return &InvocationError{Path: path, Target: root, err: err}
 		}
 		return snaggle(path, binDir, libDir, options)
@@ -287,6 +287,3 @@ func (e *InvocationError) Error() string {
 func (e *InvocationError) Unwrap() error {
 	return e.err
 }
-
-// Will wrap a &fs.PathError{Op: "recurse", Path: ..., Err: syscall.ENOTDIR},
-var ErrRecurseFile = errors.New("can only recurse into a directory")

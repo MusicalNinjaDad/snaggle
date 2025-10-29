@@ -246,3 +246,47 @@ func TestInvalidElf(t *testing.T) {
 		})
 	}
 }
+
+func TestRecurseFile(t *testing.T) {
+	tc := Ldd
+
+	for _, inplace := range []bool{false, true} {
+		var testname string
+		if inplace {
+			testname = "inplace"
+		} else {
+			testname = "link"
+		}
+
+		t.Run(testname, func(t *testing.T) {
+			Assert := assert.New(t)
+			tmp := WorkspaceTempDir(t)
+
+			snaggle := exec.Command(snaggleBin)
+
+			if inplace {
+				snaggle.Args = append(snaggle.Args, "--in-place")
+			}
+			snaggle.Args = append(snaggle.Args, "--recursive", tc.Elf.Path, tmp)
+
+			expectedErr := "Error: --recursive " + tc.Elf.Path + ": not a directory\n"
+			expectedErr += rootCmd.UsageString()
+			expectedErr += "\n"
+
+			stdout, err := snaggle.Output()
+
+			Assert.Empty(stdout)
+
+			var exitError *exec.ExitError
+			if Assert.ErrorAs(err, &exitError) {
+				Assert.Equal(2, exitError.ExitCode())
+				Assert.Equal(expectedErr, string(exitError.Stderr))
+			}
+
+			AssertDirectoryContents(t, nil, tmp)
+
+			t.Logf("Stdout:\n%s", stdout)
+			t.Logf("Stderr:\n%s", exitError.Stderr)
+		})
+	}
+}
