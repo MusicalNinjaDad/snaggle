@@ -270,7 +270,10 @@ func (e *SnaggleError) Unwrap() error {
 	return e.err
 }
 
-// Snaggle was invoked with semantically invalid inputs
+// Snaggle was invoked with semantically invalid inputs.
+// err will be formatted to read well when directly output to stderr during CLI invokation
+// E.g: invoking Snaggle(path/to/FILE, root, Recursive()) will wrap a
+// [&fs.PathError]{Op: "--recursive", Path: "path/to/FILE", Err: syscall.ENOTDIR}
 type InvocationError struct {
 	Path   string
 	Target string
