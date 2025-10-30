@@ -6,7 +6,8 @@ import (
 )
 
 type DocComment struct {
-	Text string
+	Text  string // Exact contents as multi-line string
+	Start token.Position
 }
 
 func GetDocComment(src string) (DocComment, error) {
@@ -21,5 +22,7 @@ func GetDocComment(src string) (DocComment, error) {
 	for _, line := range ast.Doc.List {
 		doccomment += line.Text
 	}
-	return DocComment{Text: doccomment}, nil
+
+	startpos := cli.Position(ast.Doc.Pos())
+	return DocComment{Text: doccomment, Start: startpos}, nil
 }
