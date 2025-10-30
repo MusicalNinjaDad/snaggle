@@ -53,9 +53,7 @@ func SetDocComment(path string, comment string) error {
 	}
 
 	newContents := string(origContents[:oldComment.Start.Offset])
-	newContents += "/*\n"
 	newContents += comment
-	newContents += "*/\n"
 	newContents += string(origContents[oldComment.End.Offset+1:])
 
 	return os.WriteFile(path, []byte(newContents), 0)
