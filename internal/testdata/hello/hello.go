@@ -1,3 +1,8 @@
+/*
+A tiny binary to use for tests
+
+Just says "hello"
+*/
 package main
 
 import "fmt"
