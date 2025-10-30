@@ -45,7 +45,7 @@ func SetDocComment(path string, comment string) error {
 	if err != nil {
 		return err
 	}
-	defer src.Close()
+	defer func() { _ = src.Close() }()
 
 	origContents, err := io.ReadAll(src)
 	if err != nil {

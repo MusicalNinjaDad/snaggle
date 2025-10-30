@@ -76,14 +76,22 @@ func main() {
 	if !Assert.NoError(err) {
 		Assert.FailNow("")
 	}
-	defer copied.Close()
+	defer func() {
+		err = copied.Close()
+		if !Assert.NoError(err) {
+			Assert.FailNow("")
+		}
+	}()
 
 	code, err := io.ReadAll(copied)
 	if !Assert.NoError(err) {
 		Assert.FailNow("")
 	}
 
-	copied.Close()
+	err = copied.Close()
+	if !Assert.NoError(err) {
+		Assert.FailNow("")
+	}
 
 	Assert.Equalf(origCode, string(code), "%s has been changed", original)
 
@@ -118,7 +126,12 @@ func main() {
 	if !Assert.NoError(err) {
 		Assert.FailNow("")
 	}
-	defer updated.Close()
+	defer func() {
+		err = updated.Close()
+		if !Assert.NoError(err) {
+			Assert.FailNow("")
+		}
+	}()
 
 	newCode, err := io.ReadAll(updated)
 	if !Assert.NoError(err) {
