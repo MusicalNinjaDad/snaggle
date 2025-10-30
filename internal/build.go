@@ -14,7 +14,7 @@ func RemoveBuildDir(bin string) {
 	buildDir := filepath.Dir(bin)
 	if err := os.RemoveAll(buildDir); err != nil {
 		msg := fmt.Sprintf("cannot remove temporary directory used for build output: %v", err)
-		panic(msg)
+		panic(msg) // only used in tests & generate - ensures we see this error
 	}
 }
 
