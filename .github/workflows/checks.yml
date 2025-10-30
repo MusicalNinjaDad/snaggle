@@ -16,3 +16,14 @@ jobs:
       - uses: actions/checkout@v5
       - name: Check changelog entry for current version
         run: .pre-commit/check_changelog.sh
+  help_text:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+      - name: Install dependencies
+        run: go mod download
+      - name: Check CLI DocComment & Readme match --help
+        run: go generate ./...
