@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"bytes"
 	"go/token"
 	"io"
 	"io/fs"
@@ -145,4 +146,35 @@ func main() {
 
 	Assert.NoError(err)
 	Assert.Equal(expected, string(newCode))
+}
+
+func TestReplaceBetween(t *testing.T) {
+	Assert := assert.New(t)
+
+	original := bytes.NewReader([]byte(`Line 1
+Line 2
+
+This line ends with something interesting
+This stuff
+Will all
+get changed
+Keep me
+and me
+`))
+
+	replacementText := []byte("new text\nhas been added\n")
+
+	expected := []byte(`Line 1
+Line 2
+
+This line ends with something interesting
+new text
+has been added
+Keep me
+and me
+`)
+
+	updated := ReplaceBetween(original, "something interesting", "Keep me", replacementText)
+
+	Assert.Equal(string(expected), string(updated))
 }

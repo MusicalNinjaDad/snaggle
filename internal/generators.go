@@ -1,10 +1,12 @@
 package internal
 
 import (
+	"bufio"
 	"go/parser"
 	"go/token"
 	"io"
 	"os"
+	"strings"
 )
 
 type docComment struct {
@@ -54,4 +56,25 @@ func SetDocComment(path string, comment string) error {
 	newContents += string(origContents[oldComment.End.Offset+1:])
 
 	return os.WriteFile(path, []byte(newContents), 0)
+}
+
+func ReplaceBetween(original io.Reader, marker1 string, marker2 string, replacement []byte) []byte {
+	updated := ""
+	scanner := bufio.NewScanner(original)
+	wanted := true
+	for scanner.Scan() {
+		if wanted {
+			updated += scanner.Text() + "\n"
+			if strings.Contains(scanner.Text(), marker1) {
+				wanted = false
+				updated += string(replacement)
+			}
+		} else {
+			if strings.Contains(scanner.Text(), marker2) {
+				wanted = true
+				updated += scanner.Text() + "\n"
+			}
+		}
+	}
+	return []byte(updated)
 }
