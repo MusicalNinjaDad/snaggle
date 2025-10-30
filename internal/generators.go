@@ -5,11 +5,15 @@ import (
 	"go/token"
 )
 
-func GetDocComment(src string) (string, error) {
+type DocComment struct {
+	Text string
+}
+
+func GetDocComment(src string) (DocComment, error) {
 	cli := token.NewFileSet()
 	ast, err := parser.ParseFile(cli, src, nil, parser.ParseComments)
 	if err != nil {
-		return "", err
+		return DocComment{}, err
 	}
 
 	var doccomment string
@@ -17,5 +21,5 @@ func GetDocComment(src string) (string, error) {
 	for _, line := range ast.Doc.List {
 		doccomment += line.Text
 	}
-	return doccomment, nil
+	return DocComment{Text: doccomment}, nil
 }

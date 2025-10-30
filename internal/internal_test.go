@@ -24,5 +24,5 @@ func TestGetDoccomment(t *testing.T) {
 
 	comment, err := GetDocComment(src)
 	Assert.NoError(err)
-	Assert.Equal(expected, comment)
+	Assert.Equal(expected, comment.Text)
 }
