@@ -11,11 +11,9 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"slices"
 
@@ -63,57 +61,43 @@ func main() {
 	}
 
 	if !slices.Equal(new_main, orig_main) {
-		println("main.go updated")
+		fmt.Fprintf(os.Stderr, "%s updated", main_go)
 		exitcode = 1
 	}
 
-	readme := filepath.Join(workspaceRoot, "README.md")
+	readme_md := filepath.Join(workspaceRoot, "README.md")
 
-	orig_readme, err := HashFile(main_go)
+	orig_readme, err := HashFile(readme_md)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s", err)
 		os.Exit(3)
 	}
 
-	readme_file, err := os.Open(readme)
+	readme_file, err := os.Open(readme_md)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s", err)
 		os.Exit(3)
 	}
 	defer func() { _ = readme_file.Close() }()
 
-	contents, err := io.ReadAll(readme_file)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s", err)
-		os.Exit(3)
-	}
+	updatedContents := ReplaceBetween(readme_file, "snaggle --help", "```", helptext)
 
 	readme_file.Close()
 
-	find_helptext := regexp.MustCompile(`(?s)^(<!-- AUTO-GENERATED via go generate -->)(.*?snaggle --help).*?(<!-- END AUTO-GENERATED -->)`)
-	replacement_helptext := []byte("${1}{2}\n" + string(helptext) + "${3}")
-
-	if !find_helptext.Match(contents) {
-		fmt.Fprintf(os.Stderr, "cannot find correct section of %s", readme)
-		os.Exit(3)
-	}
-
-	updatedContents := find_helptext.ReplaceAll(contents, replacement_helptext)
-
-	err = os.WriteFile(readme, updatedContents, 0)
+	err = os.WriteFile(readme_md, updatedContents, 0)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s", err)
 		os.Exit(3)
 	}
 
-	new_readme, err := HashFile(readme)
+	new_readme, err := HashFile(readme_md)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s", err)
 		os.Exit(3)
 	}
 
 	if !slices.Equal(new_readme, orig_readme) {
-		println("README.md updated")
+		fmt.Fprintf(os.Stderr, "%s updated", readme_md)
 		exitcode = 1
 	}
 
