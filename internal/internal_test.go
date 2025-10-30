@@ -29,15 +29,15 @@ func TestGetDoccomment(t *testing.T) {
 
 	expectedStart := token.Position{
 		Filename: src,
-		Offset:   0,
-		Line:     1,
+		Offset:   28,
+		Line:     3,
 		Column:   1,
 	}
 
 	expectedEnd := token.Position{
 		Filename: src,
-		Offset:   55,
-		Line:     5,
+		Offset:   83,
+		Line:     7,
 		Column:   3,
 	}
 
@@ -60,7 +60,9 @@ func TestSetDocComment(t *testing.T) {
 	}
 
 	// ReadAll seems to strip the empty line at EOF ;(
-	origCode := `/*
+	origCode := `//go:generate echo "hello"
+
+/*
 A tiny binary to use for tests
 
 Just says "hello"
@@ -103,7 +105,9 @@ func main() {
 	newcomment += "\n"
 	newcomment += "It just says hello\n"
 
-	expected := `/*
+	expected := `//go:generate echo "hello"
+
+/*
 A tiny binary to use for tests
 
 
