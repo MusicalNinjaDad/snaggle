@@ -1,12 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"maps"
-	"os"
 	"os/exec"
-	"path/filepath"
-	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -17,43 +13,11 @@ import (
 	. "github.com/MusicalNinjaDad/snaggle/internal/testing"
 )
 
-var (
-	snaggleBin        string
-	_, thisfile, _, _ = runtime.Caller(0)
-)
-
-func removeBuildDir(bin string) {
-	buildDir := filepath.Dir(bin)
-	if err := os.RemoveAll(buildDir); err != nil {
-		msg := fmt.Sprintf("cannot remove temporary directory used for build output: %v", err)
-		panic(msg)
-	}
-}
-
-func build(tags []string) string {
-	buildDir, err := os.MkdirTemp(os.TempDir(), filepath.Base(thisfile))
-	if err != nil {
-		panic("Cannot create temporary directory for build output")
-	}
-
-	args := []string{"build"}
-	if len(tags) > 0 {
-		args = append(args, "-tags", strings.Join(tags, ","))
-	}
-	args = append(args, "-o", buildDir, filepath.Dir(thisfile))
-
-	if err := exec.Command("go", args...).Run(); err != nil {
-		msg := fmt.Sprintf("cannot go %s: %v", args, err)
-		panic(msg)
-	}
-
-	return filepath.Join(buildDir, "snaggle")
-
-}
+var snaggleBin string
 
 func TestMain(m *testing.M) {
-	snaggleBin = build(nil)
-	defer removeBuildDir(snaggleBin)
+	snaggleBin = Build(nil)
+	defer RemoveBuildDir(snaggleBin)
 	m.Run()
 }
 
@@ -124,8 +88,8 @@ func TestInvalidNumberArgs(t *testing.T) {
 }
 
 func TestPanic(t *testing.T) {
-	panicBin := build([]string{"testpanic"})
-	defer removeBuildDir(panicBin)
+	panicBin := Build([]string{"testpanic"})
+	defer RemoveBuildDir(panicBin)
 
 	Assert := assert.New(t)
 

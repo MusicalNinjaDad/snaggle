@@ -1,6 +1,6 @@
-/*
-The commandline version of snaggle, for running during container builds etc.
+//go:generate go run update_docstring_and_readme.go
 
+/*
 Snag a copy of a binary and all its dependencies to DESTINATION/bin & DESTINATION/lib64
 
 Snaggle is designed to help create minimal runtime containers from pre-existing installations.
@@ -70,6 +70,9 @@ var (
 
 func init() {
 	log.Default().SetOutput(os.Stdout)
+	// Do not implement until we also add --verbose -> avoid breaking change of repurposing `-v`
+	// rootCmd.Version = snaggle.Version
+
 	helpTemplate := []string{rootCmd.HelpTemplate(), helpNotes, exitCodes}
 	rootCmd.SetHelpTemplate(strings.Join(helpTemplate, "\n"))
 	rootCmd.Flags().BoolVar(&inplace, "in-place", false, "Snag in place: only snag dependencies & interpreter")

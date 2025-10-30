@@ -14,8 +14,6 @@ package snaggle
 import (
 	debug_elf "debug/elf"
 	"errors"
-	"fmt"
-	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -58,7 +56,7 @@ func link(sourcePath string, targetDir string) error {
 	switch {
 	// X-Device link || No permission to link - Try simple copy
 	case errors.Is(err, syscall.EXDEV) || errors.Is(err, syscall.EPERM):
-		err = copy(sourcePath, target)
+		err = internal.Copy(sourcePath, target)
 	// File already exists - not an err if it's identical
 	case errors.Is(err, syscall.EEXIST) && internal.SameFile(sourcePath, target):
 		err = nil
@@ -68,57 +66,6 @@ func link(sourcePath string, targetDir string) error {
 		log.Default().Println(originalSourcePath + " -> " + target)
 	}
 
-	return err
-}
-
-func copy(sourcePath string, target string) error {
-	src, err := os.Open(sourcePath)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		err = errors.Join(err,
-			src.Close(),
-		)
-	}()
-
-	_srcstat, err := src.Stat()
-	if err != nil {
-		return err
-	}
-	dst, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, _srcstat.Mode())
-	if err != nil {
-		return err
-	}
-	defer func() {
-		err = errors.Join(err,
-			dst.Close(),
-		)
-	}()
-
-	if _, err := io.Copy(dst, src); err != nil {
-		return err
-	}
-	defer func() {
-		err = errors.Join(err,
-			dst.Sync(),
-		)
-	}()
-
-	err = dst.Chown(int(_srcstat.Sys().(*syscall.Stat_t).Uid), int(_srcstat.Sys().(*syscall.Stat_t).Gid))
-	switch {
-	// only root has permission (usually)
-	case errors.Is(err, syscall.EPERM):
-		err = nil
-	case err != nil:
-		su := int(_srcstat.Sys().(*syscall.Stat_t).Uid)
-		sg := int(_srcstat.Sys().(*syscall.Stat_t).Gid)
-		_dststat, _ := dst.Stat()
-		du := int(_dststat.Sys().(*syscall.Stat_t).Uid)
-		dg := int(_dststat.Sys().(*syscall.Stat_t).Gid)
-		err = fmt.Errorf("%w (src: %v:%v, dst: %v:%v)", err, su, sg, du, dg)
-		return err
-	}
 	return err
 }
 

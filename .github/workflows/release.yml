@@ -67,11 +67,11 @@ jobs:
       - name: Install dependencies
         run: go mod download
       - name: Build snaggle
-        working-directory: ${{ github.workspace }}/snaggle
+        working-directory: ${{ github.workspace }}/cmd/snaggle
         run: |
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build .
       - name: Create github release
-        working-directory: ${{ github.workspace }}/snaggle
+        working-directory: ${{ github.workspace }}/cmd/snaggle
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

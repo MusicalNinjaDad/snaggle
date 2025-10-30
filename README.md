@@ -2,6 +2,7 @@
 
 Had enough of every container you pull having a full OS available inside? Create your own minimal app container easily by snaggling the binary and linked libraries.
 
+<!-- AUTO-GENERATED via go generate -->
 ```text
 ninjacoder@f52ce3a5f188:/workspaces/snaggle/snaggle$ ./snaggle --help
 Snag a copy of a binary and all its dependencies to DESTINATION/bin & DESTINATION/lib64
@@ -46,6 +47,7 @@ Exit Codes:
   2: Invalid command
   3: Panic
 ```
+<!-- END AUTO-GENERATED -->
 
 ## Installing snaggle
 

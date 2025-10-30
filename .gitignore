@@ -30,7 +30,8 @@ go.work
 .go
 
 # our cli binary
-snaggle/snaggle
+cmd/snaggle/snaggle
+.build
 
 # include testdata EXCEPT .tmp
 !internal/testdata/**

@@ -93,12 +93,12 @@ func sameModeAndSize(path1 string, path2 string) (bool, error) {
 
 // Do both files have same SHA256?
 func sameHash(path1 string, path2 string) (bool, error) {
-	sha1, err1 := hashFile(path1)
-	sha2, err2 := hashFile(path2)
+	sha1, err1 := HashFile(path1)
+	sha2, err2 := HashFile(path2)
 	return slices.Equal(sha1, sha2), errors.Join(err1, err2)
 }
 
-func hashFile(path string) ([]byte, error) {
+func HashFile(path string) ([]byte, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err

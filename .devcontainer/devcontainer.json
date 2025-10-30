@@ -40,7 +40,25 @@
                 "git.commandsToLog": [
                     "commit",
                     "push"
-                ]
+                ],
+                "[yaml]": {
+                    "editor.insertSpaces": true,
+                    "editor.tabSize": 2,
+                    "editor.autoIndent": "advanced",
+                    "diffEditor.ignoreTrimWhitespace": false,
+                    "editor.defaultColorDecorators": "never",
+                    "editor.quickSuggestions": {
+                        "strings": "on"
+                    }
+                },
+                "[go]": {
+                    "editor.insertSpaces": false,
+                    "editor.formatOnSave": true,
+                    "editor.codeActionsOnSave": {
+                        "source.organizeImports": "explicit"
+                    },
+                    "editor.rulers": [120]
+                }
             }
         }
     }
