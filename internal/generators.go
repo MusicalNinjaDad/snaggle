@@ -31,9 +31,9 @@ func GetDocComment(src string) (DocComment, error) {
 	return DocComment{Text: doccomment, Start: startpos, End: endpos}, nil
 }
 
-func SetDocComment(src string, comment string) error {
+func SetDocComment(path string, comment string) error {
 	comment = "/*\n" + comment + "*/\n"
-	oldComment, err := GetDocComment(src)
+	oldComment, err := GetDocComment(path)
 	if err != nil {
 		return err
 	}
@@ -41,22 +41,22 @@ func SetDocComment(src string, comment string) error {
 		return nil
 	}
 
-	srcRO, err := os.Open(src)
+	src, err := os.Open(path)
 	if err != nil {
 		return err
 	}
-	defer srcRO.Close()
+	defer src.Close()
 
-	origSrc, err := io.ReadAll(srcRO)
+	origContents, err := io.ReadAll(src)
 	if err != nil {
 		return err
 	}
 
-	newContents := string(origSrc[:oldComment.Start.Offset])
+	newContents := string(origContents[:oldComment.Start.Offset])
 	newContents += "/*\n"
 	newContents += comment
 	newContents += "*/\n"
-	newContents += string(origSrc[oldComment.End.Offset+1:])
+	newContents += string(origContents[oldComment.End.Offset+1:])
 
-	return os.WriteFile(src, []byte(newContents), 0)
+	return os.WriteFile(path, []byte(newContents), 0)
 }
