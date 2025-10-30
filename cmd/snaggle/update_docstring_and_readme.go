@@ -19,6 +19,7 @@ import (
 
 func main() {
 	exitcode := 0
+
 	main_go, err := HashFile("main.go")
 	if err != nil {
 		println(err)
@@ -39,6 +40,12 @@ func main() {
 	}
 
 	new_main, err := HashFile("main.go")
+	if err != nil {
+		println(err)
+		os.Exit(3)
+	}
+
+	err = exec.Command("go", "fmt", "main.go").Run()
 	if err != nil {
 		println(err)
 		os.Exit(3)

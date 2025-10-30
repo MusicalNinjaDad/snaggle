@@ -37,9 +37,6 @@ func SetDocComment(path string, comment string) error {
 	if err != nil {
 		return err
 	}
-	if oldComment.Text == comment {
-		return nil
-	}
 
 	src, err := os.Open(path)
 	if err != nil {
