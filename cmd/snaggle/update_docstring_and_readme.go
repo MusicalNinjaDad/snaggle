@@ -11,9 +11,11 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"slices"
 
@@ -21,11 +23,11 @@ import (
 )
 
 func main() {
+	exitcode := 0
+
 	_, thisFile, _, _ := runtime.Caller(0)
 	thisDir := filepath.Dir(thisFile)
-	// workspaceRoot := filepath.Join(thisDir, "../..")
-
-	exitcode := 0
+	workspaceRoot := filepath.Join(thisDir, "../..")
 
 	main_go := filepath.Join(thisDir, "main.go")
 
@@ -62,6 +64,51 @@ func main() {
 
 	if !slices.Equal(new_main, orig_main) {
 		println("main.go updated")
+		exitcode = 1
+	}
+
+	readme := filepath.Join(workspaceRoot, "README.md")
+
+	orig_readme, err := HashFile(main_go)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s", err)
+		os.Exit(3)
+	}
+
+	readme_file, err := os.Open(readme)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s", err)
+		os.Exit(3)
+	}
+	defer func() { _ = readme_file.Close() }()
+
+	contents, err := io.ReadAll(readme_file)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s", err)
+		os.Exit(3)
+	}
+
+	readme_file.Close()
+
+	find_helptext := regexp.MustCompile(`/^(<!-- AUTO-GENERATED via go generate -->)(.*?snaggle --help).*?(<!-- END AUTO-GENERATED -->)/gms`)
+	replacement_helptext := []byte("${1}{2}\n" + string(helptext) + "${3}")
+
+	updatedContents := find_helptext.ReplaceAll(contents, replacement_helptext)
+
+	err = os.WriteFile(readme, updatedContents, 0)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s", err)
+		os.Exit(3)
+	}
+
+	new_readme, err := HashFile(readme)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s", err)
+		os.Exit(3)
+	}
+
+	if !slices.Equal(new_readme, orig_readme) {
+		println("README.md updated")
 		exitcode = 1
 	}
 
