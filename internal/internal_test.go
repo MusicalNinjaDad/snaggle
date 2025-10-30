@@ -3,6 +3,7 @@ package internal
 import (
 	"go/token"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -78,7 +79,7 @@ func main() {
 	}
 	defer func() {
 		err = copied.Close()
-		if !Assert.NoError(err) {
+		if !Assert.ErrorIs(err, fs.ErrClosed) {
 			Assert.FailNow("")
 		}
 	}()
