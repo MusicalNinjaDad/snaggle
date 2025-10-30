@@ -32,9 +32,13 @@ func GetDocComment(src string) (DocComment, error) {
 }
 
 func SetDocComment(src string, comment string) error {
+	comment = "/*\n" + comment + "*/\n"
 	oldComment, err := GetDocComment(src)
 	if err != nil {
 		return err
+	}
+	if oldComment.Text == comment {
+		return nil
 	}
 
 	srcRO, err := os.Open(src)
