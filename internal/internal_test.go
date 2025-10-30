@@ -30,8 +30,16 @@ func TestGetDoccomment(t *testing.T) {
 		Column:   1,
 	}
 
+	expectedEnd := token.Position{
+		Filename: src,
+		Offset:   55,
+		Line:     5,
+		Column:   3,
+	}
+
 	comment, err := GetDocComment(src)
 	Assert.NoError(err)
 	Assert.Equal(expected, comment.Text)
 	Assert.Equal(expectedStart, comment.Start)
+	Assert.Equal(expectedEnd, comment.End)
 }
