@@ -1,8 +1,6 @@
 //go:generate go run update_docstring_and_readme.go
 
 /*
-The commandline version of snaggle, for running during container builds etc.
-
 Snag a copy of a binary and all its dependencies to DESTINATION/bin & DESTINATION/lib64
 
 Snaggle is designed to help create minimal runtime containers from pre-existing installations.
