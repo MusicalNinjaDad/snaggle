@@ -90,8 +90,13 @@ func main() {
 
 	readme_file.Close()
 
-	find_helptext := regexp.MustCompile(`/^(<!-- AUTO-GENERATED via go generate -->)(.*?snaggle --help).*?(<!-- END AUTO-GENERATED -->)/gms`)
+	find_helptext := regexp.MustCompile(`(?s)^(<!-- AUTO-GENERATED via go generate -->)(.*?snaggle --help).*?(<!-- END AUTO-GENERATED -->)`)
 	replacement_helptext := []byte("${1}{2}\n" + string(helptext) + "${3}")
+
+	if !find_helptext.Match(contents) {
+		fmt.Fprintf(os.Stderr, "cannot find correct section of %s", readme)
+		os.Exit(3)
+	}
 
 	updatedContents := find_helptext.ReplaceAll(contents, replacement_helptext)
 
