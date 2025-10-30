@@ -1,3 +1,5 @@
+//go:generate go run update_docstring_and_readme.go
+
 /*
 The commandline version of snaggle, for running during container builds etc.
 
