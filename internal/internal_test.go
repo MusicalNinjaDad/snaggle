@@ -72,15 +72,59 @@ func main() {
 	fmt.Println("hello")
 }
 `
-	copied, err := os.OpenFile(src, os.O_RDWR, 0)
+	copied, err := os.Open(src)
 	if !Assert.NoError(err) {
 		Assert.FailNow("")
 	}
+	defer copied.Close()
+
 	code, err := io.ReadAll(copied)
 	if !Assert.NoError(err) {
 		Assert.FailNow("")
 	}
 
+	copied.Close()
+
 	Assert.Equalf(origCode, string(code), "%s has been changed", original)
 
+	newcomment := "A tiny binary to use for tests\n"
+	newcomment += "\n"
+	newcomment += "\n"
+	newcomment += "Updated comment:\n"
+	newcomment += "\n"
+	newcomment += "It just says hello\n"
+
+	expected := `/*
+A tiny binary to use for tests
+
+
+Updated comment:
+
+It just says hello
+*/
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("hello")
+}
+`
+
+	err = SetDocComment(src, newcomment)
+	Assert.NoError(err)
+
+	updated, err := os.Open(src)
+	if !Assert.NoError(err) {
+		Assert.FailNow("")
+	}
+	defer updated.Close()
+
+	newCode, err := io.ReadAll(updated)
+	if !Assert.NoError(err) {
+		Assert.FailNow("")
+	}
+
+	Assert.NoError(err)
+	Assert.Equal(expected, string(newCode))
 }

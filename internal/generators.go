@@ -3,6 +3,8 @@ package internal
 import (
 	"go/parser"
 	"go/token"
+	"io"
+	"os"
 )
 
 type DocComment struct {
@@ -27,4 +29,40 @@ func GetDocComment(src string) (DocComment, error) {
 	startpos := cli.Position(ast.Doc.Pos())
 	endpos := cli.Position(ast.Doc.End())
 	return DocComment{Text: doccomment, Start: startpos, End: endpos}, nil
+}
+
+func SetDocComment(src string, comment string) error {
+	oldComment, err := GetDocComment(src)
+	if err != nil {
+		return err
+	}
+
+	srcRO, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcRO.Close()
+
+	origSrc, err := io.ReadAll(srcRO)
+	if err != nil {
+		return err
+	}
+
+	srcRW, err := os.OpenFile(src, os.O_RDWR, 0)
+	if err != nil {
+		return err
+	}
+	defer srcRW.Close()
+
+	newContents := "/*\n"
+	newContents += comment
+	newContents += "*/\n"
+	newContents += string(origSrc[oldComment.End.Offset+1:])
+
+	_, err = srcRW.WriteAt([]byte(newContents), int64(oldComment.Start.Offset))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
