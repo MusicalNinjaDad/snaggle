@@ -47,7 +47,7 @@ func TestGetDoccomment(t *testing.T) {
 	Assert.Equal(expectedEnd, comment.End)
 }
 
-func TestSetDoccomment(t *testing.T) {
+func TestSetDocComment(t *testing.T) {
 	Assert := assert.New(t)
 	tmp := t.TempDir()
 	original := TestdataPath("hello/hello.go")
