@@ -48,21 +48,11 @@ func SetDocComment(src string, comment string) error {
 		return err
 	}
 
-	srcRW, err := os.OpenFile(src, os.O_RDWR, 0)
-	if err != nil {
-		return err
-	}
-	defer srcRW.Close()
-
-	newContents := "/*\n"
+	newContents := string(origSrc[:oldComment.Start.Offset])
+	newContents += "/*\n"
 	newContents += comment
 	newContents += "*/\n"
 	newContents += string(origSrc[oldComment.End.Offset+1:])
 
-	_, err = srcRW.WriteAt([]byte(newContents), int64(oldComment.Start.Offset))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return os.WriteFile(src, []byte(newContents), 0)
 }
