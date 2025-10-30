@@ -7,6 +7,7 @@ on:
     - CHANGELOG.md
     - README.md
     - 'cmd/snaggle/*.go'
+    - .github/workflows/checks.yml
   pull_request:
 
 jobs:
