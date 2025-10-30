@@ -7,17 +7,17 @@ import (
 	"os"
 )
 
-type DocComment struct {
+type docComment struct {
 	Text  string // Exact contents as multi-line string
 	Start token.Position
 	End   token.Position
 }
 
-func GetDocComment(src string) (DocComment, error) {
+func getDocComment(src string) (docComment, error) {
 	cli := token.NewFileSet()
 	ast, err := parser.ParseFile(cli, src, nil, parser.ParseComments)
 	if err != nil {
-		return DocComment{}, err
+		return docComment{}, err
 	}
 
 	var doccomment string
@@ -28,12 +28,12 @@ func GetDocComment(src string) (DocComment, error) {
 
 	startpos := cli.Position(ast.Doc.Pos())
 	endpos := cli.Position(ast.Doc.End())
-	return DocComment{Text: doccomment, Start: startpos, End: endpos}, nil
+	return docComment{Text: doccomment, Start: startpos, End: endpos}, nil
 }
 
 func SetDocComment(path string, comment string) error {
 	comment = "/*\n" + comment + "*/\n"
-	oldComment, err := GetDocComment(path)
+	oldComment, err := getDocComment(path)
 	if err != nil {
 		return err
 	}

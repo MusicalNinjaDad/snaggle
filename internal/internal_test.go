@@ -41,7 +41,7 @@ func TestGetDoccomment(t *testing.T) {
 		Column:   3,
 	}
 
-	comment, err := GetDocComment(src)
+	comment, err := getDocComment(src)
 	Assert.NoError(err)
 	Assert.Equal(expected, comment.Text)
 	Assert.Equal(expectedStart, comment.Start)
