@@ -12,9 +12,6 @@ jobs:
   check_version:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
-
     outputs:
       semver: ${{ steps.set_version.outputs.semver }}
       release_me: ${{ steps.release_me.outputs.release_me }}
@@ -58,8 +55,3 @@ jobs:
     uses: ./.github/workflows/release.yml
     with:
       semver: ${{ needs.check_version.outputs.semver }}
-    permissions:
-      contents: write
-      packages: write
-      attestations: write
-      id-token: write
