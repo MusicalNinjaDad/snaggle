@@ -1,57 +1,27 @@
-name: Check need to release
+name: Create version tag
 
 on:
   push:
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+    branches: main
+    paths: version.go
 
 jobs:
-
-  check_version:
+  tag:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
-
-    outputs:
-      semver: ${{ steps.set_version.outputs.semver }}
-      release_me: ${{ steps.release_me.outputs.release_me }}
-
     steps:
       - uses: actions/checkout@v5
-
-      - id: tag_check
-        if: ${{ startsWith( '/refs/tags/v', github.ref) }}
-        run: echo "TAG=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
-
-      - id: version_go_check
-        if: ${{ github.ref == 'refs/heads/main' }}
-        uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf #v5.3.1
+      - name: get version number
+        id: version
+        run: echo version=$(grep 'const Version = ' version.go | awk --field-separator='"' '{ print $2 }') >> "$GITHUB_OUTPUT"
+      - name: create version tag
+        uses: actions/github-script@v7
         with:
-          paths: '["version.go"]'
-
-      - id: version_go
-        run: echo VERSION_GO=v$(grep 'const Version = ' version.go | awk --field-separator='"' '{ print $2 }') >> "$GITHUB_OUTPUT"
-
-      - id: version_conflict
-        if: ${{ steps.tag_check.outcome == 'success' && steps.tag_check.outputs.TAG != steps.version_go.outputs.VERSION_GO }}
-        run: |
-          echo "::error title=Mismatched versions::Tag ${{ steps.tag_check.outputs.TAG }} vs version.go ${{ steps.version_go.outputs.VERSION_GO }}"
-          exit 1
-
-      - id: release_me
-        run: echo "RELEASE_ME=${{ steps.tag_check.outcome == 'success' || steps.version_go_check.outputs.should_skip == 'false' }}" >> "$GITHUB_OUTPUT"
-
-      - id: set_version
-        if: ${{ steps.release_me.outputs.release_me == 'true' }}
-        run: echo "SEMVER=${{ steps.tag_check.outputs.TAG || steps.version_go.outputs.VERSION_GO }}" >> "$GITHUB_OUTPUT"
-
-      - id: create_tag
-        if: ${{ steps.tag_check.outcome == 'skipped' && steps.release_me.outputs.release_me == 'true' }}
-        run: git tag ${{ steps.set_version.outputs.semver }} && git push --tags
-
-  release:
-    needs: check_version
-    if: ${{ needs.check_version.outputs.release_me == 'true '}}
-    uses: ./.github/workflows/release.yml
-    with:
-      semver: ${{ needs.check_version.outputs.semver }}
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/v${{ steps.version.outputs.version }}',
+              sha: '${{ github.event.after }}'
+            })
