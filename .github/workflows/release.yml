@@ -38,12 +38,12 @@ jobs:
           echo "::error title=Mismatched versions::Tag ${{ steps.tag_check.outputs.TAG }} vs version.go ${{ steps.version_go.outputs.VERSION_GO }}"
           exit 1
 
-      - id: set_version
-        if: ${{ steps.tag_check.outcome == 'success' || steps.version_go.outcome == 'success'}}
-        run: echo "SEMVER=${{ steps.tag_check.outputs.TAG || steps.version_go.outputs.VERSION_GO }}" >> "$GITHUB_OUTPUT"
-
       - id: release_me
         run: echo "RELEASE_ME=${{ steps.tag_check.outcome == 'success' || steps.version_go_check.outputs.should_skip == 'false' }}" >> "$GITHUB_OUTPUT"
+
+      - id: set_version
+        if: ${{ steps.release_me.outputs.release_me == 'true' }}
+        run: echo "SEMVER=${{ steps.tag_check.outputs.TAG || steps.version_go.outputs.VERSION_GO }}" >> "$GITHUB_OUTPUT"
 
       - id: create_tag
         if: ${{ steps.tag_check.outcome == 'skipped' && steps.release_me.outputs.release_me == 'true' }}
