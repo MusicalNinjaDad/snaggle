@@ -25,7 +25,13 @@ jobs:
 
       - id: tag_check
         if: ${{ startsWith( '/refs/tags/v', github.ref) }}
-        run: echo "TAG=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+        run: |
+          main_sha=$(git show-ref --verify refs/heads/main | awk '{ print $1 }')
+          if [[ ${{ github.sha }} != $main_sha ]]; then
+            echo "::error title=Not main::Automated releasing is only possible for the head commit on main"
+            exit 1
+          fi
+          echo "TAG=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
 
       - id: version_go_check
         if: ${{ github.ref == 'refs/heads/main' }}
