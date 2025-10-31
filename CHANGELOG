@@ -1,5 +1,12 @@
 # Changelog snaggle
 
+## [v0.3.1] - release automation
+
+### Features
+
+- improved changelog validation
+- improved release automation
+
 ## [v0.3.0] - improved error handing
 
 ### Fixes

@@ -2,31 +2,80 @@ name: Package & release
 
 on:
   push:
-    tags:
-      v*
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  docker:
+
+  version:
+    if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') }}
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
+      contents: write
+
+    outputs:
+      semver: ${{ steps.set_version.outputs.semver }}
+      release_me: ${{ steps.release_me.outputs.release_me }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - id: tag_check
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        run: |
+          main_sha=$(git show-ref --verify refs/heads/main | awk '{ print $1 }')
+          if [[ ${{ github.sha }} != $main_sha ]]; then
+            echo "::error title=Not main::Automated releasing is only possible for the head commit on main"
+            exit 1
+          fi
+          echo "TAG=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      - id: version_go_check
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf #v5.3.1
+        with:
+          paths: '["version.go"]'
+
+      - id: version_go
+        run: echo VERSION_GO=v$(grep 'const Version = ' version.go | awk --field-separator='"' '{ print $2 }') >> "$GITHUB_OUTPUT"
+
+      - id: version_conflict
+        if: ${{ steps.tag_check.outcome == 'success' && steps.tag_check.outputs.TAG != steps.version_go.outputs.VERSION_GO }}
+        run: |
+          echo "::error title=Mismatched versions::Tag ${{ steps.tag_check.outputs.TAG }} vs version.go ${{ steps.version_go.outputs.VERSION_GO }}"
+          exit 1
+
+      - id: release_me
+        run: echo "RELEASE_ME=${{ steps.tag_check.outcome == 'success' || steps.version_go_check.outputs.should_skip == 'false' }}" >> "$GITHUB_OUTPUT"
+
+      - id: set_version
+        if: ${{ steps.release_me.outputs.release_me == 'true' }}
+        run: echo "SEMVER=${{ steps.tag_check.outputs.TAG || steps.version_go.outputs.VERSION_GO }}" >> "$GITHUB_OUTPUT"
+
+      - id: create_tag
+        if: ${{ steps.tag_check.outcome == 'skipped' && steps.release_me.outputs.release_me == 'true' }}
+        run: git tag ${{ steps.set_version.outputs.semver }} && git push --tags
+
+  release:
+    needs: version
+    if: ${{ needs.version.outputs.release_me == 'true' }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
       packages: write
       attestations: write
       id-token: write
 
     steps:
-      - uses: actions/checkout@v5
-
       - name: Build devcontainer image to use as builder
         id: devcontainer
         uses: docker/build-push-action@9e436ba9f2d7bcd1d038c8e55d039d37896ddc5d
         with:
-          context: ./.devcontainer
+          file: .devcontainer/Dockerfile
           push: false
           load: true
           tags: snaggle_devcontainer
@@ -42,37 +91,22 @@ jobs:
         id: meta
         uses: docker/metadata-action@032a4b3bda1b716928481836ac5bfe36e1feaad6
         with:
+          tags: |
+            type=semver,pattern={{raw}},value=${{ needs.version.outputs.semver }}
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Build and push Docker image
         id: push
         uses: docker/build-push-action@9e436ba9f2d7bcd1d038c8e55d039d37896ddc5d
         with:
-          context: .
           push: true
+          outputs:
+            type=local,dest=.
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-  github:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      attestations: write
-      id-token: write
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v6
-        with:
-          go-version: stable
-      - name: Install dependencies
-        run: go mod download
-      - name: Build snaggle
-        working-directory: ${{ github.workspace }}/cmd/snaggle
-        run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build .
       - name: Create github release
-        working-directory: ${{ github.workspace }}/cmd/snaggle
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create ${{ github.ref_name }} --generate-notes 'snaggle#Snaggle ${{ github.ref_name }}'
+          gh release create ${{ needs.version.outputs.semver }} --generate-notes 'snaggle#Snaggle ${{ needs.version.outputs.semver }}'
