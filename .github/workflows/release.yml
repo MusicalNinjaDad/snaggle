@@ -17,6 +17,8 @@ jobs:
       release_me: ${{ steps.release_me.outputs.release_me }}
 
     steps:
+      - uses: actions/checkout@v5
+
       - id: tag_check
         if: ${{ startsWith( '/refs/tags/v', github.ref) }}
         run: echo "TAG=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
@@ -28,11 +30,10 @@ jobs:
           paths: '["version.go"]'
 
       - id: version_go
-        if: ${{ !steps.version_go_check.outputs.should_skip }}
         run: echo VERSION_GO=v$(grep 'const Version = ' version.go | awk --field-separator='"' '{ print $2 }') >> "$GITHUB_OUTPUT"
 
       - id: version_conflict
-        if: ${{ steps.tag_check.outcome == 'success' && steps.version_go.outcome == 'success' && steps.tag_check.outputs.TAG != steps.version_go.outputs.VERSION_GO }}
+        if: ${{ steps.tag_check.outcome == 'success' && steps.tag_check.outputs.TAG != steps.version_go.outputs.VERSION_GO }}
         run: |
           echo "::error title=Mismatched versions::Tag ${{ steps.tag_check.outputs.TAG }} vs version.go ${{ steps.version_go.outputs.VERSION_GO }}"
           exit 1
@@ -42,7 +43,11 @@ jobs:
         run: echo "SEMVER=${{ steps.tag_check.outputs.TAG || steps.version_go.outputs.VERSION_GO }}" >> "$GITHUB_OUTPUT"
 
       - id: release_me
-        run: echo "RELEASE_ME=${{ steps.set_version.outcome == 'success' }}" >> "$GITHUB_OUTPUT"
+        run: echo "RELEASE_ME=${{ steps.tag_check.outcome == 'success' || steps.version_go_check.outputs.should_skip == 'false' }}" >> "$GITHUB_OUTPUT"
+
+      - id: create_tag
+        if: ${{ steps.tag_check.outcome == 'skipped' && steps.release_me.outputs.release_me == 'true' }}
+        run: git tag ${{ steps.set_version.outputs.semver }} && git push --tags
 
   docker:
     needs: version
