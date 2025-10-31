@@ -51,7 +51,7 @@ jobs:
 
   docker:
     needs: version
-    if: ${{ needs.version.outputs.release_me }}
+    if: ${{ needs.version.outputs.release_me == 'true' }}
     runs-on: ubuntu-latest
 
     permissions:
@@ -98,7 +98,7 @@ jobs:
 
   github:
     needs: version
-    if: ${{ needs.version.outputs.release_me }}
+    if: ${{ needs.version.outputs.release_me == 'true' }}
     runs-on: ubuntu-latest
 
     permissions:
