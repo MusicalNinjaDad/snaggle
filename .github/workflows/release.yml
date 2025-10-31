@@ -103,12 +103,15 @@ jobs:
         with:
           push: true
           outputs:
-            type=local,dest=./.build
+            type=local,dest=${{ github.workspace }}/.build
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: List workspace files
+        run: ls -Ral ${{ github.workspace }}
 
       - name: Create github release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create ${{ needs.version.outputs.semver }} --generate-notes ./.build/snaggle#Snaggle ${{ needs.version.outputs.semver }}'
+          gh release create ${{ needs.version.outputs.semver }} --generate-notes ${{ github.workspace }}/.build/snaggle#Snaggle ${{ needs.version.outputs.semver }}'
