@@ -53,13 +53,13 @@ jobs:
         if: ${{ steps.tag_check.outcome == 'skipped' && steps.release_me.outputs.release_me == 'true' }}
         run: git tag ${{ steps.set_version.outputs.semver }} && git push --tags
 
-  docker:
+  release:
     needs: version
     if: ${{ needs.version.outputs.release_me == 'true' }}
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
+      contents: write
       packages: write
       attestations: write
       id-token: write
@@ -94,32 +94,12 @@ jobs:
         uses: docker/build-push-action@9e436ba9f2d7bcd1d038c8e55d039d37896ddc5d
         with:
           push: true
+          outputs:
+            type=local,dest=.
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-  github:
-    needs: version
-    if: ${{ needs.version.outputs.release_me == 'true' }}
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-      attestations: write
-      id-token: write
-
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v6
-        with:
-          go-version: stable
-      - name: Install dependencies
-        run: go mod download
-      - name: Build snaggle
-        working-directory: ${{ github.workspace }}/cmd/snaggle
-        run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build .
       - name: Create github release
-        working-directory: ${{ github.workspace }}/cmd/snaggle
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
