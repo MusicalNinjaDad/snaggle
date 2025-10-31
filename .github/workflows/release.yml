@@ -71,6 +71,8 @@ jobs:
       id-token: write
 
     steps:
+      - uses: actions/checkout@v5
+
       - name: Build devcontainer image to use as builder
         id: devcontainer
         uses: docker/build-push-action@9e436ba9f2d7bcd1d038c8e55d039d37896ddc5d
@@ -101,7 +103,7 @@ jobs:
         with:
           push: true
           outputs:
-            type=local,dest=.
+            type=local,dest=./.build
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -109,4 +111,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create ${{ needs.version.outputs.semver }} --generate-notes 'snaggle#Snaggle ${{ needs.version.outputs.semver }}'
+          gh release create ${{ needs.version.outputs.semver }} --generate-notes ./.build/snaggle#Snaggle ${{ needs.version.outputs.semver }}'
