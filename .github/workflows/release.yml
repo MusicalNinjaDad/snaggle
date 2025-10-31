@@ -10,6 +10,7 @@ env:
 jobs:
 
   version:
+    if: ${{ github.ref == 'refs/heads/main' || startsWith( '/refs/tags/v', github.ref) }}
     runs-on: ubuntu-latest
 
     permissions:
