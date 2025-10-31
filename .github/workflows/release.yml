@@ -2,15 +2,51 @@ name: Package & release
 
 on:
   push:
-    tags:
-      v*
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+
+  version:
+    runs-on: ubuntu-latest
+
+    outputs:
+      semver: ${{ steps.set_version.outputs.semver }}
+      release_me: ${{ steps.release_me.outputs.release_me }}
+
+    steps:
+      - id: tag_check
+        if: ${{ startsWith( '/refs/tags/v', github.ref) }}
+        run: echo "TAG=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      - id: version_go_check
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf #v5.3.1
+        with:
+          paths: '["version.go"]'
+
+      - id: version_go
+        if: ${{ !steps.version_go_check.outputs.should_skip }}
+        run: echo VERSION_GO=v$(grep 'const Version = ' version.go | awk --field-separator='"' '{ print $2 }') >> "$GITHUB_OUTPUT"
+
+      - id: version_conflict
+        if: ${{ steps.tag_check.outcome == 'success' && steps.version_go.outcome == 'success' && steps.tag_check.outputs.TAG != steps.version_go.outputs.VERSION_GO }}
+        run: |
+          echo "::error title=Mismatched versions::Tag ${{ steps.tag_check.outputs.TAG }} vs version.go ${{ steps.version_go.outputs.VERSION_GO }}"
+          exit 1
+
+      - id: set_version
+        if: ${{ steps.tag_check.outcome == 'success' || steps.version_go.outcome == 'success'}}
+        run: echo "SEMVER=${{ steps.tag_check.outputs.TAG || steps.version_go.outputs.VERSION_GO }}" >> "$GITHUB_OUTPUT"
+
+      - id: release_me
+        run: echo "RELEASE_ME=${{ steps.set_version.outcome == 'success' }}" >> "$GITHUB_OUTPUT"
+
   docker:
+    needs: version
+    if: ${{ needs.version.outputs.release_me }}
     runs-on: ubuntu-latest
 
     permissions:
@@ -54,11 +90,16 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   github:
+    needs: version
+    if: ${{ needs.version.outputs.release_me }}
+
     runs-on: ubuntu-latest
+
     permissions:
       contents: write
       attestations: write
       id-token: write
+
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
