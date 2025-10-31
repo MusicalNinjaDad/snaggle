@@ -12,6 +12,9 @@ jobs:
   version:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     outputs:
       semver: ${{ steps.set_version.outputs.semver }}
       release_me: ${{ steps.release_me.outputs.release_me }}
