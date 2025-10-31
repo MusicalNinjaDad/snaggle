@@ -6,6 +6,9 @@
 
 ### Features
 
+- improved changelog validation
+- improved release automation
+
 ### Fixes
 
 ## [v0.3.0] - improved error handing
