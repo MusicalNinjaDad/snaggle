@@ -99,7 +99,6 @@ jobs:
   github:
     needs: version
     if: ${{ needs.version.outputs.release_me }}
-
     runs-on: ubuntu-latest
 
     permissions:
