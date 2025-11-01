@@ -266,10 +266,10 @@ func TestRecurseFile(t *testing.T) {
 }
 
 func TestXxx(t *testing.T) {
-	for Assert, data := range TestCases(t) {
-		err := snaggle.Snaggle(data.Src, data.Dest)
+	for Assert, tc := range TestCases(t) {
+		err := snaggle.Snaggle(tc.Src, tc.Dest)
 		Assert.NoError(err)
-		Assert.DirExists(data.Dest)
-		Assert.FileExists(filepath.Join(data.Dest, filepath.Base(data.Src)))
+		Assert.DirExists(tc.Dest)
+		Assert.FileExists(filepath.Join(tc.Dest, filepath.Base(tc.Src)))
 	}
 }

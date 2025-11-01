@@ -215,24 +215,24 @@ func AssertStdout(t *testing.T, expected []string, actual []string) {
 	a.ElementsMatch(expected, stripped)
 }
 
-type TestData struct {
+type TestCase struct {
 	Src  string // source path
 	Dest string // destination path
 }
 
 // Calls t.Run on the test body for all our test case binaries e.g.:
 //
-//	for Assert, data := range TestCases(t) {
-//		Assert.NotEmpty(data)
+//	for Assert, tc := range TestCases(t) {
+//		Assert.NotEmpty(tc)
 //	}
-func TestCases(t *testing.T) iter.Seq2[*assert.Assertions, TestData] {
-	return func(testbody func(Assert *assert.Assertions, data TestData) bool) {
+func TestCases(t *testing.T) iter.Seq2[*assert.Assertions, TestCase] {
+	return func(testbody func(Assert *assert.Assertions, tc TestCase) bool) {
 		t.Run("foo", func(t *testing.T) {
 			Assert := assert.New(t)
-			data := TestData{}
-			data.Src = "bar"
-			data.Dest = WorkspaceTempDir(t)
-			testbody(Assert, data)
+			tc := TestCase{}
+			tc.Src = "bar"
+			tc.Dest = WorkspaceTempDir(t)
+			testbody(Assert, tc)
 		})
 	}
 }
