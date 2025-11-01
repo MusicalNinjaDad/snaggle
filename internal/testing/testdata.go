@@ -206,7 +206,7 @@ func AssertStdout(t *testing.T, expected []string, actual []string) {
 
 	for n, line := range actual {
 		a.Conditionf(func() (success bool) {
-			return strings.HasPrefix(line, "copy") || strings.HasPrefix(line, "link")
+			return strings.HasPrefix(line, "copy ") || strings.HasPrefix(line, "link ")
 		}, "Line %v does not start with `copy` or `line`: %s", n+1, line)
 		stripped = append(stripped, line[5:])
 	}
