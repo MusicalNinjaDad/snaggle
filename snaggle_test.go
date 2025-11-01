@@ -265,7 +265,8 @@ func TestRecurseFile(t *testing.T) {
 }
 
 func TestXxx(t *testing.T) {
-	for Assert, dest := range TestCases(t) {
-		Assert.Empty(dest)
+	for Assert, data := range TestCases(t) {
+		Assert.Empty(data.Src)
+		Assert.Empty(data.Dest)
 	}
 }
