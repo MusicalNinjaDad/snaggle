@@ -1,3 +1,14 @@
+# Automated release to ghcr.io & github when `version.go` is updated or a tag `v*` is pushed
+#
+# - Requires the version in `version.go` and the tag (if present) to match
+# - If a corresponding tag is not present, it will be created
+# - Only accepts `v*` tags which mark the head commit on `main`
+#
+# Recovering from failure, either:
+# 1. Delete the tag, push fixes to `main`.
+#      The historical change to `version.go` will re-trigger this workflow until it succeeds.
+# 2. Delete the tag, manually push a new tag.
+
 name: Package & release
 
 on:
