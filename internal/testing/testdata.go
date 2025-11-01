@@ -4,6 +4,7 @@ package testing
 
 //nolint:staticcheck
 import (
+	"iter"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -214,8 +215,12 @@ func AssertStdout(t *testing.T, expected []string, actual []string) {
 	a.ElementsMatch(expected, stripped)
 }
 
-func TestCases(t *testing.T) (Assert *assert.Assertions, dest string) {
-	Assert = assert.New(t)
-	dest = WorkspaceTempDir(t)
-	return
+func TestCases(t *testing.T) iter.Seq2[*assert.Assertions, string] {
+	return func(testbody func(*assert.Assertions, string) bool) {
+		t.Run("foo", func(t *testing.T) {
+			Assert := assert.New(t)
+			dest := WorkspaceTempDir(t)
+			testbody(Assert, dest)
+		})
+	}
 }
