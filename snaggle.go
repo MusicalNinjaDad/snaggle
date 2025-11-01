@@ -51,11 +51,13 @@ func link(sourcePath string, targetDir string) error {
 		return err
 	}
 
+	op := "link"
 	err = os.Link(sourcePath, target)
 	// Error codes: https://man7.org/linux/man-pages/man2/link.2.html
 	switch {
 	// X-Device link || No permission to link - Try simple copy
 	case errors.Is(err, syscall.EXDEV) || errors.Is(err, syscall.EPERM):
+		op = "copy"
 		err = internal.Copy(sourcePath, target)
 	// File already exists - not an err if it's identical
 	case errors.Is(err, syscall.EEXIST) && internal.SameFile(sourcePath, target):
@@ -63,7 +65,7 @@ func link(sourcePath string, targetDir string) error {
 	}
 
 	if err == nil {
-		log.Default().Println(originalSourcePath + " -> " + target)
+		log.Default().Println(op + " " + originalSourcePath + " -> " + target)
 	}
 
 	return err
