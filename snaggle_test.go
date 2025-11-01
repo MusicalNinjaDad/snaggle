@@ -265,7 +265,7 @@ func TestRecurseFile(t *testing.T) {
 	}
 }
 
-func TestXxx(t *testing.T) {
+func Test(t *testing.T) {
 	for Assert, tc := range TestCases(t) {
 		t.Logf("%#v", tc)
 		err := snaggle.Snaggle(tc.Src, tc.Dest)
