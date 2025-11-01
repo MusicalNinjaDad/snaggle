@@ -267,9 +267,10 @@ func TestRecurseFile(t *testing.T) {
 
 func TestXxx(t *testing.T) {
 	for Assert, tc := range TestCases(t) {
+		t.Logf("%#v", tc)
 		err := snaggle.Snaggle(tc.Src, tc.Dest)
 		Assert.NoError(err)
 		Assert.DirExists(tc.Dest)
-		Assert.FileExists(filepath.Join(tc.Dest, filepath.Base(tc.Src)))
+		Assert.FileExists(filepath.Join(tc.Dest, "bin", filepath.Base(tc.Src)))
 	}
 }

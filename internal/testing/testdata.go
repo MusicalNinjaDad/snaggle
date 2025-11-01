@@ -227,10 +227,10 @@ type TestCase struct {
 //	}
 func TestCases(t *testing.T) iter.Seq2[*assert.Assertions, TestCase] {
 	return func(testbody func(Assert *assert.Assertions, tc TestCase) bool) {
-		t.Run("foo", func(t *testing.T) {
+		t.Run("PIE 1 dependency", func(t *testing.T) {
 			Assert := assert.New(t)
 			tc := TestCase{}
-			tc.Src = "bar"
+			tc.Src = P_which
 			tc.Dest = WorkspaceTempDir(t)
 			testbody(Assert, tc)
 		})
