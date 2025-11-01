@@ -5,7 +5,10 @@ package testing
 //nolint:staticcheck
 import (
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/MusicalNinjaDad/snaggle/elf"
 
@@ -193,4 +196,20 @@ func ExpectedOutput(tc binaryDetails, tmp string, inplace bool) (stdout []string
 		files[lib] = libPath
 	}
 	return
+}
+
+func AssertStdout(t *testing.T, expected []string, actual []string) {
+	t.Helper()
+	a := assert.New(t)
+
+	stripped := make([]string, 0, len(actual))
+
+	for n, line := range actual {
+		a.Conditionf(func() (success bool) {
+			return strings.HasPrefix(line, "copy") || strings.HasPrefix(line, "link")
+		}, "Line %v does not start with `copy` or `line`: %s", n+1, line)
+		stripped = append(stripped, line[5:])
+	}
+
+	a.ElementsMatch(expected, stripped)
 }

@@ -58,7 +58,7 @@ func TestCommonBinaries(t *testing.T) {
 				}
 
 				AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
-				Assert.ElementsMatch(expectedOut, StripLines(string(stdout)))
+				AssertStdout(t, expectedOut, StripLines(string(stdout)))
 			})
 		}
 	}
@@ -160,7 +160,7 @@ func TestDirectory(t *testing.T) {
 			}
 
 			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
-			Assert.ElementsMatch(expectedOut, StripLines(string(stdout)))
+			AssertStdout(t, expectedOut, StripLines(string(stdout)))
 		})
 	}
 }
