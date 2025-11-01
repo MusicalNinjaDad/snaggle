@@ -214,7 +214,8 @@ func AssertStdout(t *testing.T, expected []string, actual []string) {
 	a.ElementsMatch(expected, stripped)
 }
 
-func TestCases(t *testing.T) (Assert *assert.Assertions) {
+func TestCases(t *testing.T) (Assert *assert.Assertions, dest string) {
 	Assert = assert.New(t)
+	dest = WorkspaceTempDir(t)
 	return
 }
