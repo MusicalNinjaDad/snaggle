@@ -61,6 +61,13 @@ func TestCommonBinaries(t *testing.T) {
 
 				AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
 				AssertStdout(t, expectedOut, StripLines(stdout.String()))
+				for _, line := range StripLines(stdout.String()) {
+					if strings.Contains(line, tc.Elf.Path) {
+						Assert.Conditionf(func() (success bool) {
+							return strings.HasPrefix(line, "link ")
+						}, "%s should have been linked: %s", tc.Elf.Path, line)
+					}
+				}
 			})
 		}
 	}
