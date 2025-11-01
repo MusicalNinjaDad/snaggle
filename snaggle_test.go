@@ -6,6 +6,7 @@ import (
 	"log"
 	"maps"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"syscall"
@@ -266,7 +267,9 @@ func TestRecurseFile(t *testing.T) {
 
 func TestXxx(t *testing.T) {
 	for Assert, data := range TestCases(t) {
-		Assert.Empty(data.Src)
-		Assert.Empty(data.Dest)
+		err := snaggle.Snaggle(data.Src, data.Dest)
+		Assert.NoError(err)
+		Assert.DirExists(data.Dest)
+		Assert.FileExists(filepath.Join(data.Dest, filepath.Base(data.Src)))
 	}
 }
