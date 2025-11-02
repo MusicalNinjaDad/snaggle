@@ -23,7 +23,11 @@ func Assert(t *testing.T) *Asserter {
 	return &Asserter{Testify, t}
 }
 
-// Assert directory ONLY contains files, contains ALL files and all files are identical to expectations
+// Assert contents of dir match map[reference_file]expected_file.
+//
+//  1. Asserts ALL expected files are present
+//  1. Asserts all expected files are IDENTICAL to the reference files
+//  1. Assert NO OTHER files are present in dir
 func (a *Asserter) DirectoryContents(ExpectedContents map[string]string, dir string) {
 	a.t.Helper()
 
