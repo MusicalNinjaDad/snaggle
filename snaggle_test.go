@@ -266,11 +266,16 @@ func TestRecurseFile(t *testing.T) {
 }
 
 func Test(t *testing.T) {
+	var stdout strings.Builder
+	log.SetOutput(&stdout)
+	t.Cleanup(func() { log.SetOutput(os.Stdout) })
+
 	for Assert, tc := range TestCases(t) {
 		t.Logf("%#v", tc)
 		err := snaggle.Snaggle(tc.Src, tc.Dest)
 		Assert.NoError(err)
 		Assert.DirExists(tc.Dest)
 		Assert.FileExists(filepath.Join(tc.Dest, "bin", filepath.Base(tc.Src)))
+		AssertStdout(t, tc.ExpectedStdout, StripLines(stdout.String()))
 	}
 }
