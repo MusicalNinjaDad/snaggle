@@ -87,7 +87,7 @@ func (a *Asserter) Stdout(expected []string, actual []string, mustBeLinked ...st
 	}
 
 	// TODO with #84 - assert Equal (ordering guaranteed with --verbose)
-	a.Testify.ElementsMatch(expected, stripped)
+	a.Testify.ElementsMatch(expected, stripped, "A: expected, B: actual")
 
 	for _, filename := range mustBeLinked {
 		if linked, ok := linked[filename]; ok {

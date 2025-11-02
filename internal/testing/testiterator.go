@@ -2,6 +2,7 @@ package testing
 
 import (
 	"iter"
+	"maps"
 	"path/filepath"
 	"testing"
 
@@ -58,6 +59,8 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 			}
 			for _, recursive := range []bool{false, true} {
 				desc := "Directory"
+				bins := maps.Clone(tests)
+
 				var options []snaggle.Option
 				if inplace {
 					desc += "_inplace"
@@ -66,6 +69,7 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 				if recursive {
 					desc += "_recursive"
 					options = append(options, snaggle.Recursive())
+					bins["subdir"] = subdir_contents
 				}
 
 				t.Run(desc, func(t *testing.T) {
@@ -77,7 +81,7 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 						Options:        options,
 					}
 
-					for _, bin := range tests {
+					for _, bin := range bins {
 						generateOutput(bin, &tc, inplace)
 					}
 
@@ -161,4 +165,12 @@ var tests = map[string]testDetails{
 		snagas:         "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
 		hasInterpreter: false,
 	},
+}
+
+var subdir_contents = testDetails{
+	elf:            commonElfs["hello_dynamic"],
+	path:           P_hello_dynamic,
+	snagto:         "bin",
+	snagas:         "hello",
+	hasInterpreter: true,
 }
