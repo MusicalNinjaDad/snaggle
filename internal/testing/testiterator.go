@@ -56,29 +56,37 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 					testbody(t, tc)
 				})
 			}
-			// for _, recursive := range []bool{false, true} {
-			// 	desc := "Directory"
-			// 	var options []snaggle.Option
-			// 	if inplace {
-			// 		desc += "_inplace"
-			// 		options = append(options, snaggle.InPlace())
-			// 	}
-			// 	if recursive {
-			// 		desc += "_recursive"
-			// 		options = append(options, snaggle.Recursive())
-			// 	}
+			for _, recursive := range []bool{false, true} {
+				desc := "Directory"
+				var options []snaggle.Option
+				if inplace {
+					desc += "_inplace"
+					options = append(options, snaggle.InPlace())
+				}
+				if recursive {
+					desc += "_recursive"
+					options = append(options, snaggle.Recursive())
+				}
 
-			// 	t.Run(desc, func(t *testing.T) {
-			// 		tc := TestCase{
-			// 			Src:            TestdataPath("."),
-			// 			Dest:           WorkspaceTempDir(t),
-			// 			ExpectedStdout: make([]string, 0),
-			// 			ExpectedFiles:  make(map[string]string),
-			// 			Options:        options,
-			// 		}
-			// 	})
+				t.Run(desc, func(t *testing.T) {
+					tc := TestCase{
+						Src:            TestdataPath("."),
+						Dest:           WorkspaceTempDir(t),
+						ExpectedStdout: make([]string, 0),
+						ExpectedFiles:  make(map[string]string),
+						Options:        options,
+					}
 
-			// }
+					for _, bin := range tests {
+						generateOutput(bin, &tc, inplace)
+					}
+
+					t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
+					testbody(t, tc)
+
+				})
+
+			}
 		}
 	}
 }
@@ -87,9 +95,9 @@ func generateOutput(bin testDetails, tc *TestCase, inplace bool) {
 	if !inplace {
 		snaggedBin := filepath.Join(tc.Dest, bin.snagto, bin.snagas)
 		tc.ExpectedStdout = append(tc.ExpectedStdout,
-			tc.Src+" -> "+snaggedBin,
+			bin.path+" -> "+snaggedBin,
 		)
-		tc.ExpectedFiles[tc.Src] = snaggedBin
+		tc.ExpectedFiles[bin.path] = snaggedBin
 	}
 
 	if bin.hasInterpreter {
