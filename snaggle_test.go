@@ -274,10 +274,6 @@ func Test(t *testing.T) {
 
 		Assert := assert.New(t)
 
-		if !Assert.DirExists(tc.Dest) {
-			t.Fatal("Temporary destination does not exist")
-		}
-
 		err := snaggle.Snaggle(tc.Src, tc.Dest)
 
 		Assert.NoError(err)
