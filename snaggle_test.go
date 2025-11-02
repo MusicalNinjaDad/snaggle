@@ -6,7 +6,6 @@ import (
 	"log"
 	"maps"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"syscall"
@@ -271,12 +270,26 @@ func Test(t *testing.T) {
 	t.Cleanup(func() { log.SetOutput(os.Stdout) })
 
 	for Assert, tc := range TestCases(t) {
+		t.Cleanup(func() { stdout.Reset() })
+
 		t.Logf("%#v", tc)
+		if !Assert.DirExists(tc.Dest) {
+			t.Fatal("Temporary destination does not exist")
+		}
+
 		err := snaggle.Snaggle(tc.Src, tc.Dest)
+
 		Assert.NoError(err)
-		Assert.DirExists(tc.Dest)
-		Assert.FileExists(filepath.Join(tc.Dest, "bin", filepath.Base(tc.Src)))
+
 		AssertDirectoryContents(t, slices.Collect(maps.Values(tc.ExpectedFiles)), tc.Dest)
+		for original, copy := range tc.ExpectedFiles {
+			if original == tc.Src {
+				AssertLinkedFile(t, original, copy)
+			} else {
+				AssertSameFile(t, original, copy)
+			}
+		}
+
 		AssertStdout(t, tc.ExpectedStdout, StripLines(stdout.String()))
 	}
 }
