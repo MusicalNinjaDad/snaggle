@@ -272,20 +272,14 @@ func Test(t *testing.T) {
 	for t, tc := range TestCases(t) {
 		t.Cleanup(func() { stdout.Reset() })
 
+		A := Assert(t)
 		Assert := assert.New(t)
 
 		err := snaggle.Snaggle(tc.Src, tc.Dest)
 
 		Assert.NoError(err)
 
-		AssertDirectoryContents(t, slices.Collect(maps.Values(tc.ExpectedFiles)), tc.Dest)
-		for original, copy := range tc.ExpectedFiles {
-			if original == tc.Src {
-				AssertLinkedFile(t, original, copy)
-			} else {
-				AssertSameFile(t, original, copy)
-			}
-		}
+		A.DirectoryContents(tc.ExpectedFiles, tc.Dest)
 
 		AssertStdout(t, tc.ExpectedStdout, StripLines(stdout.String()))
 		for _, line := range StripLines(stdout.String()) {
