@@ -280,6 +280,7 @@ func Test(t *testing.T) {
 		Assert.NoError(err)
 
 		A.DirectoryContents(tc.ExpectedFiles, tc.Dest)
+		A.LinkedFile(tc.Src, tc.ExpectedFiles[tc.Src])
 
 		AssertStdout(t, tc.ExpectedStdout, StripLines(stdout.String()))
 		for _, line := range StripLines(stdout.String()) {

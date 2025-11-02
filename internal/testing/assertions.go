@@ -50,3 +50,10 @@ func (a *Asserter) DirectoryContents(ExpectedContents map[string]string, dir str
 	}
 
 }
+
+func (a *Asserter) LinkedFile(path1 string, path2 string) {
+	a.t.Helper()
+	same, err := SameInode(path1, path2)
+	a.Testify.NoError(err)
+	a.Testify.Truef(same, "%s & %s are different files", path1, path2)
+}

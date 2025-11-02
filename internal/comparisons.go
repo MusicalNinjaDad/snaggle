@@ -35,14 +35,14 @@ func AssertSameFile(t *testing.T, path1 string, path2 string) {
 func AssertLinkedFile(t *testing.T, path1 string, path2 string) {
 	t.Helper()
 
-	same, err := sameInode(path1, path2)
+	same, err := SameInode(path1, path2)
 
 	assert.NoError(t, err)
 	assert.Truef(t, same, "%s & %s are different files", path1, path2)
 }
 
 func sameFile(path1 string, path2 string) (bool, error) {
-	same, err := sameInode(path1, path2)
+	same, err := SameInode(path1, path2)
 	switch {
 	case err != nil:
 		return false, err
@@ -72,7 +72,7 @@ func sameFile(path1 string, path2 string) (bool, error) {
 }
 
 // Are two paths refering to identical inodes?
-func sameInode(path1 string, path2 string) (bool, error) {
+func SameInode(path1 string, path2 string) (bool, error) {
 	file1, err1 := os.Stat(path1)
 	file2, err2 := os.Stat(path2)
 	if err1 != nil || err2 != nil {
