@@ -2,7 +2,6 @@
 // due to circular imports
 package testing
 
-//nolint:staticcheck
 import (
 	"path/filepath"
 	"strings"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/MusicalNinjaDad/snaggle/elf"
 
+	//nolint:staticcheck
 	. "github.com/MusicalNinjaDad/snaggle/internal" //lint:ignore ST1001 test helpers
 )
 

@@ -7,6 +7,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 
+	//nolint:staticcheck
 	. "github.com/MusicalNinjaDad/snaggle/internal" //lint:ignore ST1001 test helpers
 )
 
