@@ -291,5 +291,12 @@ func Test(t *testing.T) {
 		}
 
 		AssertStdout(t, tc.ExpectedStdout, StripLines(stdout.String()))
+		for _, line := range StripLines(stdout.String()) {
+			if strings.Contains(line, tc.Src) {
+				Assert.Conditionf(func() (success bool) {
+					return strings.HasPrefix(line, "link ")
+				}, "%s should have been linked: %s", tc.Src, line)
+			}
+		}
 	}
 }
