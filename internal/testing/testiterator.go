@@ -31,23 +31,31 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 	return func(testbody func(t *testing.T, tc TestCase) bool) {
 		for desc, bin := range tests {
 			t.Run(desc, func(t *testing.T) {
-				tc := TestCase{}
+				tc := TestCase{ExpectedFiles: make(map[string]string, len(bin.Elf.Dependencies)+2)}
 
 				tc.Src = bin.Path
 				tc.Dest = WorkspaceTempDir(t)
 
+				snaggedBin := filepath.Join(tc.Dest, bin.snagto, bin.snagas)
 				tc.ExpectedStdout = append(tc.ExpectedStdout,
-					tc.Src+" -> "+filepath.Join(tc.Dest, bin.snagto, bin.snagas),
+					tc.Src+" -> "+snaggedBin,
 				)
+				tc.ExpectedFiles[tc.Src] = snaggedBin
+
 				if bin.hasInterpreter {
+					snaggedInterp := filepath.Join(tc.Dest, bin.Elf.Interpreter)
 					tc.ExpectedStdout = append(tc.ExpectedStdout,
-						bin.Elf.Interpreter+" -> "+filepath.Join(tc.Dest, bin.Elf.Interpreter),
+						bin.Elf.Interpreter+" -> "+snaggedInterp,
 					)
+					tc.ExpectedFiles[bin.Elf.Interpreter] = snaggedInterp
 				}
+
 				for _, lib := range bin.Elf.Dependencies {
+					snaggedLib := filepath.Join(tc.Dest, "lib64", filepath.Base(lib))
 					tc.ExpectedStdout = append(tc.ExpectedStdout,
-						lib+" -> "+filepath.Join(tc.Dest, "lib64", filepath.Base(lib)),
+						lib+" -> "+snaggedLib,
 					)
+					tc.ExpectedFiles[lib] = snaggedLib
 				}
 
 				t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
