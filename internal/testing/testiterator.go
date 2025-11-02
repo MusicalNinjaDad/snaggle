@@ -25,17 +25,19 @@ type TestCase struct {
 //	}
 func TestCases(t *testing.T) iter.Seq2[*assert.Assertions, TestCase] {
 	return func(testbody func(Assert *assert.Assertions, tc TestCase) bool) {
-		t.Run("PIE 1 dependency", func(t *testing.T) {
-			tc := TestCase{}
+		for desc, bin := range CommonBinaries(t) {
+			t.Run(desc, func(t *testing.T) {
+				tc := TestCase{}
 
-			Assert := assert.New(t)
+				Assert := assert.New(t)
 
-			tc.Src = P_which
-			tc.Dest = WorkspaceTempDir(t)
-			tc.ExpectedStdout, tc.ExpectedFiles = ExpectedOutput(CommonBinaries(t)["PIE_1"], tc.Dest, false)
+				tc.Src = bin.Elf.Path
+				tc.Dest = WorkspaceTempDir(t)
+				tc.ExpectedStdout, tc.ExpectedFiles = ExpectedOutput(bin, tc.Dest, false)
 
-			t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
-			testbody(Assert, tc)
-		})
+				t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
+				testbody(Assert, tc)
+			})
+		}
 	}
 }
