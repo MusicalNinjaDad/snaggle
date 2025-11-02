@@ -61,6 +61,7 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 					testbody(t, tc)
 				})
 			}
+
 			for _, recursive := range []bool{false, true} {
 				desc := "Directory"
 				bins := maps.Clone(tests)
