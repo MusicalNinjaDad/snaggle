@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/stretchr/testify/assert"
 
 	//nolint:staticcheck
 	"github.com/MusicalNinjaDad/snaggle/elf"
@@ -21,22 +20,23 @@ type TestCase struct {
 
 // Calls t.Run on the test body for all our test case binaries e.g.:
 //
-//	for Assert, tc := range TestCases(t) {
+//	for t, tc := range TestCases(t) {
+//		Assert := assert.New(t)
 //		Assert.NotEmpty(tc)
 //	}
-func TestCases(t *testing.T) iter.Seq2[*assert.Assertions, TestCase] {
-	return func(testbody func(Assert *assert.Assertions, tc TestCase) bool) {
+//
+// returns the sepecific, shadowed, t for each test run, to ensure results are correctly allocated to the subtest
+func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
+	return func(testbody func(t *testing.T, tc TestCase) bool) {
 		for desc, bin := range tests {
 			t.Run(desc, func(t *testing.T) {
 				tc := TestCase{}
-
-				Assert := assert.New(t)
 
 				tc.Src = bin.Path
 				tc.Dest = WorkspaceTempDir(t)
 
 				t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
-				testbody(Assert, tc)
+				testbody(t, tc)
 			})
 		}
 	}
