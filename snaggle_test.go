@@ -19,57 +19,23 @@ import (
 	. "github.com/MusicalNinjaDad/snaggle/internal/testing"
 )
 
-func TestCommonBinaries(t *testing.T) {
+func Test(t *testing.T) {
 	var stdout strings.Builder
 	log.SetOutput(&stdout)
 	t.Cleanup(func() { log.SetOutput(os.Stdout) })
 
-	tests := CommonBinaries(t)
+	for t, tc := range TestCases(t) {
+		t.Cleanup(func() { stdout.Reset() })
+		Assert := Assert(t)
 
-	for _, inplace := range []bool{false, true} {
-		for _, tc := range tests {
-			testname := tc.Description
-			if inplace {
-				testname += "_inplace"
-			}
+		err := snaggle.Snaggle(tc.Src, tc.Dest, tc.Options...)
 
-			t.Run(testname, func(t *testing.T) {
-				t.Cleanup(func() { stdout.Reset() })
+		Assert.Testify.NoError(err)
 
-				Assert := assert.New(t)
-				tmp := WorkspaceTempDir(t)
+		Assert.DirectoryContents(tc.ExpectedFiles, tc.Dest)
+		Assert.LinkedFile(tc.Src, tc.ExpectedFiles[tc.Src])
 
-				expectedOut, expectedFiles := ExpectedOutput(tc, tmp, inplace)
-
-				var err error
-				switch {
-				case inplace:
-					err = snaggle.Snaggle(tc.Elf.Path, tmp, snaggle.InPlace())
-				default:
-					err = snaggle.Snaggle(tc.Elf.Path, tmp)
-				}
-
-				Assert.NoError(err)
-
-				for original, copy := range expectedFiles {
-					if original == tc.Elf.Path {
-						AssertLinkedFile(t, original, copy)
-					} else {
-						AssertSameFile(t, original, copy)
-					}
-				}
-
-				AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
-				AssertStdout(t, expectedOut, StripLines(stdout.String()))
-				for _, line := range StripLines(stdout.String()) {
-					if strings.Contains(line, tc.Elf.Path) {
-						Assert.Conditionf(func() (success bool) {
-							return strings.HasPrefix(line, "link ")
-						}, "%s should have been linked: %s", tc.Elf.Path, line)
-					}
-				}
-			})
-		}
+		Assert.Stdout(tc.ExpectedStdout, StripLines(stdout.String()), tc.Src)
 	}
 }
 
@@ -103,60 +69,6 @@ func TestFileExists(t *testing.T) {
 	for range 2 {
 		err := snaggle.Snaggle(tc.Elf.Path, tmp)
 		Assert.NoError(err)
-	}
-}
-
-func TestDirectory(t *testing.T) {
-	var stdout strings.Builder
-	log.SetOutput(&stdout)
-	t.Cleanup(func() { log.SetOutput(os.Stdout) })
-
-	for _, recursive := range []bool{false, true} {
-		var testname string
-		if recursive {
-			testname = "recursive"
-		} else {
-			testname = "flat"
-		}
-
-		t.Run(testname, func(t *testing.T) {
-			t.Cleanup(func() { stdout.Reset() })
-
-			Assert := assert.New(t)
-			tmp := WorkspaceTempDir(t)
-
-			contents := CommonBinaries(t)
-			if recursive {
-				contents["subdir"] = Hello_dynamic
-			}
-			dir := TestdataPath(".")
-			inplace := false
-
-			var expectedOut []string
-			var expectedFiles = make(map[string]string)
-
-			for _, bin := range contents {
-				stdout, files := ExpectedOutput(bin, tmp, inplace)
-				expectedOut = append(expectedOut, stdout...)
-				maps.Insert(expectedFiles, maps.All(files))
-			}
-
-			var err error
-			if recursive {
-				err = snaggle.Snaggle(dir, tmp, snaggle.Recursive())
-			} else {
-				err = snaggle.Snaggle(dir, tmp)
-			}
-
-			Assert.NoError(err)
-
-			for original, copy := range expectedFiles {
-				AssertSameFile(t, original, copy)
-			}
-
-			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
-			AssertStdout(t, expectedOut, StripLines(stdout.String()))
-		})
 	}
 }
 
@@ -261,25 +173,5 @@ func TestRecurseFile(t *testing.T) {
 			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
 			Assert.ElementsMatch(expectedOut, StripLines(stdout.String()))
 		})
-	}
-}
-
-func Test(t *testing.T) {
-	var stdout strings.Builder
-	log.SetOutput(&stdout)
-	t.Cleanup(func() { log.SetOutput(os.Stdout) })
-
-	for t, tc := range TestCases(t) {
-		t.Cleanup(func() { stdout.Reset() })
-		Assert := Assert(t)
-
-		err := snaggle.Snaggle(tc.Src, tc.Dest, tc.Options...)
-
-		Assert.Testify.NoError(err)
-
-		Assert.DirectoryContents(tc.ExpectedFiles, tc.Dest)
-		Assert.LinkedFile(tc.Src, tc.ExpectedFiles[tc.Src])
-
-		Assert.Stdout(tc.ExpectedStdout, StripLines(stdout.String()), tc.Src)
 	}
 }
