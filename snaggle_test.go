@@ -276,6 +276,7 @@ func Test(t *testing.T) {
 		Assert.NoError(err)
 		Assert.DirExists(tc.Dest)
 		Assert.FileExists(filepath.Join(tc.Dest, "bin", filepath.Base(tc.Src)))
+		AssertDirectoryContents(t, slices.Collect(maps.Values(tc.ExpectedFiles)), tc.Dest)
 		AssertStdout(t, tc.ExpectedStdout, StripLines(stdout.String()))
 	}
 }

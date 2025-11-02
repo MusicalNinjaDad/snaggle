@@ -10,9 +10,10 @@ import (
 )
 
 type TestCase struct {
-	Src            string   // source path
-	Dest           string   // destination path
-	ExpectedStdout []string // Split by line, de-(in)dented
+	Src            string            // source path
+	Dest           string            // destination path
+	ExpectedStdout []string          // Split by line, de-(in)dented
+	ExpectedFiles  map[string]string // map[original_path]snagged_path
 }
 
 // Calls t.Run on the test body for all our test case binaries e.g.:
@@ -27,7 +28,7 @@ func TestCases(t *testing.T) iter.Seq2[*assert.Assertions, TestCase] {
 			tc := TestCase{}
 			tc.Src = P_which
 			tc.Dest = WorkspaceTempDir(t)
-			tc.ExpectedStdout, _ = ExpectedOutput(CommonBinaries(t)["PIE_1"], tc.Dest, false)
+			tc.ExpectedStdout, tc.ExpectedFiles = ExpectedOutput(CommonBinaries(t)["PIE_1"], tc.Dest, false)
 			testbody(Assert, tc)
 		})
 	}
