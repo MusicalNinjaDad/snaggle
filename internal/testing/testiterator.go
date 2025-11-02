@@ -7,8 +7,9 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 
-	//nolint:staticcheck
 	"github.com/MusicalNinjaDad/snaggle/elf"
+
+	//nolint:staticcheck
 	. "github.com/MusicalNinjaDad/snaggle/internal" //lint:ignore ST1001 test helpers
 )
 
