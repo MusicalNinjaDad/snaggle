@@ -50,35 +50,62 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 						Options:        options,
 					}
 
-					if !inplace {
-						snaggedBin := filepath.Join(tc.Dest, bin.snagto, bin.snagas)
-						tc.ExpectedStdout = append(tc.ExpectedStdout,
-							tc.Src+" -> "+snaggedBin,
-						)
-						tc.ExpectedFiles[tc.Src] = snaggedBin
-					}
-
-					if bin.hasInterpreter {
-						snaggedInterp := filepath.Join(tc.Dest, bin.elf.Interpreter)
-						tc.ExpectedStdout = append(tc.ExpectedStdout,
-							bin.elf.Interpreter+" -> "+snaggedInterp,
-						)
-						tc.ExpectedFiles[bin.elf.Interpreter] = snaggedInterp
-					}
-
-					for _, lib := range bin.elf.Dependencies {
-						snaggedLib := filepath.Join(tc.Dest, "lib64", filepath.Base(lib))
-						tc.ExpectedStdout = append(tc.ExpectedStdout,
-							lib+" -> "+snaggedLib,
-						)
-						tc.ExpectedFiles[lib] = snaggedLib
-					}
+					generateOutput(bin, &tc, inplace)
 
 					t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
 					testbody(t, tc)
 				})
 			}
+			// for _, recursive := range []bool{false, true} {
+			// 	desc := "Directory"
+			// 	var options []snaggle.Option
+			// 	if inplace {
+			// 		desc += "_inplace"
+			// 		options = append(options, snaggle.InPlace())
+			// 	}
+			// 	if recursive {
+			// 		desc += "_recursive"
+			// 		options = append(options, snaggle.Recursive())
+			// 	}
+
+			// 	t.Run(desc, func(t *testing.T) {
+			// 		tc := TestCase{
+			// 			Src:            TestdataPath("."),
+			// 			Dest:           WorkspaceTempDir(t),
+			// 			ExpectedStdout: make([]string, 0),
+			// 			ExpectedFiles:  make(map[string]string),
+			// 			Options:        options,
+			// 		}
+			// 	})
+
+			// }
 		}
+	}
+}
+
+func generateOutput(bin testDetails, tc *TestCase, inplace bool) {
+	if !inplace {
+		snaggedBin := filepath.Join(tc.Dest, bin.snagto, bin.snagas)
+		tc.ExpectedStdout = append(tc.ExpectedStdout,
+			tc.Src+" -> "+snaggedBin,
+		)
+		tc.ExpectedFiles[tc.Src] = snaggedBin
+	}
+
+	if bin.hasInterpreter {
+		snaggedInterp := filepath.Join(tc.Dest, bin.elf.Interpreter)
+		tc.ExpectedStdout = append(tc.ExpectedStdout,
+			bin.elf.Interpreter+" -> "+snaggedInterp,
+		)
+		tc.ExpectedFiles[bin.elf.Interpreter] = snaggedInterp
+	}
+
+	for _, lib := range bin.elf.Dependencies {
+		snaggedLib := filepath.Join(tc.Dest, "lib64", filepath.Base(lib))
+		tc.ExpectedStdout = append(tc.ExpectedStdout,
+			lib+" -> "+snaggedLib,
+		)
+		tc.ExpectedFiles[lib] = snaggedLib
 	}
 }
 
