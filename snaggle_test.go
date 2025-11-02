@@ -271,17 +271,15 @@ func Test(t *testing.T) {
 
 	for t, tc := range TestCases(t) {
 		t.Cleanup(func() { stdout.Reset() })
-
-		A := Assert(t)
-		Assert := assert.New(t)
+		Assert := Assert(t)
 
 		err := snaggle.Snaggle(tc.Src, tc.Dest)
 
-		Assert.NoError(err)
+		Assert.Testify.NoError(err)
 
-		A.DirectoryContents(tc.ExpectedFiles, tc.Dest)
-		A.LinkedFile(tc.Src, tc.ExpectedFiles[tc.Src])
+		Assert.DirectoryContents(tc.ExpectedFiles, tc.Dest)
+		Assert.LinkedFile(tc.Src, tc.ExpectedFiles[tc.Src])
 
-		A.Stdout(tc.ExpectedStdout, StripLines(stdout.String()), tc.Src)
+		Assert.Stdout(tc.ExpectedStdout, StripLines(stdout.String()), tc.Src)
 	}
 }
