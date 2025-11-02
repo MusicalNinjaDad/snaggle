@@ -34,17 +34,21 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 	return func(testbody func(t *testing.T, tc TestCase) bool) {
 		for _, inplace := range []bool{false, true} {
 			for desc, bin := range tests {
+
 				var options []snaggle.Option
 				if inplace {
 					desc += "_inplace"
 					options = append(options, snaggle.InPlace())
 				}
-				t.Run(desc, func(t *testing.T) {
-					tc := TestCase{ExpectedFiles: make(map[string]string, len(bin.elf.Dependencies)+2)}
-					tc.Options = options
 
-					tc.Src = bin.path
-					tc.Dest = WorkspaceTempDir(t)
+				t.Run(desc, func(t *testing.T) {
+					tc := TestCase{
+						Src:            bin.path,
+						Dest:           WorkspaceTempDir(t),
+						ExpectedStdout: make([]string, 0, len(bin.elf.Dependencies)+2),
+						ExpectedFiles:  make(map[string]string, len(bin.elf.Dependencies)+2),
+						Options:        options,
+					}
 
 					if !inplace {
 						snaggedBin := filepath.Join(tc.Dest, bin.snagto, bin.snagas)
