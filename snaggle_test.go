@@ -273,12 +273,7 @@ func Test(t *testing.T) {
 		t.Cleanup(func() { stdout.Reset() })
 		Assert := Assert(t)
 
-		var err error
-		if tc.Inplace {
-			err = snaggle.Snaggle(tc.Src, tc.Dest, snaggle.InPlace())
-		} else {
-			err = snaggle.Snaggle(tc.Src, tc.Dest)
-		}
+		err := snaggle.Snaggle(tc.Src, tc.Dest, tc.Options...)
 
 		Assert.Testify.NoError(err)
 

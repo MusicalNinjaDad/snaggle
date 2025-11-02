@@ -7,6 +7,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 
+	"github.com/MusicalNinjaDad/snaggle"
 	"github.com/MusicalNinjaDad/snaggle/elf"
 
 	//nolint:staticcheck
@@ -18,7 +19,7 @@ type TestCase struct {
 	Dest           string            // destination path
 	ExpectedStdout []string          // Split by line, de-(in)dented
 	ExpectedFiles  map[string]string // map[original_path]snagged_path
-	Inplace        bool
+	Options        []snaggle.Option
 }
 
 // Calls t.Run on the test body for all our test case binaries e.g.:
@@ -33,12 +34,14 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 	return func(testbody func(t *testing.T, tc TestCase) bool) {
 		for _, inplace := range []bool{false, true} {
 			for desc, bin := range tests {
+				var options []snaggle.Option
 				if inplace {
 					desc += "_inplace"
+					options = append(options, snaggle.InPlace())
 				}
 				t.Run(desc, func(t *testing.T) {
 					tc := TestCase{ExpectedFiles: make(map[string]string, len(bin.elf.Dependencies)+2)}
-					tc.Inplace = inplace
+					tc.Options = options
 
 					tc.Src = bin.path
 					tc.Dest = WorkspaceTempDir(t)
