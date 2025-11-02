@@ -272,7 +272,6 @@ func Test(t *testing.T) {
 	for Assert, tc := range TestCases(t) {
 		t.Cleanup(func() { stdout.Reset() })
 
-		t.Logf("%#v", tc)
 		if !Assert.DirExists(tc.Dest) {
 			t.Fatal("Temporary destination does not exist")
 		}

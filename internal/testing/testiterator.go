@@ -4,6 +4,7 @@ import (
 	"iter"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 
 	. "github.com/MusicalNinjaDad/snaggle/internal" //lint:ignore ST1001 test helpers
@@ -24,8 +25,11 @@ type TestCase struct {
 func TestCases(t *testing.T) iter.Seq2[*assert.Assertions, TestCase] {
 	return func(testbody func(Assert *assert.Assertions, tc TestCase) bool) {
 		t.Run("PIE 1 dependency", func(t *testing.T) {
-			Assert := assert.New(t)
 			tc := TestCase{}
+			t.Cleanup(func() { t.Logf("\n\nTestcase details: %s", spew.Sdump(tc)) })
+
+			Assert := assert.New(t)
+
 			tc.Src = P_which
 			tc.Dest = WorkspaceTempDir(t)
 			tc.ExpectedStdout, tc.ExpectedFiles = ExpectedOutput(CommonBinaries(t)["PIE_1"], tc.Dest, false)
