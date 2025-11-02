@@ -2,6 +2,7 @@ package testing
 
 import (
 	"iter"
+	"path/filepath"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
@@ -34,6 +35,20 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 
 				tc.Src = bin.Path
 				tc.Dest = WorkspaceTempDir(t)
+
+				tc.ExpectedStdout = append(tc.ExpectedStdout,
+					tc.Src+" -> "+filepath.Join(tc.Dest, bin.snagto, bin.snagas),
+				)
+				if bin.hasInterpreter {
+					tc.ExpectedStdout = append(tc.ExpectedStdout,
+						bin.Elf.Interpreter+" -> "+filepath.Join(tc.Dest, bin.Elf.Interpreter),
+					)
+				}
+				for _, lib := range bin.Elf.Dependencies {
+					tc.ExpectedStdout = append(tc.ExpectedStdout,
+						lib+" -> "+filepath.Join(tc.Dest, "lib64", filepath.Base(lib)),
+					)
+				}
 
 				t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
 				testbody(t, tc)
