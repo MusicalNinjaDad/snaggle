@@ -282,13 +282,6 @@ func Test(t *testing.T) {
 		A.DirectoryContents(tc.ExpectedFiles, tc.Dest)
 		A.LinkedFile(tc.Src, tc.ExpectedFiles[tc.Src])
 
-		AssertStdout(t, tc.ExpectedStdout, StripLines(stdout.String()))
-		for _, line := range StripLines(stdout.String()) {
-			if strings.Contains(line, tc.Src) {
-				Assert.Conditionf(func() (success bool) {
-					return strings.HasPrefix(line, "link ")
-				}, "%s should have been linked: %s", tc.Src, line)
-			}
-		}
+		A.Stdout(tc.ExpectedStdout, StripLines(stdout.String()), tc.Src)
 	}
 }

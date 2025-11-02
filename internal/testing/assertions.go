@@ -5,6 +5,7 @@ import (
 	"maps"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -56,4 +57,37 @@ func (a *Asserter) LinkedFile(path1 string, path2 string) {
 	same, err := SameInode(path1, path2)
 	a.Testify.NoError(err)
 	a.Testify.Truef(same, "%s & %s are different files", path1, path2)
+}
+
+// Assert:
+//  1. Actual contains all expected lines, in correct order (ignoring prefix "link" / "copy")
+//  1. All lines are prefixed with either "link" or "copy"
+//  1. All lines referencing paths in mustBeLinked are prefixed with "link"
+func (a *Asserter) Stdout(expected []string, actual []string, mustBeLinked ...string) {
+	a.t.Helper()
+
+	linked := make(map[string]bool, len(expected))
+
+	stripped := make([]string, 0, len(actual))
+	for n, line := range actual {
+		if strippedline, ok := strings.CutPrefix(line, "copy "); ok {
+			stripped = append(stripped, strippedline)
+			linked[strings.Fields(strippedline)[0]] = false
+			continue
+		}
+		if strippedline, ok := strings.CutPrefix(line, "link "); ok {
+			stripped = append(stripped, strippedline)
+			linked[strings.Fields(strippedline)[0]] = true
+			continue
+		}
+		a.t.Errorf("Line %v does not start with `copy` or `line`: %s", n+1, line)
+	}
+
+	// TODO with #84 - assert Equal (ordering guaranteed with --verbose)
+	a.Testify.ElementsMatch(expected, stripped)
+
+	for _, filename := range mustBeLinked {
+		a.Testify.Truef(linked[filename], "%s was reported as copied", filename)
+	}
+
 }
