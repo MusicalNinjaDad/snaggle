@@ -26,13 +26,14 @@ func TestCases(t *testing.T) iter.Seq2[*assert.Assertions, TestCase] {
 	return func(testbody func(Assert *assert.Assertions, tc TestCase) bool) {
 		t.Run("PIE 1 dependency", func(t *testing.T) {
 			tc := TestCase{}
-			t.Cleanup(func() { t.Logf("\n\nTestcase details: %s", spew.Sdump(tc)) })
 
 			Assert := assert.New(t)
 
 			tc.Src = P_which
 			tc.Dest = WorkspaceTempDir(t)
 			tc.ExpectedStdout, tc.ExpectedFiles = ExpectedOutput(CommonBinaries(t)["PIE_1"], tc.Dest, false)
+
+			t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
 			testbody(Assert, tc)
 		})
 	}
