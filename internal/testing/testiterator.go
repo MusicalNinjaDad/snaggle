@@ -43,35 +43,47 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 }
 
 type testDetails struct {
-	Elf    elf.Elf
-	Path   string
-	snagto string
+	Elf            elf.Elf
+	Path           string
+	snagto         string
+	snagas         string
+	hasInterpreter bool
 }
 
 var tests = map[string]testDetails{
 	"PIE_0_deps": {
-		Elf:    commonElfs["hello_pie"],
-		Path:   P_hello_pie,
-		snagto: "bin",
+		Elf:            commonElfs["hello_pie"],
+		Path:           P_hello_pie,
+		snagto:         "bin",
+		snagas:         "hello_pie",
+		hasInterpreter: true,
 	},
 	"static": {
-		Elf:    commonElfs["hello_static"],
-		Path:   P_hello_static,
-		snagto: "bin",
+		Elf:            commonElfs["hello_static"],
+		Path:           P_hello_static,
+		snagto:         "bin",
+		snagas:         "hello_static",
+		hasInterpreter: false,
 	},
 	"PIE_1_dep": {
-		Elf:    commonElfs["which"],
-		Path:   P_which,
-		snagto: "bin",
+		Elf:            commonElfs["which"],
+		Path:           P_which,
+		snagto:         "bin",
+		snagas:         "which",
+		hasInterpreter: true,
 	},
 	"PIE_many_deps": {
-		Elf:    commonElfs["id"],
-		Path:   P_id,
-		snagto: "bin",
+		Elf:            commonElfs["id"],
+		Path:           P_id,
+		snagto:         "bin",
+		snagas:         "id",
+		hasInterpreter: true,
 	},
 	"dyn_lib": {
-		Elf:    commonElfs["ctypes_so"],
-		Path:   P_ctypes_so,
-		snagto: "lib64",
+		Elf:            commonElfs["ctypes_so"],
+		Path:           P_ctypes_so,
+		snagto:         "lib64",
+		snagas:         "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
+		hasInterpreter: false,
 	},
 }
