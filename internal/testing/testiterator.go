@@ -32,9 +32,9 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 	return func(testbody func(t *testing.T, tc TestCase) bool) {
 		for desc, bin := range tests {
 			t.Run(desc, func(t *testing.T) {
-				tc := TestCase{ExpectedFiles: make(map[string]string, len(bin.Elf.Dependencies)+2)}
+				tc := TestCase{ExpectedFiles: make(map[string]string, len(bin.elf.Dependencies)+2)}
 
-				tc.Src = bin.Path
+				tc.Src = bin.path
 				tc.Dest = WorkspaceTempDir(t)
 
 				snaggedBin := filepath.Join(tc.Dest, bin.snagto, bin.snagas)
@@ -44,14 +44,14 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 				tc.ExpectedFiles[tc.Src] = snaggedBin
 
 				if bin.hasInterpreter {
-					snaggedInterp := filepath.Join(tc.Dest, bin.Elf.Interpreter)
+					snaggedInterp := filepath.Join(tc.Dest, bin.elf.Interpreter)
 					tc.ExpectedStdout = append(tc.ExpectedStdout,
-						bin.Elf.Interpreter+" -> "+snaggedInterp,
+						bin.elf.Interpreter+" -> "+snaggedInterp,
 					)
-					tc.ExpectedFiles[bin.Elf.Interpreter] = snaggedInterp
+					tc.ExpectedFiles[bin.elf.Interpreter] = snaggedInterp
 				}
 
-				for _, lib := range bin.Elf.Dependencies {
+				for _, lib := range bin.elf.Dependencies {
 					snaggedLib := filepath.Join(tc.Dest, "lib64", filepath.Base(lib))
 					tc.ExpectedStdout = append(tc.ExpectedStdout,
 						lib+" -> "+snaggedLib,
@@ -67,8 +67,8 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 }
 
 type testDetails struct {
-	Elf            elf.Elf
-	Path           string
+	elf            elf.Elf
+	path           string
 	snagto         string
 	snagas         string
 	hasInterpreter bool
@@ -76,36 +76,36 @@ type testDetails struct {
 
 var tests = map[string]testDetails{
 	"PIE_0_deps": {
-		Elf:            commonElfs["hello_pie"],
-		Path:           P_hello_pie,
+		elf:            commonElfs["hello_pie"],
+		path:           P_hello_pie,
 		snagto:         "bin",
 		snagas:         "hello_pie",
 		hasInterpreter: true,
 	},
 	"static": {
-		Elf:            commonElfs["hello_static"],
-		Path:           P_hello_static,
+		elf:            commonElfs["hello_static"],
+		path:           P_hello_static,
 		snagto:         "bin",
 		snagas:         "hello_static",
 		hasInterpreter: false,
 	},
 	"PIE_1_dep": {
-		Elf:            commonElfs["which"],
-		Path:           P_which,
+		elf:            commonElfs["which"],
+		path:           P_which,
 		snagto:         "bin",
 		snagas:         "which",
 		hasInterpreter: true,
 	},
 	"PIE_many_deps": {
-		Elf:            commonElfs["id"],
-		Path:           P_id,
+		elf:            commonElfs["id"],
+		path:           P_id,
 		snagto:         "bin",
 		snagas:         "id",
 		hasInterpreter: true,
 	},
 	"dyn_lib": {
-		Elf:            commonElfs["ctypes_so"],
-		Path:           P_ctypes_so,
+		elf:            commonElfs["ctypes_so"],
+		path:           P_ctypes_so,
 		snagto:         "lib64",
 		snagas:         "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
 		hasInterpreter: false,
