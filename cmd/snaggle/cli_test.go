@@ -21,6 +21,29 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
+func Test(t *testing.T) {
+	for t, tc := range TestCases(t) {
+		Assert := Assert(t)
+
+		snaggle := exec.Command(snaggleBin, tc.Flags...)
+		snaggle.Args = append(snaggle.Args, tc.Src, tc.Dest)
+
+		stdout, err := snaggle.Output()
+
+		if !Assert.Testify.NoError(err) {
+			var exiterr *exec.ExitError
+			Assert.Testify.ErrorAs(err, &exiterr)
+			t.Logf("Stderr: %s", exiterr.Stderr)
+		}
+
+		Assert.DirectoryContents(tc.ExpectedFiles, tc.Dest)
+		Assert.LinkedFile(tc.Src, tc.ExpectedFiles[tc.Src])
+
+		Assert.Stdout(tc.ExpectedStdout, StripLines(string(stdout)), tc.Src)
+
+	}
+}
+
 func TestCommonBinaries(t *testing.T) {
 	tests := CommonBinaries(t)
 

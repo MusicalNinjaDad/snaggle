@@ -21,6 +21,7 @@ type TestCase struct {
 	ExpectedStdout []string          // Split by line, de-(in)dented
 	ExpectedFiles  map[string]string // map[original_path]snagged_path
 	Options        []snaggle.Option
+	Flags          []string
 }
 
 // Calls t.Run on the test body for all our test case binaries e.g.:
@@ -37,8 +38,10 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 			for desc, bin := range tests {
 
 				var options []snaggle.Option
+				var flags []string
 				if inplace {
 					desc += "_inplace"
+					flags = append(flags, "--in-place")
 					options = append(options, snaggle.InPlace())
 				}
 
@@ -49,6 +52,7 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 						ExpectedStdout: make([]string, 0, len(bin.elf.Dependencies)+2),
 						ExpectedFiles:  make(map[string]string, len(bin.elf.Dependencies)+2),
 						Options:        options,
+						Flags:          flags,
 					}
 
 					generateOutput(bin, &tc, inplace)
@@ -62,13 +66,16 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 				bins := maps.Clone(tests)
 
 				var options []snaggle.Option
+				var flags []string
 				if inplace {
 					desc += "_inplace"
 					options = append(options, snaggle.InPlace())
+					flags = append(flags, "--in-place")
 				}
 				if recursive {
 					desc += "_recursive"
 					options = append(options, snaggle.Recursive())
+					flags = append(flags, "--recursive")
 					bins["subdir"] = subdir_contents
 				}
 
@@ -79,6 +86,7 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 						ExpectedStdout: make([]string, 0),
 						ExpectedFiles:  make(map[string]string),
 						Options:        options,
+						Flags:          flags,
 					}
 
 					for _, bin := range bins {
