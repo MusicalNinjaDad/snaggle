@@ -273,12 +273,19 @@ func Test(t *testing.T) {
 		t.Cleanup(func() { stdout.Reset() })
 		Assert := Assert(t)
 
-		err := snaggle.Snaggle(tc.Src, tc.Dest)
+		var err error
+		if tc.Inplace {
+			err = snaggle.Snaggle(tc.Src, tc.Dest, snaggle.InPlace())
+		} else {
+			err = snaggle.Snaggle(tc.Src, tc.Dest)
+		}
 
 		Assert.Testify.NoError(err)
 
 		Assert.DirectoryContents(tc.ExpectedFiles, tc.Dest)
-		Assert.LinkedFile(tc.Src, tc.ExpectedFiles[tc.Src])
+		if !tc.Inplace {
+			Assert.LinkedFile(tc.Src, tc.ExpectedFiles[tc.Src])
+		}
 
 		Assert.Stdout(tc.ExpectedStdout, StripLines(stdout.String()), tc.Src)
 	}

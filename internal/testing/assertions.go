@@ -87,7 +87,9 @@ func (a *Asserter) Stdout(expected []string, actual []string, mustBeLinked ...st
 	a.Testify.ElementsMatch(expected, stripped)
 
 	for _, filename := range mustBeLinked {
-		a.Testify.Truef(linked[filename], "%s was reported as copied", filename)
+		if linked, ok := linked[filename]; ok {
+			a.Testify.Truef(linked, "%s was not reported as copied", filename)
+		}
 	}
 
 }

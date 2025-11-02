@@ -18,6 +18,7 @@ type TestCase struct {
 	Dest           string            // destination path
 	ExpectedStdout []string          // Split by line, de-(in)dented
 	ExpectedFiles  map[string]string // map[original_path]snagged_path
+	Inplace        bool
 }
 
 // Calls t.Run on the test body for all our test case binaries e.g.:
@@ -30,38 +31,46 @@ type TestCase struct {
 // returns the sepecific, shadowed, t for each test run, to ensure results are correctly allocated to the subtest
 func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 	return func(testbody func(t *testing.T, tc TestCase) bool) {
-		for desc, bin := range tests {
-			t.Run(desc, func(t *testing.T) {
-				tc := TestCase{ExpectedFiles: make(map[string]string, len(bin.elf.Dependencies)+2)}
-
-				tc.Src = bin.path
-				tc.Dest = WorkspaceTempDir(t)
-
-				snaggedBin := filepath.Join(tc.Dest, bin.snagto, bin.snagas)
-				tc.ExpectedStdout = append(tc.ExpectedStdout,
-					tc.Src+" -> "+snaggedBin,
-				)
-				tc.ExpectedFiles[tc.Src] = snaggedBin
-
-				if bin.hasInterpreter {
-					snaggedInterp := filepath.Join(tc.Dest, bin.elf.Interpreter)
-					tc.ExpectedStdout = append(tc.ExpectedStdout,
-						bin.elf.Interpreter+" -> "+snaggedInterp,
-					)
-					tc.ExpectedFiles[bin.elf.Interpreter] = snaggedInterp
+		for _, inplace := range []bool{false, true} {
+			for desc, bin := range tests {
+				if inplace {
+					desc += "_inplace"
 				}
+				t.Run(desc, func(t *testing.T) {
+					tc := TestCase{ExpectedFiles: make(map[string]string, len(bin.elf.Dependencies)+2)}
+					tc.Inplace = inplace
 
-				for _, lib := range bin.elf.Dependencies {
-					snaggedLib := filepath.Join(tc.Dest, "lib64", filepath.Base(lib))
-					tc.ExpectedStdout = append(tc.ExpectedStdout,
-						lib+" -> "+snaggedLib,
-					)
-					tc.ExpectedFiles[lib] = snaggedLib
-				}
+					tc.Src = bin.path
+					tc.Dest = WorkspaceTempDir(t)
 
-				t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
-				testbody(t, tc)
-			})
+					if !inplace {
+						snaggedBin := filepath.Join(tc.Dest, bin.snagto, bin.snagas)
+						tc.ExpectedStdout = append(tc.ExpectedStdout,
+							tc.Src+" -> "+snaggedBin,
+						)
+						tc.ExpectedFiles[tc.Src] = snaggedBin
+					}
+
+					if bin.hasInterpreter {
+						snaggedInterp := filepath.Join(tc.Dest, bin.elf.Interpreter)
+						tc.ExpectedStdout = append(tc.ExpectedStdout,
+							bin.elf.Interpreter+" -> "+snaggedInterp,
+						)
+						tc.ExpectedFiles[bin.elf.Interpreter] = snaggedInterp
+					}
+
+					for _, lib := range bin.elf.Dependencies {
+						snaggedLib := filepath.Join(tc.Dest, "lib64", filepath.Base(lib))
+						tc.ExpectedStdout = append(tc.ExpectedStdout,
+							lib+" -> "+snaggedLib,
+						)
+						tc.ExpectedFiles[lib] = snaggedLib
+					}
+
+					t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
+					testbody(t, tc)
+				})
+			}
 		}
 	}
 }
