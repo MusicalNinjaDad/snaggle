@@ -31,7 +31,7 @@ type TestCase struct {
 //		Assert.NotEmpty(tc)
 //	}
 //
-// returns the sepecific, shadowed, t for each test run, to ensure results are correctly allocated to the subtest
+// returns the specific, shadowed, t for each test run, to ensure results are correctly allocated to the subtest
 func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 	return func(testbody func(t *testing.T, tc TestCase) bool) {
 		for _, inplace := range []bool{false, true} {
