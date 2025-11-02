@@ -283,9 +283,7 @@ func Test(t *testing.T) {
 		Assert.Testify.NoError(err)
 
 		Assert.DirectoryContents(tc.ExpectedFiles, tc.Dest)
-		if !tc.Inplace {
-			Assert.LinkedFile(tc.Src, tc.ExpectedFiles[tc.Src])
-		}
+		Assert.LinkedFile(tc.Src, tc.ExpectedFiles[tc.Src])
 
 		Assert.Stdout(tc.ExpectedStdout, StripLines(stdout.String()), tc.Src)
 	}
