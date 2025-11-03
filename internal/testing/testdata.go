@@ -3,12 +3,6 @@
 package testing
 
 import (
-	"path/filepath"
-	"strings"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-
 	"github.com/MusicalNinjaDad/snaggle/elf"
 
 	//nolint:staticcheck
@@ -16,7 +10,7 @@ import (
 )
 
 type binaryDetails struct {
-	Description    string // test run name
+	Description    string
 	Elf            elf.Elf
 	Dynamic        bool
 	Exe            bool
@@ -131,62 +125,4 @@ var Ldd = binaryDetails{
 	Exe:            false,
 	Lib:            false,
 	HasInterpreter: false,
-}
-
-// Identify the expected outputs when snaggling a test case to tmp
-func ExpectedOutput(tc binaryDetails, tmp string, inplace bool) (stdout []string, files map[string]string) {
-	numFiles := 1 // snaggled Elf
-	numFiles += len(tc.Elf.Dependencies)
-	if tc.HasInterpreter {
-		numFiles++
-	}
-	stdout = make([]string, 0, numFiles)
-	files = make(map[string]string, numFiles)
-
-	binBasePath := filepath.Join(tmp, "bin")
-	libBasePath := filepath.Join(tmp, "lib64")
-
-	switch inplace {
-	case true:
-		// Don't expect base ELF to be snagged
-	case false:
-		var elfPath string
-		if tc.Exe {
-			elfPath = filepath.Join(binBasePath, tc.Elf.Name)
-		} else {
-			elfPath = filepath.Join(libBasePath, tc.Elf.Name)
-		}
-
-		stdout = append(stdout, LinkMessage(tc.Elf.Path, elfPath))
-		files[tc.Elf.Path] = elfPath
-	}
-
-	if tc.HasInterpreter {
-		interpPath := filepath.Join(tmp, tc.Elf.Interpreter)
-		stdout = append(stdout, LinkMessage(tc.Elf.Interpreter, interpPath))
-		files[tc.Elf.Interpreter] = interpPath
-	}
-
-	for _, lib := range tc.Elf.Dependencies {
-		libPath := filepath.Join(libBasePath, filepath.Base(lib))
-		stdout = append(stdout, LinkMessage(lib, libPath))
-		files[lib] = libPath
-	}
-	return
-}
-
-func AssertStdout(t *testing.T, expected []string, actual []string) {
-	t.Helper()
-	a := assert.New(t)
-
-	stripped := make([]string, 0, len(actual))
-
-	for n, line := range actual {
-		a.Conditionf(func() (success bool) {
-			return strings.HasPrefix(line, "copy ") || strings.HasPrefix(line, "link ")
-		}, "Line %v does not start with `copy` or `line`: %s", n+1, line)
-		stripped = append(stripped, line[5:])
-	}
-
-	a.ElementsMatch(expected, stripped)
 }
