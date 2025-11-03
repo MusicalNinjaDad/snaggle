@@ -65,6 +65,7 @@ var defaultTests = []TestDetails{
 		SnagTo:   "bin",
 		SnagAs:   "id2",
 		InSubdir: true,
+		Symlink:  true,
 	},
 }
 
@@ -75,6 +76,7 @@ type TestDetails struct {
 	SnagTo   string
 	SnagAs   string
 	InSubdir bool
+	Symlink  bool
 }
 
 type TestCase struct {
@@ -196,9 +198,15 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 func generateOutput(bin TestDetails, tc *TestCase, inplace bool) {
 	if !inplace {
 		snaggedBin := filepath.Join(tc.Dest, bin.SnagTo, bin.SnagAs)
-		tc.ExpectedStdout = append(tc.ExpectedStdout,
-			bin.Path+" -> "+snaggedBin,
-		)
+		if bin.Symlink {
+			tc.ExpectedStdout = append(tc.ExpectedStdout,
+				bin.Path+" ("+bin.Bin.Elf.Path+") -> "+snaggedBin,
+			)
+		} else {
+			tc.ExpectedStdout = append(tc.ExpectedStdout,
+				bin.Path+" -> "+snaggedBin,
+			)
+		}
 		tc.ExpectedFiles[bin.Path] = snaggedBin
 	}
 
