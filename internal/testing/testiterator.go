@@ -32,6 +32,9 @@ type TestCase struct {
 //	}
 //
 // returns the specific, shadowed, t for each test run, to ensure results are correctly allocated to the subtest
+//
+// Just don't try to use SkipNow, FailNow or t.Parallel as Go's rangefunc & t.Run hacks collide and mess up
+// goroutine clarity. There is probably a good fix with channels but I can't be bothered right now...
 func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 	return func(testbody func(t *testing.T, tc TestCase) bool) {
 		for _, inplace := range []bool{false, true} {
@@ -82,11 +85,6 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 				}
 
 				t.Run(desc, func(t *testing.T) {
-					defer func() {
-						if reason := recover(); reason == "Skip" {
-							panic("=======AAAAAAAAAAAAAAAAAAAAAAAGGGGGGGGHHHHHHHHHHHHH================")
-						}
-					}()
 					tc := TestCase{
 						Src:            TestdataPath("."),
 						Dest:           WorkspaceTempDir(t),

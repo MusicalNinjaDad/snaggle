@@ -31,10 +31,6 @@ func TestCommonBinaries(t *testing.T) {
 
 func Test(t *testing.T) {
 	for t, tc := range TestCases(t) {
-		if tc.ExpectedBinary.Description == "" {
-			panic("Skip")
-		}
-
 		Assert := assert.New(t)
 
 		parsed, err := elf.New(tc.Src)
