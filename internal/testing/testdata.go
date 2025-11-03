@@ -172,7 +172,7 @@ var commonBins = map[string]binaryDetails{
 		Lib:            false,
 		HasInterpreter: true,
 	},
-	"static": {
+	"hello_static": {
 		Description: "Static linked executable",
 		Elf: elf.Elf{
 			Name:         "hello_static",
@@ -187,7 +187,7 @@ var commonBins = map[string]binaryDetails{
 		Lib:            false,
 		HasInterpreter: false,
 	},
-	"PIE_1": {
+	"which": {
 		Description: "PIE 1 dependency",
 		Elf: elf.Elf{
 			Name:         "which",
@@ -202,7 +202,7 @@ var commonBins = map[string]binaryDetails{
 		Lib:            false,
 		HasInterpreter: true,
 	},
-	"PIE_Many": {
+	"id": {
 		Description: "PIE nested dependencies",
 		Elf: elf.Elf{
 			Name:         "id",
@@ -217,7 +217,7 @@ var commonBins = map[string]binaryDetails{
 		Lib:            false,
 		HasInterpreter: true,
 	},
-	"dyn_lib": {
+	"ctypes_so": {
 		Description: "Dynamic library (.so)",
 		Elf: elf.Elf{
 			Name:         "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
@@ -231,6 +231,21 @@ var commonBins = map[string]binaryDetails{
 		Exe:            false,
 		Lib:            true,
 		HasInterpreter: false,
+	},
+	"hello_dynamic": {
+		Description: "In subdirectory",
+		Elf: elf.Elf{
+			Name:         "hello",
+			Path:         P_hello_dynamic,
+			Class:        elf.EI_CLASS(elf.ELF64),
+			Type:         elf.PIE,
+			Interpreter:  P_ld_linux,
+			Dependencies: []string{P_libc},
+		},
+		Dynamic:        true,
+		Exe:            true,
+		Lib:            false,
+		HasInterpreter: true,
 	},
 }
 

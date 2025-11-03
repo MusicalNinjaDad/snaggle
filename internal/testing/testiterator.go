@@ -9,7 +9,6 @@ import (
 	"github.com/davecgh/go-spew/spew"
 
 	"github.com/MusicalNinjaDad/snaggle"
-	"github.com/MusicalNinjaDad/snaggle/elf"
 
 	//nolint:staticcheck
 	. "github.com/MusicalNinjaDad/snaggle/internal" //lint:ignore ST1001 test helpers
@@ -49,8 +48,8 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 					tc := TestCase{
 						Src:            bin.path,
 						Dest:           WorkspaceTempDir(t),
-						ExpectedStdout: make([]string, 0, len(bin.elf.Dependencies)+2),
-						ExpectedFiles:  make(map[string]string, len(bin.elf.Dependencies)+2),
+						ExpectedStdout: make([]string, 0, len(bin.bin.Elf.Dependencies)+2),
+						ExpectedFiles:  make(map[string]string, len(bin.bin.Elf.Dependencies)+2),
 						Options:        options,
 						Flags:          flags,
 					}
@@ -113,15 +112,15 @@ func generateOutput(bin testDetails, tc *TestCase, inplace bool) {
 		tc.ExpectedFiles[bin.path] = snaggedBin
 	}
 
-	if bin.hasInterpreter {
-		snaggedInterp := filepath.Join(tc.Dest, bin.elf.Interpreter)
+	if bin.bin.HasInterpreter {
+		snaggedInterp := filepath.Join(tc.Dest, bin.bin.Elf.Interpreter)
 		tc.ExpectedStdout = append(tc.ExpectedStdout,
-			bin.elf.Interpreter+" -> "+snaggedInterp,
+			bin.bin.Elf.Interpreter+" -> "+snaggedInterp,
 		)
-		tc.ExpectedFiles[bin.elf.Interpreter] = snaggedInterp
+		tc.ExpectedFiles[bin.bin.Elf.Interpreter] = snaggedInterp
 	}
 
-	for _, lib := range bin.elf.Dependencies {
+	for _, lib := range bin.bin.Elf.Dependencies {
 		snaggedLib := filepath.Join(tc.Dest, "lib64", filepath.Base(lib))
 		tc.ExpectedStdout = append(tc.ExpectedStdout,
 			lib+" -> "+snaggedLib,
@@ -131,55 +130,48 @@ func generateOutput(bin testDetails, tc *TestCase, inplace bool) {
 }
 
 type testDetails struct {
-	elf            elf.Elf
-	path           string
-	snagto         string
-	snagas         string
-	hasInterpreter bool
+	path   string
+	bin    binaryDetails
+	snagto string
+	snagas string
 }
 
 var tests = map[string]testDetails{
 	"PIE_0_deps": {
-		elf:            commonElfs["hello_pie"],
-		path:           P_hello_pie,
-		snagto:         "bin",
-		snagas:         "hello_pie",
-		hasInterpreter: true,
+		path:   P_hello_pie,
+		bin:    commonBins["hello_pie"],
+		snagto: "bin",
+		snagas: "hello_pie",
 	},
 	"static": {
-		elf:            commonElfs["hello_static"],
-		path:           P_hello_static,
-		snagto:         "bin",
-		snagas:         "hello_static",
-		hasInterpreter: false,
+		path:   P_hello_static,
+		bin:    commonBins["hello_static"],
+		snagto: "bin",
+		snagas: "hello_static",
 	},
 	"PIE_1_dep": {
-		elf:            commonElfs["which"],
-		path:           P_which,
-		snagto:         "bin",
-		snagas:         "which",
-		hasInterpreter: true,
+		path:   P_which,
+		bin:    commonBins["which"],
+		snagto: "bin",
+		snagas: "which",
 	},
 	"PIE_many_deps": {
-		elf:            commonElfs["id"],
-		path:           P_id,
-		snagto:         "bin",
-		snagas:         "id",
-		hasInterpreter: true,
+		path:   P_id,
+		bin:    commonBins["id"],
+		snagto: "bin",
+		snagas: "id",
 	},
 	"dyn_lib": {
-		elf:            commonElfs["ctypes_so"],
-		path:           P_ctypes_so,
-		snagto:         "lib64",
-		snagas:         "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
-		hasInterpreter: false,
+		path:   P_ctypes_so,
+		bin:    commonBins["ctypes_so"],
+		snagto: "lib64",
+		snagas: "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
 	},
 }
 
 var subdir_contents = testDetails{
-	elf:            commonElfs["hello_dynamic"],
-	path:           P_hello_dynamic,
-	snagto:         "bin",
-	snagas:         "hello",
-	hasInterpreter: true,
+	path:   P_hello_dynamic,
+	bin:    commonBins["hello_dynamic"],
+	snagto: "bin",
+	snagas: "hello",
 }
