@@ -40,7 +40,7 @@ func (a *Asserter) DirectoryContents(ExpectedContents map[string]string, dir str
 		return err // lazy - append may have already happened but not important.
 	})
 	if !a.Testify.NoError(err) {
-		a.t.Fatal("Error listing directory contents")
+		a.t.Error("Error listing directory contents")
 	}
 
 	// expected is coming from a map, so has non-deterministic ordering
