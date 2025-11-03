@@ -58,6 +58,14 @@ var defaultTests = []TestDetails{
 		SnagAs:   "hello",
 		InSubdir: true,
 	},
+	{
+		Name:     "symlink",
+		Path:     P_symlinked_id,
+		Bin:      GoodElfs["id"],
+		SnagTo:   "bin",
+		SnagAs:   "id2",
+		InSubdir: true,
+	},
 }
 
 type TestDetails struct {
@@ -137,10 +145,11 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 			// else default test run includes snaggling a directory
 			for _, recursive := range []bool{false, true} {
 				desc := "Directory"
-				bins := slices.Clone(defaultTests)
 
+				var bins []TestDetails
 				var options []snaggle.Option
 				var flags []string
+
 				if inplace {
 					desc += "_inplace"
 					options = append(options, snaggle.InPlace())
@@ -151,14 +160,13 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 					desc += "_recursive"
 					options = append(options, snaggle.Recursive())
 					flags = append(flags, "--recursive")
+					bins = slices.Clone(defaultTests)
 				} else {
-					var filtered []TestDetails
-					for _, bin := range bins {
+					for _, bin := range defaultTests {
 						if !bin.InSubdir {
-							filtered = append(filtered, bin)
+							bins = append(bins, bin)
 						}
 					}
-					bins = filtered
 				}
 
 				t.Run(desc, func(t *testing.T) {
