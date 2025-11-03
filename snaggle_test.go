@@ -40,11 +40,10 @@ func Test(t *testing.T) {
 }
 
 func BenchmarkCommonBinaries(b *testing.B) {
-	tests := CommonBinaries(b)
 	log.SetOutput(io.Discard)
 	b.Cleanup(func() { log.SetOutput(os.Stdout) })
 
-	for _, tc := range tests {
+	for _, tc := range GoodElfs {
 		b.Run(tc.Description, func(b *testing.B) {
 			basetmp := WorkspaceTempDir(b)
 			i := 0
@@ -64,10 +63,9 @@ func BenchmarkCommonBinaries(b *testing.B) {
 
 func TestFileExists(t *testing.T) {
 	Assert := assert.New(t)
-	tc := CommonBinaries(t)["PIE_1"]
 	tmp := WorkspaceTempDir(t)
 	for range 2 {
-		err := snaggle.Snaggle(tc.Elf.Path, tmp)
+		err := snaggle.Snaggle(P_which, tmp)
 		Assert.NoError(err)
 	}
 }

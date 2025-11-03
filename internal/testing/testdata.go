@@ -101,61 +101,6 @@ var Ldd = binaryDetails{
 	HasInterpreter: false,
 }
 
-// Test Helper: provides a set of common binaries to use in table tests
-//
-//	 type binaryDetails struct {
-//			Description string // test run name
-//		   	Elf			elf.Elf
-//		   	Dynamic     bool
-//		 	Exe         bool
-//			Lib         bool
-//		}
-func CommonBinaries(t testing.TB) map[string]binaryDetails {
-	t.Helper()
-	return map[string]binaryDetails{
-		"PIE_0": {
-			Description:    "PIE no dependencies",
-			Elf:            commonElfs["hello_pie"],
-			Dynamic:        true,
-			Exe:            true,
-			Lib:            false,
-			HasInterpreter: true,
-		},
-		"static": {
-			Description:    "Static linked executable",
-			Elf:            commonElfs["hello_static"],
-			Dynamic:        false,
-			Exe:            true,
-			Lib:            false,
-			HasInterpreter: false,
-		},
-		"PIE_1": {
-			Description:    "PIE 1 dependency",
-			Elf:            commonElfs["which"],
-			Dynamic:        true,
-			Exe:            true,
-			Lib:            false,
-			HasInterpreter: true,
-		},
-		"PIE_Many": {
-			Description:    "PIE nested dependencies",
-			Elf:            commonElfs["id"],
-			Dynamic:        true,
-			Exe:            true,
-			Lib:            false,
-			HasInterpreter: true,
-		},
-		"dyn_lib": {
-			Description:    "Dynamic library (.so)",
-			Elf:            commonElfs["ctypes_so"],
-			Dynamic:        true,
-			Exe:            false,
-			Lib:            true,
-			HasInterpreter: false,
-		},
-	}
-}
-
 var GoodElfs = map[string]binaryDetails{
 	"hello_pie": {
 		Description: "PIE no dependencies",
