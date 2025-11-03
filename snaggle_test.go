@@ -37,28 +37,6 @@ func Test(t *testing.T) {
 	}
 }
 
-func BenchmarkCommonBinaries(b *testing.B) {
-	log.SetOutput(io.Discard)
-	b.Cleanup(func() { log.SetOutput(os.Stdout) })
-
-	for _, tc := range GoodElfs {
-		b.Run(tc.Description, func(b *testing.B) {
-			basetmp := WorkspaceTempDir(b)
-			i := 0
-			for b.Loop() {
-				i++
-				tmp, err := os.MkdirTemp(basetmp, tc.Description)
-				if err != nil {
-					b.Fatalf("creating %s (%v): %v", tmp, i, err)
-				}
-				if err := snaggle.Snaggle(tc.Elf.Path, tmp); err != nil {
-					b.Fatalf("running %s (%v): %v", tc.Description, i, err)
-				}
-			}
-		})
-	}
-}
-
 func TestFileExists(t *testing.T) {
 	Assert := assert.New(t)
 	tmp := WorkspaceTempDir(t)
@@ -145,5 +123,27 @@ func TestRecurseFile(t *testing.T) {
 
 		Assert.DirectoryContents(expectedFiles, tc.Dest)
 		Assert.Stdout(expectedOut, StripLines(stdout.String()))
+	}
+}
+
+func BenchmarkCommonBinaries(b *testing.B) {
+	log.SetOutput(io.Discard)
+	b.Cleanup(func() { log.SetOutput(os.Stdout) })
+
+	for _, tc := range GoodElfs {
+		b.Run(tc.Description, func(b *testing.B) {
+			basetmp := WorkspaceTempDir(b)
+			i := 0
+			for b.Loop() {
+				i++
+				tmp, err := os.MkdirTemp(basetmp, tc.Description)
+				if err != nil {
+					b.Fatalf("creating %s (%v): %v", tmp, i, err)
+				}
+				if err := snaggle.Snaggle(tc.Elf.Path, tmp); err != nil {
+					b.Fatalf("running %s (%v): %v", tc.Description, i, err)
+				}
+			}
+		})
 	}
 }
