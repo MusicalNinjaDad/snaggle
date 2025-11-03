@@ -81,10 +81,18 @@ type TestCase struct {
 //
 // Just don't try to use SkipNow, FailNow or t.Parallel as Go's rangefunc & t.Run hacks collide and mess up
 // goroutine clarity. There is probably a good fix with channels but I can't be bothered right now...
-func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
+func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCase] {
+	var specficTestsRequested bool
+	if tests == nil {
+		tests = slices.Clone(defaultTests)
+		specficTestsRequested = false
+	} else {
+		specficTestsRequested = true
+	}
+
 	return func(testbody func(t *testing.T, tc TestCase) bool) {
 		for _, inplace := range []bool{false, true} {
-			for _, bin := range defaultTests {
+			for _, bin := range tests {
 
 				desc := bin.Name
 
@@ -114,6 +122,10 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 				})
 			}
 
+			if specficTestsRequested {
+				continue
+			}
+			// else default test run includes snaggling a directory
 			for _, recursive := range []bool{false, true} {
 				desc := "Directory"
 				bins := slices.Clone(defaultTests)
