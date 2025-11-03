@@ -50,14 +50,23 @@ var defaultTests = []TestDetails{
 		SnagTo: "lib64",
 		SnagAs: "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
 	},
+	{
+		Name:     "subdir",
+		Path:     P_hello_dynamic,
+		Bin:      GoodElfs["hello_dynamic"],
+		SnagTo:   "bin",
+		SnagAs:   "hello",
+		InSubdir: true,
+	},
 }
 
 type TestDetails struct {
-	Name   string
-	Path   string
-	Bin    binaryDetails
-	SnagTo string
-	SnagAs string
+	Name     string
+	Path     string
+	Bin      binaryDetails
+	SnagTo   string
+	SnagAs   string
+	InSubdir bool
 }
 
 type TestCase struct {
@@ -137,11 +146,19 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 					options = append(options, snaggle.InPlace())
 					flags = append(flags, "--in-place")
 				}
+
 				if recursive {
 					desc += "_recursive"
 					options = append(options, snaggle.Recursive())
 					flags = append(flags, "--recursive")
-					bins = append(bins, subdir_contents)
+				} else {
+					var filtered []TestDetails
+					for _, bin := range bins {
+						if !bin.InSubdir {
+							filtered = append(filtered, bin)
+						}
+					}
+					bins = filtered
 				}
 
 				t.Run(desc, func(t *testing.T) {
@@ -192,11 +209,4 @@ func generateOutput(bin TestDetails, tc *TestCase, inplace bool) {
 		)
 		tc.ExpectedFiles[lib] = snaggedLib
 	}
-}
-
-var subdir_contents = TestDetails{
-	Path:   P_hello_dynamic,
-	Bin:    GoodElfs["hello_dynamic"],
-	SnagTo: "bin",
-	SnagAs: "hello",
 }
