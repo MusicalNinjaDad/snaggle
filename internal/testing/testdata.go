@@ -24,81 +24,37 @@ type binaryDetails struct {
 	HasInterpreter bool
 }
 
-var commonElfs = map[string]elf.Elf{
-	"hello_pie": {
-		Name:         "hello_pie",
-		Path:         P_hello_pie,
-		Class:        elf.EI_CLASS(elf.ELF64),
-		Type:         elf.Type(elf.PIE),
-		Interpreter:  P_ld_linux,
-		Dependencies: nil,
-	},
-	"hello_static": {
-		Name:         "hello_static",
-		Path:         P_hello_static,
-		Class:        elf.EI_CLASS(elf.ELF64),
-		Type:         elf.Type(elf.EXE),
-		Interpreter:  "",
-		Dependencies: nil,
-	},
-	"which": {
-		Name:         "which",
-		Path:         P_which,
-		Class:        elf.EI_CLASS(elf.ELF64),
-		Type:         elf.Type(elf.PIE),
-		Interpreter:  P_ld_linux,
-		Dependencies: []string{P_libc},
-	},
-	"id": {
-		Name:         "id",
-		Path:         P_id,
-		Class:        elf.EI_CLASS(elf.ELF64),
-		Type:         elf.Type(elf.PIE),
-		Interpreter:  P_ld_linux,
-		Dependencies: []string{P_libc, P_libpcre2_8, P_libselinux},
-	},
-	"ctypes_so": {
-		Name:         "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
-		Path:         P_ctypes_so,
-		Class:        elf.EI_CLASS(elf.ELF64),
-		Type:         elf.Type(elf.DYN),
-		Interpreter:  "",
-		Dependencies: []string{P_libc, P_libm, P_libpthread},
-	},
-	"hello_dynamic": {
-		Name:         "hello",
-		Path:         P_hello_dynamic,
-		Class:        elf.EI_CLASS(elf.ELF64),
-		Type:         elf.PIE,
-		Interpreter:  P_ld_linux,
-		Dependencies: []string{P_libc},
+var StrangeElfs = map[string]binaryDetails{
+	"subdir": {
+		Description: "In subdirectory",
+		Elf: elf.Elf{
+			Name:         "hello",
+			Path:         P_hello_dynamic,
+			Class:        elf.EI_CLASS(elf.ELF64),
+			Type:         elf.PIE,
+			Interpreter:  P_ld_linux,
+			Dependencies: []string{P_libc},
+		},
+		Dynamic:        true,
+		Exe:            true,
+		Lib:            false,
+		HasInterpreter: true,
 	},
 	"ldd": {
-		Name:         "ldd",
-		Path:         P_ldd,
-		Class:        elf.EI_CLASS(elf.UNDEF),
-		Type:         elf.Type(elf.ELFNONE),
-		Interpreter:  "",
-		Dependencies: nil,
+		Description: "Not an ELF",
+		Elf: elf.Elf{
+			Name:         "ldd",
+			Path:         P_ldd,
+			Class:        elf.EI_CLASS(elf.UNDEF),
+			Type:         elf.Type(elf.ELFNONE),
+			Interpreter:  "",
+			Dependencies: nil,
+		},
+		Dynamic:        false,
+		Exe:            false,
+		Lib:            false,
+		HasInterpreter: false,
 	},
-}
-
-var Hello_dynamic = binaryDetails{
-	Description:    "In subdirectory",
-	Elf:            commonElfs["hello_dynamic"],
-	Dynamic:        true,
-	Exe:            true,
-	Lib:            false,
-	HasInterpreter: true,
-}
-
-var Ldd = binaryDetails{
-	Description:    "Not an ELF",
-	Elf:            commonElfs["ldd"],
-	Dynamic:        false,
-	Exe:            false,
-	Lib:            false,
-	HasInterpreter: false,
 }
 
 var GoodElfs = map[string]binaryDetails{
