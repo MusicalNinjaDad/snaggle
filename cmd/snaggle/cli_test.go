@@ -103,11 +103,8 @@ func TestNotAnELF(t *testing.T) {
 	for t, tc := range TestCases(t, tests...) {
 		Assert := Assert(t)
 
-		expectedErr := []string{
-			"Error: parsing " + tc.Src + ":",
-			"invalid ELF file: bad magic number '[35 33 47 117]' in record at byte 0x0",
-			"",
-		}
+		expectedErr := "Error: parsing " + tc.Src + ":\n"
+		expectedErr += "invalid ELF file: bad magic number '[35 33 47 117]' in record at byte 0x0\n"
 
 		snaggle := exec.Command(snaggleBin, tc.Flags...)
 		snaggle.Args = append(snaggle.Args, tc.Src, tc.Dest)
@@ -115,16 +112,18 @@ func TestNotAnELF(t *testing.T) {
 		stdout, err := snaggle.Output()
 
 		Assert.Testify.Empty(stdout)
+		Assert.DirectoryContents(nil, tc.Dest)
+
+		t.Logf("Stdout:\n%s", stdout)
 
 		if Assert.Testify.Error(err) {
-			var exiterr *exec.ExitError
-			Assert.Testify.ErrorAs(err, &exiterr)
-			Assert.Testify.Equal(strings.Join(expectedErr, "\n"), string(exiterr.Stderr))
-			Assert.Testify.Equal(1, exiterr.ExitCode())
-			t.Logf("Stderr:\n%s", exiterr.Stderr)
+			var exitError *exec.ExitError
+			if Assert.Testify.ErrorAs(err, &exitError) {
+				Assert.Testify.Equal(1, exitError.ExitCode())
+				Assert.Testify.Equal(expectedErr, string(exitError.Stderr))
+			}
+			t.Logf("Stderr:\n%s", exitError.Stderr)
 		}
-
-		Assert.DirectoryContents(nil, tc.Dest)
 	}
 }
 
@@ -143,22 +142,25 @@ func TestRecurseFile(t *testing.T) {
 		expectedErr += rootCmd.UsageString()
 		expectedErr += "\n"
 
+		tc.Flags = append(tc.Flags, "--recursive")
+
 		snaggle := exec.Command(snaggleBin, tc.Flags...)
 		snaggle.Args = append(snaggle.Args, tc.Src, tc.Dest)
 
 		stdout, err := snaggle.Output()
 
 		Assert.Testify.Empty(stdout)
-
-		var exitError *exec.ExitError
-		if Assert.Testify.ErrorAs(err, &exitError) {
-			Assert.Testify.Equal(2, exitError.ExitCode())
-			Assert.Testify.Equal(expectedErr, string(exitError.Stderr))
-		}
-
 		Assert.DirectoryContents(nil, tc.Dest)
 
 		t.Logf("Stdout:\n%s", stdout)
-		t.Logf("Stderr:\n%s", exitError.Stderr)
+
+		if Assert.Testify.Error(err) {
+			var exitError *exec.ExitError
+			if Assert.Testify.ErrorAs(err, &exitError) {
+				Assert.Testify.Equal(2, exitError.ExitCode())
+				Assert.Testify.Equal(expectedErr, string(exitError.Stderr))
+			}
+			t.Logf("Stderr:\n%s", exitError.Stderr)
+		}
 	}
 }
