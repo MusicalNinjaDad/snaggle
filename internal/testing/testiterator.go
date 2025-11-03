@@ -3,6 +3,7 @@ package testing
 import (
 	"iter"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
@@ -115,7 +116,7 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 
 			for _, recursive := range []bool{false, true} {
 				desc := "Directory"
-				bins := defaultTests
+				bins := slices.Clone(defaultTests)
 
 				var options []snaggle.Option
 				var flags []string
