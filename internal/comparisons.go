@@ -5,13 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
-	"path/filepath"
 	"slices"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 // Are two files identical?, Returns false on any fs/io errors.
@@ -21,24 +16,6 @@ func SameFile(path1 string, path2 string) bool {
 		return false
 	}
 	return same
-}
-
-func AssertSameFile(t *testing.T, path1 string, path2 string) {
-	t.Helper()
-
-	same, err := sameFile(path1, path2)
-
-	assert.NoError(t, err)
-	assert.Truef(t, same, "%s & %s are different files", path1, path2)
-}
-
-func AssertLinkedFile(t *testing.T, path1 string, path2 string) {
-	t.Helper()
-
-	same, err := SameInode(path1, path2)
-
-	assert.NoError(t, err)
-	assert.Truef(t, same, "%s & %s are different files", path1, path2)
 }
 
 func sameFile(path1 string, path2 string) (bool, error) {
@@ -114,19 +91,4 @@ func HashFile(path string) ([]byte, error) {
 		return nil, err
 	}
 	return hash.Sum(nil), nil
-}
-
-func AssertDirectoryContents(t *testing.T, expected []string, dir string) {
-	t.Helper()
-	a := assert.New(t)
-	contents := make([]string, 0, len(expected))
-	err := filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
-		if !entry.IsDir() {
-			contents = append(contents, path)
-		}
-		return err // lazy - append may have already happened but not important.
-	})
-	if a.NoError(err) {
-		a.ElementsMatch(expected, contents) // expected is coming from a map, so has non-deterministic ordering
-	}
 }
