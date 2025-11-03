@@ -144,31 +144,31 @@ type testDetails struct {
 var tests = map[string]testDetails{
 	"PIE_0_deps": {
 		path:   P_hello_pie,
-		bin:    commonBins["hello_pie"],
+		bin:    GoodElfs["hello_pie"],
 		snagto: "bin",
 		snagas: "hello_pie",
 	},
 	"static": {
 		path:   P_hello_static,
-		bin:    commonBins["hello_static"],
+		bin:    GoodElfs["hello_static"],
 		snagto: "bin",
 		snagas: "hello_static",
 	},
 	"PIE_1_dep": {
 		path:   P_which,
-		bin:    commonBins["which"],
+		bin:    GoodElfs["which"],
 		snagto: "bin",
 		snagas: "which",
 	},
 	"PIE_many_deps": {
 		path:   P_id,
-		bin:    commonBins["id"],
+		bin:    GoodElfs["id"],
 		snagto: "bin",
 		snagas: "id",
 	},
 	"dyn_lib": {
 		path:   P_ctypes_so,
-		bin:    commonBins["ctypes_so"],
+		bin:    GoodElfs["ctypes_so"],
 		snagto: "lib64",
 		snagas: "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
 	},
@@ -176,7 +176,7 @@ var tests = map[string]testDetails{
 
 var subdir_contents = testDetails{
 	path:   P_hello_dynamic,
-	bin:    commonBins["hello_dynamic"],
+	bin:    GoodElfs["hello_dynamic"],
 	snagto: "bin",
 	snagas: "hello",
 }

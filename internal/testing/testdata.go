@@ -156,7 +156,7 @@ func CommonBinaries(t testing.TB) map[string]binaryDetails {
 	}
 }
 
-var commonBins = map[string]binaryDetails{
+var GoodElfs = map[string]binaryDetails{
 	"hello_pie": {
 		Description: "PIE no dependencies",
 		Elf: elf.Elf{
