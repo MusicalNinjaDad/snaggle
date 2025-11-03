@@ -32,7 +32,7 @@ func TestCommonBinaries(t *testing.T) {
 func Test(t *testing.T) {
 	for t, tc := range TestCases(t) {
 		if tc.ExpectedBinary.Description == "" {
-			t.SkipNow()
+			panic("Skip")
 		}
 
 		Assert := assert.New(t)

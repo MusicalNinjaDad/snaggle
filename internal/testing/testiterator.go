@@ -82,6 +82,11 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 				}
 
 				t.Run(desc, func(t *testing.T) {
+					defer func() {
+						if reason := recover(); reason == "Skip" {
+							panic("=======AAAAAAAAAAAAAAAAAAAAAAAGGGGGGGGHHHHHHHHHHHHH================")
+						}
+					}()
 					tc := TestCase{
 						Src:            TestdataPath("."),
 						Dest:           WorkspaceTempDir(t),
