@@ -52,6 +52,29 @@ func (a *Asserter) DirectoryContents(ExpectedContents map[string]string, dir str
 
 }
 
+// Assert no symlinks present
+func (a *Asserter) NoSymlinks(dir string) {
+	a.t.Helper()
+
+	err := filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		resolved, err := filepath.EvalSymlinks(path)
+		if err != nil {
+			return err
+		}
+		if resolved != path {
+			a.t.Errorf("%s is a symlink to %s", path, resolved)
+		}
+		return nil
+	})
+	if !a.Testify.NoError(err) {
+		a.t.Error("Error listing directory contents")
+	}
+}
+
 // Assert both files are hardlinked
 func (a *Asserter) LinkedFile(path1 string, path2 string) {
 	a.t.Helper()
