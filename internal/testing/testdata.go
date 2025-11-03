@@ -156,6 +156,84 @@ func CommonBinaries(t testing.TB) map[string]binaryDetails {
 	}
 }
 
+var commonBins = map[string]binaryDetails{
+	"hello_pie": {
+		Description: "PIE no dependencies",
+		Elf: elf.Elf{
+			Name:         "hello_pie",
+			Path:         P_hello_pie,
+			Class:        elf.EI_CLASS(elf.ELF64),
+			Type:         elf.Type(elf.PIE),
+			Interpreter:  P_ld_linux,
+			Dependencies: nil,
+		},
+		Dynamic:        true,
+		Exe:            true,
+		Lib:            false,
+		HasInterpreter: true,
+	},
+	"static": {
+		Description: "Static linked executable",
+		Elf: elf.Elf{
+			Name:         "hello_static",
+			Path:         P_hello_static,
+			Class:        elf.EI_CLASS(elf.ELF64),
+			Type:         elf.Type(elf.EXE),
+			Interpreter:  "",
+			Dependencies: nil,
+		},
+		Dynamic:        false,
+		Exe:            true,
+		Lib:            false,
+		HasInterpreter: false,
+	},
+	"PIE_1": {
+		Description: "PIE 1 dependency",
+		Elf: elf.Elf{
+			Name:         "which",
+			Path:         P_which,
+			Class:        elf.EI_CLASS(elf.ELF64),
+			Type:         elf.Type(elf.PIE),
+			Interpreter:  P_ld_linux,
+			Dependencies: []string{P_libc},
+		},
+		Dynamic:        true,
+		Exe:            true,
+		Lib:            false,
+		HasInterpreter: true,
+	},
+	"PIE_Many": {
+		Description: "PIE nested dependencies",
+		Elf: elf.Elf{
+			Name:         "id",
+			Path:         P_id,
+			Class:        elf.EI_CLASS(elf.ELF64),
+			Type:         elf.Type(elf.PIE),
+			Interpreter:  P_ld_linux,
+			Dependencies: []string{P_libc, P_libpcre2_8, P_libselinux},
+		},
+		Dynamic:        true,
+		Exe:            true,
+		Lib:            false,
+		HasInterpreter: true,
+	},
+	"dyn_lib": {
+		Description: "Dynamic library (.so)",
+		Elf: elf.Elf{
+			Name:         "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
+			Path:         P_ctypes_so,
+			Class:        elf.EI_CLASS(elf.ELF64),
+			Type:         elf.Type(elf.DYN),
+			Interpreter:  "",
+			Dependencies: []string{P_libc, P_libm, P_libpthread},
+		},
+		Dynamic:        true,
+		Exe:            false,
+		Lib:            true,
+		HasInterpreter: false,
+	},
+}
+
 // Identify the expected outputs when snaggling a test case to tmp
 func ExpectedOutput(tc binaryDetails, tmp string, inplace bool) (stdout []string, files map[string]string) {
 	numFiles := 1 // snaggled Elf
