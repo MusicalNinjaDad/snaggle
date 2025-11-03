@@ -1,9 +1,7 @@
 package main
 
 import (
-	"maps"
 	"os/exec"
-	"slices"
 	"strings"
 	"testing"
 
@@ -21,46 +19,26 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-func TestCommonBinaries(t *testing.T) {
-	tests := CommonBinaries(t)
+func Test(t *testing.T) {
+	for t, tc := range TestCases(t) {
+		Assert := Assert(t)
 
-	for _, inplace := range []bool{false, true} {
-		for _, tc := range tests {
-			testname := tc.Description
-			if inplace {
-				testname += "_inplace"
-			}
-			t.Run(testname, func(t *testing.T) {
-				Assert := assert.New(t)
-				tmp := WorkspaceTempDir(t)
-				snaggle := exec.Command(snaggleBin)
+		snaggle := exec.Command(snaggleBin, tc.Flags...)
+		snaggle.Args = append(snaggle.Args, tc.Src, tc.Dest)
 
-				if inplace {
-					snaggle.Args = append(snaggle.Args, "--in-place")
-				}
-				snaggle.Args = append(snaggle.Args, tc.Elf.Path, tmp)
+		stdout, err := snaggle.Output()
 
-				expectedOut, expectedFiles := ExpectedOutput(tc, tmp, inplace)
-				stdout, err := snaggle.Output()
-
-				if !Assert.NoError(err) {
-					var exiterr *exec.ExitError
-					Assert.ErrorAs(err, &exiterr)
-					t.Logf("Stderr: %s", exiterr.Stderr)
-				}
-
-				for original, copy := range expectedFiles {
-					if original == tc.Elf.Path {
-						AssertLinkedFile(t, original, copy)
-					} else {
-						AssertSameFile(t, original, copy)
-					}
-				}
-
-				AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
-				AssertStdout(t, expectedOut, StripLines(string(stdout)))
-			})
+		if !Assert.Testify.NoError(err) {
+			var exiterr *exec.ExitError
+			Assert.Testify.ErrorAs(err, &exiterr)
+			t.Logf("Stderr: %s", exiterr.Stderr)
 		}
+
+		Assert.DirectoryContents(tc.ExpectedFiles, tc.Dest)
+		Assert.LinkedFile(tc.Src, tc.ExpectedFiles[tc.Src])
+
+		Assert.Stdout(tc.ExpectedStdout, StripLines(string(stdout)), tc.Src)
+
 	}
 }
 
@@ -85,6 +63,78 @@ func TestInvalidNumberArgs(t *testing.T) {
 
 	t.Logf("Stdout:\n%s", stdout)
 	t.Logf("Stderr:\n%s", exitError.Stderr)
+}
+func TestRecurseFile(t *testing.T) {
+	tests := []TestDetails{
+		{
+			Name: "ldd",
+			Path: P_ldd,
+			Bin:  Ldd,
+		},
+	}
+	for t, tc := range TestCases(t, tests...) {
+		Assert := Assert(t)
+
+		expectedErr := "Error: --recursive " + tc.Src + ": not a directory\n"
+		expectedErr += rootCmd.UsageString()
+		expectedErr += "\n"
+
+		tc.Flags = append(tc.Flags, "--recursive")
+
+		snaggle := exec.Command(snaggleBin, tc.Flags...)
+		snaggle.Args = append(snaggle.Args, tc.Src, tc.Dest)
+
+		stdout, err := snaggle.Output()
+
+		Assert.Testify.Empty(stdout)
+		Assert.DirectoryContents(nil, tc.Dest)
+
+		t.Logf("Stdout:\n%s", stdout)
+
+		if Assert.Testify.Error(err) {
+			var exitError *exec.ExitError
+			if Assert.Testify.ErrorAs(err, &exitError) {
+				Assert.Testify.Equal(2, exitError.ExitCode())
+				Assert.Testify.Equal(expectedErr, string(exitError.Stderr))
+			}
+			t.Logf("Stderr:\n%s", exitError.Stderr)
+		}
+	}
+}
+
+func TestNotAnELF(t *testing.T) {
+	tests := []TestDetails{
+		{
+			Name: "ldd",
+			Path: P_ldd,
+			Bin:  Ldd,
+		},
+	}
+	for t, tc := range TestCases(t, tests...) {
+		Assert := Assert(t)
+
+		expectedErr := "Error: parsing " + tc.Src + ":\n"
+		expectedErr += "invalid ELF file: bad magic number '[35 33 47 117]' in record at byte 0x0\n"
+
+		snaggle := exec.Command(snaggleBin, tc.Flags...)
+		snaggle.Args = append(snaggle.Args, tc.Src, tc.Dest)
+
+		stdout, err := snaggle.Output()
+
+		Assert.Testify.Empty(stdout)
+		Assert.DirectoryContents(nil, tc.Dest)
+
+		t.Logf("Stdout:\n%s", stdout)
+
+		if Assert.Testify.Error(err) {
+			var exitError *exec.ExitError
+			if Assert.Testify.ErrorAs(err, &exitError) {
+				Assert.Testify.Equal(1, exitError.ExitCode())
+				Assert.Testify.Equal(expectedErr, string(exitError.Stderr))
+			}
+			t.Logf("Stderr:\n%s", exitError.Stderr)
+		}
+	}
 }
 
 func TestPanic(t *testing.T) {
@@ -112,145 +162,4 @@ func TestPanic(t *testing.T) {
 
 	t.Logf("Stdout:\n%s", stdout)
 	t.Logf("Stderr:\n%s", exitError.Stderr)
-}
-
-func TestDirectory(t *testing.T) {
-	for _, recursive := range []bool{false, true} {
-		var testname string
-		if recursive {
-			testname = "recursive"
-		} else {
-			testname = "flat"
-		}
-
-		t.Run(testname, func(t *testing.T) {
-			Assert := assert.New(t)
-			tmp := WorkspaceTempDir(t)
-			dir := TestdataPath(".")
-
-			snaggle := exec.Command(snaggleBin)
-			if recursive {
-				snaggle.Args = append(snaggle.Args, "--recursive")
-			}
-			snaggle.Args = append(snaggle.Args, dir, tmp)
-
-			contents := CommonBinaries(t)
-			if recursive {
-				contents["subdir"] = Hello_dynamic
-			}
-
-			var expectedOut []string
-			var expectedFiles = make(map[string]string)
-			for _, bin := range contents {
-				stdout, files := ExpectedOutput(bin, tmp, inplace)
-				expectedOut = append(expectedOut, stdout...)
-				maps.Insert(expectedFiles, maps.All(files))
-			}
-
-			stdout, err := snaggle.Output()
-
-			if !Assert.NoError(err) {
-				var exiterr *exec.ExitError
-				Assert.ErrorAs(err, &exiterr)
-				t.Logf("Stderr: %s", exiterr.Stderr)
-			}
-
-			for original, copy := range expectedFiles {
-				AssertSameFile(t, original, copy)
-			}
-
-			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
-			AssertStdout(t, expectedOut, StripLines(string(stdout)))
-		})
-	}
-}
-
-func TestInvalidElf(t *testing.T) {
-	tc := Ldd
-
-	for _, inplace := range []bool{false, true} {
-		var testname string
-		if inplace {
-			testname = "inplace"
-		} else {
-			testname = "link"
-		}
-
-		t.Run(testname, func(t *testing.T) {
-			Assert := assert.New(t)
-			tmp := WorkspaceTempDir(t)
-
-			snaggle := exec.Command(snaggleBin)
-
-			if inplace {
-				snaggle.Args = append(snaggle.Args, "--in-place")
-			}
-			snaggle.Args = append(snaggle.Args, tc.Elf.Path, tmp)
-
-			expectedOut := make([]string, 0)
-			expectedErr := []string{
-				"Error: parsing " + tc.Elf.Path + ":",
-				"invalid ELF file: bad magic number '[35 33 47 117]' in record at byte 0x0",
-				"",
-			}
-			expectedFiles := make(map[string]string, 0)
-
-			stdout, err := snaggle.Output()
-
-			if Assert.Error(err) {
-				var exiterr *exec.ExitError
-				Assert.ErrorAs(err, &exiterr)
-				Assert.Equal(strings.Join(expectedErr, "\n"), string(exiterr.Stderr))
-				Assert.Equal(1, exiterr.ExitCode())
-				t.Logf("Stderr:\n%s", exiterr.Stderr)
-			}
-
-			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
-			Assert.ElementsMatch(expectedOut, StripLines(string(stdout)))
-		})
-	}
-}
-
-func TestRecurseFile(t *testing.T) {
-	tc := Ldd
-
-	for _, inplace := range []bool{false, true} {
-		var testname string
-		if inplace {
-			testname = "inplace"
-		} else {
-			testname = "link"
-		}
-
-		t.Run(testname, func(t *testing.T) {
-			Assert := assert.New(t)
-			tmp := WorkspaceTempDir(t)
-
-			snaggle := exec.Command(snaggleBin)
-
-			if inplace {
-				snaggle.Args = append(snaggle.Args, "--in-place")
-			}
-			snaggle.Args = append(snaggle.Args, "--recursive", tc.Elf.Path, tmp)
-
-			expectedErr := "Error: --recursive " + tc.Elf.Path + ": not a directory\n"
-			expectedErr += rootCmd.UsageString()
-			expectedErr += "\n"
-
-			stdout, err := snaggle.Output()
-
-			Assert.Empty(stdout)
-
-			var exitError *exec.ExitError
-			if Assert.ErrorAs(err, &exitError) {
-				Assert.Equal(2, exitError.ExitCode())
-				Assert.Equal(expectedErr, string(exitError.Stderr))
-			}
-
-			AssertDirectoryContents(t, nil, tmp)
-
-			t.Logf("Stdout:\n%s", stdout)
-			t.Logf("Stderr:\n%s", exitError.Stderr)
-		})
-	}
 }
