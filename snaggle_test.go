@@ -4,9 +4,7 @@ import (
 	"io"
 	"io/fs"
 	"log"
-	"maps"
 	"os"
-	"slices"
 	"strings"
 	"syscall"
 	"testing"
@@ -109,53 +107,43 @@ func TestRecurseFile(t *testing.T) {
 	log.SetOutput(&stdout)
 	t.Cleanup(func() { log.SetOutput(os.Stdout) })
 
-	tc := Ldd
+	tests := []TestDetails{
+		{
+			Name: "ldd",
+			Path: P_ldd,
+			Bin:  Ldd,
+		},
+	}
 
-	for _, inplace := range []bool{false, true} {
-		var testname string
-		if inplace {
-			testname = "inplace"
-		} else {
-			testname = "link"
+	for t, tc := range TestCases(t, tests...) {
+		t.Cleanup(func() { stdout.Reset() })
+		Assert := Assert(t)
+
+		expectedOut := make([]string, 0)
+		expectedFiles := make(map[string]string, 0)
+
+		tc.Options = append(tc.Options, snaggle.Recursive())
+
+		err := snaggle.Snaggle(tc.Src, tc.Dest, tc.Options...)
+
+		var invocationError *snaggle.InvocationError
+		if Assert.Testify.ErrorAs(err, &invocationError) {
+			Assert.Testify.Equal(tc.Src, invocationError.Path)
+			Assert.Testify.Equal(tc.Dest, invocationError.Target)
 		}
 
-		t.Run(testname, func(t *testing.T) {
-			t.Cleanup(func() { stdout.Reset() })
+		var pathError *fs.PathError
+		if Assert.Testify.ErrorAs(err, &pathError) {
+			Assert.Testify.Equal("--recursive", pathError.Op)
+			Assert.Testify.Equal(tc.Src, pathError.Path)
+			Assert.Testify.ErrorIs(pathError, syscall.ENOTDIR)
+		}
 
-			Assert := assert.New(t)
-			tmp := WorkspaceTempDir(t)
+		var snaggleError *snaggle.SnaggleError
+		Assert.Testify.NotErrorAs(err, &snaggleError)
+		Assert.Testify.NotErrorIs(err, elf.ErrInvalidElf)
 
-			var invocationError *snaggle.InvocationError
-			var pathError *fs.PathError
-			var snaggleError *snaggle.SnaggleError
-
-			expectedOut := make([]string, 0)
-			expectedFiles := make(map[string]string, 0)
-
-			var err error
-			switch {
-			case inplace:
-				err = snaggle.Snaggle(tc.Elf.Path, tmp, snaggle.InPlace(), snaggle.Recursive())
-			default:
-				err = snaggle.Snaggle(tc.Elf.Path, tmp, snaggle.Recursive())
-			}
-
-			// In CLI test assert StdErr & exit code instead
-			if Assert.ErrorAs(err, &invocationError) {
-				Assert.Equal(tc.Elf.Path, invocationError.Path)
-				Assert.Equal(tmp, invocationError.Target)
-				if Assert.ErrorAs(err, &pathError) {
-					Assert.Equal("--recursive", pathError.Op)
-					Assert.Equal(tc.Elf.Path, pathError.Path)
-					Assert.ErrorIs(pathError, syscall.ENOTDIR)
-				}
-			}
-
-			Assert.NotErrorAs(err, &snaggleError)
-			Assert.NotErrorIs(err, elf.ErrInvalidElf)
-
-			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
-			Assert.ElementsMatch(expectedOut, StripLines(stdout.String()))
-		})
+		Assert.DirectoryContents(expectedFiles, tc.Dest)
+		Assert.Stdout(expectedOut, StripLines(stdout.String()))
 	}
 }
