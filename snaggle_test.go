@@ -70,6 +70,43 @@ func TestFileExists(t *testing.T) {
 	}
 }
 
+func TestErrors(t *testing.T) {
+	var stdout strings.Builder
+	log.SetOutput(&stdout)
+	t.Cleanup(func() { log.SetOutput(os.Stdout) })
+
+	tests := []TestDetails{
+		{
+			Name: "Not_an_ELF",
+			Path: P_ldd,
+			Bin:  Ldd,
+		},
+	}
+
+	for t, tc := range TestCases(t, tests...) {
+		t.Cleanup(func() { stdout.Reset() })
+		Assert := Assert(t)
+
+		expectedOut := make([]string, 0)
+		expectedFiles := make(map[string]string, 0)
+
+		err := snaggle.Snaggle(tc.Src, tc.Dest, tc.Options...)
+
+		var snaggleError *snaggle.SnaggleError
+		if Assert.Testify.ErrorAs(err, &snaggleError) {
+			Assert.Testify.Equal(tc.Src, snaggleError.Src)
+			Assert.Testify.Equal("", snaggleError.Dst)
+		}
+		Assert.Testify.ErrorIs(err, elf.ErrInvalidElf)
+		Assert.Testify.ErrorContains(err, tc.Src)
+
+		Assert.DirectoryContents(expectedFiles, tc.Dest)
+		Assert.Stdout(expectedOut, StripLines(stdout.String()))
+
+	}
+
+}
+
 func TestInvalidElf(t *testing.T) {
 	var stdout strings.Builder
 	log.SetOutput(&stdout)
