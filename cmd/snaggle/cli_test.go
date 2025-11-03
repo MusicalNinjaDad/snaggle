@@ -1,9 +1,7 @@
 package main
 
 import (
-	"maps"
 	"os/exec"
-	"slices"
 	"strings"
 	"testing"
 
@@ -94,49 +92,40 @@ func TestPanic(t *testing.T) {
 	t.Logf("Stderr:\n%s", exitError.Stderr)
 }
 
-func TestInvalidElf(t *testing.T) {
-	tc := Ldd
+func TestNotAnELF(t *testing.T) {
+	tests := []TestDetails{
+		{
+			Name: "ldd",
+			Path: P_ldd,
+			Bin:  Ldd,
+		},
+	}
+	for t, tc := range TestCases(t, tests...) {
+		Assert := Assert(t)
 
-	for _, inplace := range []bool{false, true} {
-		var testname string
-		if inplace {
-			testname = "inplace"
-		} else {
-			testname = "link"
+		expectedOut := make([]string, 0)
+		expectedErr := []string{
+			"Error: parsing " + tc.Src + ":",
+			"invalid ELF file: bad magic number '[35 33 47 117]' in record at byte 0x0",
+			"",
+		}
+		expectedFiles := make(map[string]string, 0)
+
+		snaggle := exec.Command(snaggleBin, tc.Flags...)
+		snaggle.Args = append(snaggle.Args, tc.Src, tc.Dest)
+
+		stdout, err := snaggle.Output()
+
+		if Assert.Testify.Error(err) {
+			var exiterr *exec.ExitError
+			Assert.Testify.ErrorAs(err, &exiterr)
+			Assert.Testify.Equal(strings.Join(expectedErr, "\n"), string(exiterr.Stderr))
+			Assert.Testify.Equal(1, exiterr.ExitCode())
+			t.Logf("Stderr:\n%s", exiterr.Stderr)
 		}
 
-		t.Run(testname, func(t *testing.T) {
-			Assert := assert.New(t)
-			tmp := WorkspaceTempDir(t)
-
-			snaggle := exec.Command(snaggleBin)
-
-			if inplace {
-				snaggle.Args = append(snaggle.Args, "--in-place")
-			}
-			snaggle.Args = append(snaggle.Args, tc.Elf.Path, tmp)
-
-			expectedOut := make([]string, 0)
-			expectedErr := []string{
-				"Error: parsing " + tc.Elf.Path + ":",
-				"invalid ELF file: bad magic number '[35 33 47 117]' in record at byte 0x0",
-				"",
-			}
-			expectedFiles := make(map[string]string, 0)
-
-			stdout, err := snaggle.Output()
-
-			if Assert.Error(err) {
-				var exiterr *exec.ExitError
-				Assert.ErrorAs(err, &exiterr)
-				Assert.Equal(strings.Join(expectedErr, "\n"), string(exiterr.Stderr))
-				Assert.Equal(1, exiterr.ExitCode())
-				t.Logf("Stderr:\n%s", exiterr.Stderr)
-			}
-
-			AssertDirectoryContents(t, slices.Collect(maps.Values(expectedFiles)), tmp)
-			Assert.ElementsMatch(expectedOut, StripLines(string(stdout)))
-		})
+		Assert.DirectoryContents(expectedFiles, tc.Dest)
+		Assert.Stdout(expectedOut, StripLines(string(stdout)))
 	}
 }
 
