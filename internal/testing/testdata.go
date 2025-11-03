@@ -24,39 +24,6 @@ type binaryDetails struct {
 	HasInterpreter bool
 }
 
-var StrangeElfs = map[string]binaryDetails{
-	"subdir": {
-		Description: "In subdirectory",
-		Elf: elf.Elf{
-			Name:         "hello",
-			Path:         P_hello_dynamic,
-			Class:        elf.EI_CLASS(elf.ELF64),
-			Type:         elf.PIE,
-			Interpreter:  P_ld_linux,
-			Dependencies: []string{P_libc},
-		},
-		Dynamic:        true,
-		Exe:            true,
-		Lib:            false,
-		HasInterpreter: true,
-	},
-	"ldd": {
-		Description: "Not an ELF",
-		Elf: elf.Elf{
-			Name:         "ldd",
-			Path:         P_ldd,
-			Class:        elf.EI_CLASS(elf.UNDEF),
-			Type:         elf.Type(elf.ELFNONE),
-			Interpreter:  "",
-			Dependencies: nil,
-		},
-		Dynamic:        false,
-		Exe:            false,
-		Lib:            false,
-		HasInterpreter: false,
-	},
-}
-
 var GoodElfs = map[string]binaryDetails{
 	"hello_pie": {
 		Description: "PIE no dependencies",
@@ -148,6 +115,22 @@ var GoodElfs = map[string]binaryDetails{
 		Lib:            false,
 		HasInterpreter: true,
 	},
+}
+
+var Ldd = binaryDetails{
+	Description: "Not an ELF",
+	Elf: elf.Elf{
+		Name:         "ldd",
+		Path:         P_ldd,
+		Class:        elf.EI_CLASS(elf.UNDEF),
+		Type:         elf.Type(elf.ELFNONE),
+		Interpreter:  "",
+		Dependencies: nil,
+	},
+	Dynamic:        false,
+	Exe:            false,
+	Lib:            false,
+	HasInterpreter: false,
 }
 
 // Identify the expected outputs when snaggling a test case to tmp

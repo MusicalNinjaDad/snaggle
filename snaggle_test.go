@@ -75,7 +75,7 @@ func TestInvalidElf(t *testing.T) {
 	log.SetOutput(&stdout)
 	t.Cleanup(func() { log.SetOutput(os.Stdout) })
 
-	tc := StrangeElfs["ldd"]
+	tc := Ldd
 
 	for _, inplace := range []bool{false, true} {
 		var testname string
@@ -123,7 +123,7 @@ func TestRecurseFile(t *testing.T) {
 	log.SetOutput(&stdout)
 	t.Cleanup(func() { log.SetOutput(os.Stdout) })
 
-	tc := StrangeElfs["ldd"]
+	tc := Ldd
 
 	for _, inplace := range []bool{false, true} {
 		var testname string
