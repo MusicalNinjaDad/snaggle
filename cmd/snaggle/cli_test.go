@@ -64,32 +64,42 @@ func TestInvalidNumberArgs(t *testing.T) {
 	t.Logf("Stdout:\n%s", stdout)
 	t.Logf("Stderr:\n%s", exitError.Stderr)
 }
-
-func TestPanic(t *testing.T) {
-	panicBin := Build([]string{"testpanic"})
-	defer RemoveBuildDir(panicBin)
-
-	Assert := assert.New(t)
-
-	snaggle := exec.Command(panicBin, "src", "dst")
-
-	expectedErr := "Sorry someone panicked!\n"
-	expectedErr += "This is what we know ...\n"
-	expectedErr += "you got a special testing build that always panics. (Tip: don't build with `-tags testpanic`)\n"
-
-	stdout, err := snaggle.Output()
-
-	Assert.Empty(stdout)
-
-	var exitError *exec.ExitError
-	if Assert.ErrorAs(err, &exitError) {
-		Assert.Equal(3, exitError.ExitCode())
-		Assert.True(strings.HasPrefix(string(exitError.Stderr), expectedErr), "stderr does not start as expected")
-		Assert.NotContains(string(exitError.Stderr), rootCmd.UsageString())
+func TestRecurseFile(t *testing.T) {
+	tests := []TestDetails{
+		{
+			Name: "ldd",
+			Path: P_ldd,
+			Bin:  Ldd,
+		},
 	}
+	for t, tc := range TestCases(t, tests...) {
+		Assert := Assert(t)
 
-	t.Logf("Stdout:\n%s", stdout)
-	t.Logf("Stderr:\n%s", exitError.Stderr)
+		expectedErr := "Error: --recursive " + tc.Src + ": not a directory\n"
+		expectedErr += rootCmd.UsageString()
+		expectedErr += "\n"
+
+		tc.Flags = append(tc.Flags, "--recursive")
+
+		snaggle := exec.Command(snaggleBin, tc.Flags...)
+		snaggle.Args = append(snaggle.Args, tc.Src, tc.Dest)
+
+		stdout, err := snaggle.Output()
+
+		Assert.Testify.Empty(stdout)
+		Assert.DirectoryContents(nil, tc.Dest)
+
+		t.Logf("Stdout:\n%s", stdout)
+
+		if Assert.Testify.Error(err) {
+			var exitError *exec.ExitError
+			if Assert.Testify.ErrorAs(err, &exitError) {
+				Assert.Testify.Equal(2, exitError.ExitCode())
+				Assert.Testify.Equal(expectedErr, string(exitError.Stderr))
+			}
+			t.Logf("Stderr:\n%s", exitError.Stderr)
+		}
+	}
 }
 
 func TestNotAnELF(t *testing.T) {
@@ -127,40 +137,29 @@ func TestNotAnELF(t *testing.T) {
 	}
 }
 
-func TestRecurseFile(t *testing.T) {
-	tests := []TestDetails{
-		{
-			Name: "ldd",
-			Path: P_ldd,
-			Bin:  Ldd,
-		},
+func TestPanic(t *testing.T) {
+	panicBin := Build([]string{"testpanic"})
+	defer RemoveBuildDir(panicBin)
+
+	Assert := assert.New(t)
+
+	snaggle := exec.Command(panicBin, "src", "dst")
+
+	expectedErr := "Sorry someone panicked!\n"
+	expectedErr += "This is what we know ...\n"
+	expectedErr += "you got a special testing build that always panics. (Tip: don't build with `-tags testpanic`)\n"
+
+	stdout, err := snaggle.Output()
+
+	Assert.Empty(stdout)
+
+	var exitError *exec.ExitError
+	if Assert.ErrorAs(err, &exitError) {
+		Assert.Equal(3, exitError.ExitCode())
+		Assert.True(strings.HasPrefix(string(exitError.Stderr), expectedErr), "stderr does not start as expected")
+		Assert.NotContains(string(exitError.Stderr), rootCmd.UsageString())
 	}
-	for t, tc := range TestCases(t, tests...) {
-		Assert := Assert(t)
 
-		expectedErr := "Error: --recursive " + tc.Src + ": not a directory\n"
-		expectedErr += rootCmd.UsageString()
-		expectedErr += "\n"
-
-		tc.Flags = append(tc.Flags, "--recursive")
-
-		snaggle := exec.Command(snaggleBin, tc.Flags...)
-		snaggle.Args = append(snaggle.Args, tc.Src, tc.Dest)
-
-		stdout, err := snaggle.Output()
-
-		Assert.Testify.Empty(stdout)
-		Assert.DirectoryContents(nil, tc.Dest)
-
-		t.Logf("Stdout:\n%s", stdout)
-
-		if Assert.Testify.Error(err) {
-			var exitError *exec.ExitError
-			if Assert.Testify.ErrorAs(err, &exitError) {
-				Assert.Testify.Equal(2, exitError.ExitCode())
-				Assert.Testify.Equal(expectedErr, string(exitError.Stderr))
-			}
-			t.Logf("Stderr:\n%s", exitError.Stderr)
-		}
-	}
+	t.Logf("Stdout:\n%s", stdout)
+	t.Logf("Stderr:\n%s", exitError.Stderr)
 }
