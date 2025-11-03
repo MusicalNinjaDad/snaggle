@@ -19,6 +19,7 @@ type TestCase struct {
 	Dest           string            // destination path
 	ExpectedStdout []string          // Split by line, de-(in)dented
 	ExpectedFiles  map[string]string // map[original_path]snagged_path
+	ExpectedBinary binaryDetails
 	Options        []snaggle.Option
 	Flags          []string
 }
@@ -50,6 +51,7 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 						Dest:           WorkspaceTempDir(t),
 						ExpectedStdout: make([]string, 0, len(bin.bin.Elf.Dependencies)+2),
 						ExpectedFiles:  make(map[string]string, len(bin.bin.Elf.Dependencies)+2),
+						ExpectedBinary: bin.bin,
 						Options:        options,
 						Flags:          flags,
 					}
