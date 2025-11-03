@@ -14,6 +14,39 @@ import (
 	. "github.com/MusicalNinjaDad/snaggle/internal" //lint:ignore ST1001 test helpers
 )
 
+var tests = map[string]testDetails{
+	"PIE_0_deps": {
+		path:   P_hello_pie,
+		bin:    GoodElfs["hello_pie"],
+		snagto: "bin",
+		snagas: "hello_pie",
+	},
+	"static": {
+		path:   P_hello_static,
+		bin:    GoodElfs["hello_static"],
+		snagto: "bin",
+		snagas: "hello_static",
+	},
+	"PIE_1_dep": {
+		path:   P_which,
+		bin:    GoodElfs["which"],
+		snagto: "bin",
+		snagas: "which",
+	},
+	"PIE_many_deps": {
+		path:   P_id,
+		bin:    GoodElfs["id"],
+		snagto: "bin",
+		snagas: "id",
+	},
+	"dyn_lib": {
+		path:   P_ctypes_so,
+		bin:    GoodElfs["ctypes_so"],
+		snagto: "lib64",
+		snagas: "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
+	},
+}
+
 type TestCase struct {
 	Src            string            // source path
 	Dest           string            // destination path
@@ -134,49 +167,16 @@ func generateOutput(bin testDetails, tc *TestCase, inplace bool) {
 	}
 }
 
-type testDetails struct {
-	path   string
-	bin    binaryDetails
-	snagto string
-	snagas string
-}
-
-var tests = map[string]testDetails{
-	"PIE_0_deps": {
-		path:   P_hello_pie,
-		bin:    GoodElfs["hello_pie"],
-		snagto: "bin",
-		snagas: "hello_pie",
-	},
-	"static": {
-		path:   P_hello_static,
-		bin:    GoodElfs["hello_static"],
-		snagto: "bin",
-		snagas: "hello_static",
-	},
-	"PIE_1_dep": {
-		path:   P_which,
-		bin:    GoodElfs["which"],
-		snagto: "bin",
-		snagas: "which",
-	},
-	"PIE_many_deps": {
-		path:   P_id,
-		bin:    GoodElfs["id"],
-		snagto: "bin",
-		snagas: "id",
-	},
-	"dyn_lib": {
-		path:   P_ctypes_so,
-		bin:    GoodElfs["ctypes_so"],
-		snagto: "lib64",
-		snagas: "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
-	},
-}
-
 var subdir_contents = testDetails{
 	path:   P_hello_dynamic,
 	bin:    GoodElfs["hello_dynamic"],
 	snagto: "bin",
 	snagas: "hello",
+}
+
+type testDetails struct {
+	path   string
+	bin    binaryDetails
+	snagto string
+	snagas string
 }
