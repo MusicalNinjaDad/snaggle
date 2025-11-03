@@ -18,6 +18,7 @@ var (
 	P_ldd           = TestdataPath("ldd")
 	P_ctypes_so     = TestdataPath("_ctypes_test.cpython-314-x86_64-linux-gnu.so")
 	P_hello_dynamic = TestdataPath("hello/hello")
+	P_symlinked_id  = TestdataPath("symlink/id2")
 )
 
 // Test helper: Provides a temporary file which exists but has no read permission

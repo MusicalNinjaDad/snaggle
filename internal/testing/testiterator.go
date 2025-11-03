@@ -50,14 +50,33 @@ var defaultTests = []TestDetails{
 		SnagTo: "lib64",
 		SnagAs: "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
 	},
+	{
+		Name:     "subdir",
+		Path:     P_hello_dynamic,
+		Bin:      GoodElfs["hello_dynamic"],
+		SnagTo:   "bin",
+		SnagAs:   "hello",
+		InSubdir: true,
+	},
+	{
+		Name:     "symlink",
+		Path:     P_symlinked_id,
+		Bin:      GoodElfs["id"],
+		SnagTo:   "bin",
+		SnagAs:   "id2",
+		InSubdir: true,
+		Symlink:  true,
+	},
 }
 
 type TestDetails struct {
-	Name   string
-	Path   string
-	Bin    binaryDetails
-	SnagTo string
-	SnagAs string
+	Name     string
+	Path     string
+	Bin      binaryDetails
+	SnagTo   string
+	SnagAs   string
+	InSubdir bool
+	Symlink  bool
 }
 
 type TestCase struct {
@@ -128,20 +147,28 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 			// else default test run includes snaggling a directory
 			for _, recursive := range []bool{false, true} {
 				desc := "Directory"
-				bins := slices.Clone(defaultTests)
 
+				var bins []TestDetails
 				var options []snaggle.Option
 				var flags []string
+
 				if inplace {
 					desc += "_inplace"
 					options = append(options, snaggle.InPlace())
 					flags = append(flags, "--in-place")
 				}
+
 				if recursive {
 					desc += "_recursive"
 					options = append(options, snaggle.Recursive())
 					flags = append(flags, "--recursive")
-					bins = append(bins, subdir_contents)
+					bins = slices.Clone(defaultTests)
+				} else {
+					for _, bin := range defaultTests {
+						if !bin.InSubdir {
+							bins = append(bins, bin)
+						}
+					}
 				}
 
 				t.Run(desc, func(t *testing.T) {
@@ -192,11 +219,4 @@ func generateOutput(bin TestDetails, tc *TestCase, inplace bool) {
 		)
 		tc.ExpectedFiles[lib] = snaggedLib
 	}
-}
-
-var subdir_contents = TestDetails{
-	Path:   P_hello_dynamic,
-	Bin:    GoodElfs["hello_dynamic"],
-	SnagTo: "bin",
-	SnagAs: "hello",
 }

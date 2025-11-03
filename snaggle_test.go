@@ -32,6 +32,7 @@ func Test(t *testing.T) {
 
 		Assert.DirectoryContents(tc.ExpectedFiles, tc.Dest)
 		Assert.LinkedFile(tc.Src, tc.ExpectedFiles[tc.Src])
+		Assert.NoSymlinks(tc.Dest)
 
 		Assert.Stdout(tc.ExpectedStdout, StripLines(stdout.String()), tc.Src)
 	}
