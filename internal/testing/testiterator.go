@@ -14,37 +14,44 @@ import (
 	. "github.com/MusicalNinjaDad/snaggle/internal" //lint:ignore ST1001 test helpers
 )
 
-var tests = map[string]testDetails{
+var tests = map[string]TestDetails{
 	"PIE_0_deps": {
-		path:   P_hello_pie,
-		bin:    GoodElfs["hello_pie"],
-		snagto: "bin",
-		snagas: "hello_pie",
+		Path:   P_hello_pie,
+		Bin:    GoodElfs["hello_pie"],
+		SnagTo: "bin",
+		SnagAs: "hello_pie",
 	},
 	"static": {
-		path:   P_hello_static,
-		bin:    GoodElfs["hello_static"],
-		snagto: "bin",
-		snagas: "hello_static",
+		Path:   P_hello_static,
+		Bin:    GoodElfs["hello_static"],
+		SnagTo: "bin",
+		SnagAs: "hello_static",
 	},
 	"PIE_1_dep": {
-		path:   P_which,
-		bin:    GoodElfs["which"],
-		snagto: "bin",
-		snagas: "which",
+		Path:   P_which,
+		Bin:    GoodElfs["which"],
+		SnagTo: "bin",
+		SnagAs: "which",
 	},
 	"PIE_many_deps": {
-		path:   P_id,
-		bin:    GoodElfs["id"],
-		snagto: "bin",
-		snagas: "id",
+		Path:   P_id,
+		Bin:    GoodElfs["id"],
+		SnagTo: "bin",
+		SnagAs: "id",
 	},
 	"dyn_lib": {
-		path:   P_ctypes_so,
-		bin:    GoodElfs["ctypes_so"],
-		snagto: "lib64",
-		snagas: "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
+		Path:   P_ctypes_so,
+		Bin:    GoodElfs["ctypes_so"],
+		SnagTo: "lib64",
+		SnagAs: "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
 	},
+}
+
+type TestDetails struct {
+	Path   string
+	Bin    binaryDetails
+	SnagTo string
+	SnagAs string
 }
 
 type TestCase struct {
@@ -83,11 +90,11 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 
 				t.Run(desc, func(t *testing.T) {
 					tc := TestCase{
-						Src:            bin.path,
+						Src:            bin.Path,
 						Dest:           WorkspaceTempDir(t),
-						ExpectedStdout: make([]string, 0, len(bin.bin.Elf.Dependencies)+2),
-						ExpectedFiles:  make(map[string]string, len(bin.bin.Elf.Dependencies)+2),
-						ExpectedBinary: bin.bin,
+						ExpectedStdout: make([]string, 0, len(bin.Bin.Elf.Dependencies)+2),
+						ExpectedFiles:  make(map[string]string, len(bin.Bin.Elf.Dependencies)+2),
+						ExpectedBinary: bin.Bin,
 						Options:        options,
 						Flags:          flags,
 					}
@@ -141,24 +148,24 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 	}
 }
 
-func generateOutput(bin testDetails, tc *TestCase, inplace bool) {
+func generateOutput(bin TestDetails, tc *TestCase, inplace bool) {
 	if !inplace {
-		snaggedBin := filepath.Join(tc.Dest, bin.snagto, bin.snagas)
+		snaggedBin := filepath.Join(tc.Dest, bin.SnagTo, bin.SnagAs)
 		tc.ExpectedStdout = append(tc.ExpectedStdout,
-			bin.path+" -> "+snaggedBin,
+			bin.Path+" -> "+snaggedBin,
 		)
-		tc.ExpectedFiles[bin.path] = snaggedBin
+		tc.ExpectedFiles[bin.Path] = snaggedBin
 	}
 
-	if bin.bin.HasInterpreter {
-		snaggedInterp := filepath.Join(tc.Dest, bin.bin.Elf.Interpreter)
+	if bin.Bin.HasInterpreter {
+		snaggedInterp := filepath.Join(tc.Dest, bin.Bin.Elf.Interpreter)
 		tc.ExpectedStdout = append(tc.ExpectedStdout,
-			bin.bin.Elf.Interpreter+" -> "+snaggedInterp,
+			bin.Bin.Elf.Interpreter+" -> "+snaggedInterp,
 		)
-		tc.ExpectedFiles[bin.bin.Elf.Interpreter] = snaggedInterp
+		tc.ExpectedFiles[bin.Bin.Elf.Interpreter] = snaggedInterp
 	}
 
-	for _, lib := range bin.bin.Elf.Dependencies {
+	for _, lib := range bin.Bin.Elf.Dependencies {
 		snaggedLib := filepath.Join(tc.Dest, "lib64", filepath.Base(lib))
 		tc.ExpectedStdout = append(tc.ExpectedStdout,
 			lib+" -> "+snaggedLib,
@@ -167,16 +174,9 @@ func generateOutput(bin testDetails, tc *TestCase, inplace bool) {
 	}
 }
 
-var subdir_contents = testDetails{
-	path:   P_hello_dynamic,
-	bin:    GoodElfs["hello_dynamic"],
-	snagto: "bin",
-	snagas: "hello",
-}
-
-type testDetails struct {
-	path   string
-	bin    binaryDetails
-	snagto string
-	snagas string
+var subdir_contents = TestDetails{
+	Path:   P_hello_dynamic,
+	Bin:    GoodElfs["hello_dynamic"],
+	SnagTo: "bin",
+	SnagAs: "hello",
 }
