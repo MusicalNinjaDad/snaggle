@@ -198,15 +198,9 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 func generateOutput(bin TestDetails, tc *TestCase, inplace bool) {
 	if !inplace {
 		snaggedBin := filepath.Join(tc.Dest, bin.SnagTo, bin.SnagAs)
-		if bin.Symlink {
-			tc.ExpectedStdout = append(tc.ExpectedStdout,
-				bin.Path+" ("+bin.Bin.Elf.Path+") -> "+snaggedBin,
-			)
-		} else {
-			tc.ExpectedStdout = append(tc.ExpectedStdout,
-				bin.Path+" -> "+snaggedBin,
-			)
-		}
+		tc.ExpectedStdout = append(tc.ExpectedStdout,
+			bin.Path+" -> "+snaggedBin,
+		)
 		tc.ExpectedFiles[bin.Path] = snaggedBin
 	}
 
