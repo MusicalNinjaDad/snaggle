@@ -28,3 +28,22 @@ func TestCommonBinaries(t *testing.T) {
 		})
 	}
 }
+
+func Test(t *testing.T) {
+	for t, tc := range TestCases(t) {
+		if tc.ExpectedBinary.Description == "" {
+			t.SkipNow()
+		}
+
+		Assert := assert.New(t)
+
+		parsed, err := elf.New(tc.Src)
+
+		Assert.NoError(err)
+		Assert.Equal(tc.ExpectedBinary.Exe, parsed.IsExe())
+		Assert.Equal(tc.ExpectedBinary.Lib, parsed.IsLib())
+		Assert.Equal(tc.ExpectedBinary.Dynamic, parsed.IsDyn())
+		Assert.Nil(parsed.Diff(tc.ExpectedBinary.Elf))
+
+	}
+}
