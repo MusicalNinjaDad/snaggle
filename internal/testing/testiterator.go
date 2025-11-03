@@ -2,7 +2,6 @@ package testing
 
 import (
 	"iter"
-	"maps"
 	"path/filepath"
 	"testing"
 
@@ -14,32 +13,37 @@ import (
 	. "github.com/MusicalNinjaDad/snaggle/internal" //lint:ignore ST1001 test helpers
 )
 
-var tests = map[string]TestDetails{
-	"PIE_0_deps": {
+var defaultTests = []TestDetails{
+	{
+		Name:   "PIE_0_deps",
 		Path:   P_hello_pie,
 		Bin:    GoodElfs["hello_pie"],
 		SnagTo: "bin",
 		SnagAs: "hello_pie",
 	},
-	"static": {
+	{
+		Name:   "static",
 		Path:   P_hello_static,
 		Bin:    GoodElfs["hello_static"],
 		SnagTo: "bin",
 		SnagAs: "hello_static",
 	},
-	"PIE_1_dep": {
+	{
+		Name:   "PIE_1_dep",
 		Path:   P_which,
 		Bin:    GoodElfs["which"],
 		SnagTo: "bin",
 		SnagAs: "which",
 	},
-	"PIE_many_deps": {
+	{
+		Name:   "PIE_many_deps",
 		Path:   P_id,
 		Bin:    GoodElfs["id"],
 		SnagTo: "bin",
 		SnagAs: "id",
 	},
-	"dyn_lib": {
+	{
+		Name:   "dyn_lib",
 		Path:   P_ctypes_so,
 		Bin:    GoodElfs["ctypes_so"],
 		SnagTo: "lib64",
@@ -48,6 +52,7 @@ var tests = map[string]TestDetails{
 }
 
 type TestDetails struct {
+	Name   string
 	Path   string
 	Bin    binaryDetails
 	SnagTo string
@@ -78,7 +83,9 @@ type TestCase struct {
 func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 	return func(testbody func(t *testing.T, tc TestCase) bool) {
 		for _, inplace := range []bool{false, true} {
-			for desc, bin := range tests {
+			for _, bin := range defaultTests {
+
+				desc := bin.Name
 
 				var options []snaggle.Option
 				var flags []string
@@ -108,7 +115,7 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 
 			for _, recursive := range []bool{false, true} {
 				desc := "Directory"
-				bins := maps.Clone(tests)
+				bins := defaultTests
 
 				var options []snaggle.Option
 				var flags []string
@@ -121,7 +128,7 @@ func TestCases(t *testing.T) iter.Seq2[*testing.T, TestCase] {
 					desc += "_recursive"
 					options = append(options, snaggle.Recursive())
 					flags = append(flags, "--recursive")
-					bins["subdir"] = subdir_contents
+					bins = append(bins, subdir_contents)
 				}
 
 				t.Run(desc, func(t *testing.T) {
