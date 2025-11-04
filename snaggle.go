@@ -69,7 +69,11 @@ func link(sourcePath string, targetDir string) (err error) {
 	}
 
 	if err == nil {
-		log.Default().Println(op + " " + originalSourcePath + " -> " + target)
+		if originalSourcePath == sourcePath {
+			log.Default().Println(op + " " + originalSourcePath + " -> " + target)
+		} else {
+			log.Default().Println(op + " " + originalSourcePath + " (" + sourcePath + ") -> " + target)
+		}
 	}
 
 	return err

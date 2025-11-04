@@ -11,6 +11,8 @@ var Ld_linux_64_RE = regexp.MustCompile(`^\/lib64(?:\/.+|)\/ld-linux.*\.so(?:\..
 // Path to interpreter
 const P_ld_linux = "/lib64/ld-linux-x86-64.so.2"
 
+var P_ld_linux_resolved, _ = filepath.EvalSymlinks(P_ld_linux)
+
 // Paths to common libraries
 var (
 	P_libc       = findLib("libc.so.6")
