@@ -5,6 +5,7 @@
 ### Breaking changes
 
 - stdout is prefixed with "link" or "copy"
+- stdout lists absolute DESTINATION, even when relative path is given
 
 ### Features
 
