@@ -114,49 +114,46 @@ func Snaggle(path string, root string, opts ...Option) error {
 	binDir := filepath.Join(root, "bin")
 	libDir := filepath.Join(root, "lib64")
 
+	snagit := func(path string, entry fs.DirEntry, _ error) error {
+		if !entry.IsDir() {
+			var badelf *debug_elf.FormatError
+			err := snaggle(path, binDir, libDir, options)
+			switch {
+			case err == nil:
+				return nil // snagged
+			case errors.As(err, &badelf):
+				return nil // not an ELF
+			default:
+				return err
+			}
+		}
+		return nil
+	}
+
 	stat, err := os.Stat(path)
 	if err != nil {
 		return err
 	}
 
-	if stat.IsDir() {
-		snagit := func(path string, entry fs.DirEntry, _ error) error {
-			if !entry.IsDir() {
-				var badelf *debug_elf.FormatError
-				err := snaggle(path, binDir, libDir, options)
-				switch {
-				case err == nil:
-					return nil // snagged
-				case errors.As(err, &badelf):
-					return nil // not an ELF
-				default:
-					return err
-				}
-			}
-			return nil
+	switch {
+	case stat.IsDir() && options.recursive:
+		return filepath.WalkDir(path, snagit)
+	case stat.IsDir():
+		files, err := os.ReadDir(path)
+		if err != nil {
+			return err
 		}
-
-		switch {
-		case options.recursive:
-			return filepath.WalkDir(path, snagit)
-		default:
-			files, err := os.ReadDir(path)
-			if err != nil {
+		for _, file := range files {
+			path := filepath.Join(path, file.Name())
+			if err := snagit(path, file, nil); err != nil {
 				return err
 			}
-			for _, file := range files {
-				path := filepath.Join(path, file.Name())
-				if err := snagit(path, file, nil); err != nil {
-					return err
-				}
-			}
-			return nil
 		}
-	} else {
-		if options.recursive {
-			err = &fs.PathError{Op: "--recursive", Path: path, Err: syscall.ENOTDIR}
-			return &InvocationError{Path: path, Target: root, err: err}
-		}
+		return nil
+	case options.recursive:
+		err = &fs.PathError{Op: "--recursive", Path: path, Err: syscall.ENOTDIR}
+		return &InvocationError{Path: path, Target: root, err: err}
+	default:
 		return snaggle(path, binDir, libDir, options)
 	}
 }
