@@ -2,6 +2,7 @@ package testing
 
 import (
 	"iter"
+	"os"
 	"path/filepath"
 	"slices"
 	"testing"
@@ -110,86 +111,114 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 	}
 
 	return func(testbody func(t *testing.T, tc TestCase) bool) {
-		for _, inplace := range []bool{false, true} {
-			for _, bin := range tests {
+		for _, relative := range []bool{false, true} {
+			for _, inplace := range []bool{false, true} {
+				for _, bin := range tests {
 
-				desc := bin.Name
+					desc := bin.Name
 
-				var options []snaggle.Option
-				var flags []string
-				if inplace {
-					desc += "_inplace"
-					flags = append(flags, "--in-place")
-					options = append(options, snaggle.InPlace())
-				}
-
-				t.Run(desc, func(t *testing.T) {
-					tc := TestCase{
-						Src:            bin.Path,
-						Dest:           WorkspaceTempDir(t),
-						ExpectedStdout: make([]string, 0, len(bin.Bin.Elf.Dependencies)+2),
-						ExpectedFiles:  make(map[string]string, len(bin.Bin.Elf.Dependencies)+2),
-						ExpectedBinary: bin.Bin,
-						Options:        options,
-						Flags:          flags,
+					var options []snaggle.Option
+					var flags []string
+					if relative {
+						desc += "_relative"
 					}
 
-					generateOutput(bin, &tc, inplace)
+					if inplace {
+						desc += "_inplace"
+						flags = append(flags, "--in-place")
+						options = append(options, snaggle.InPlace())
+					}
 
-					t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
-					testbody(t, tc)
-				})
-			}
+					t.Run(desc, func(t *testing.T) {
+						tc := TestCase{
+							Src:            bin.Path,
+							Dest:           WorkspaceTempDir(t),
+							ExpectedStdout: make([]string, 0, len(bin.Bin.Elf.Dependencies)+2),
+							ExpectedFiles:  make(map[string]string, len(bin.Bin.Elf.Dependencies)+2),
+							ExpectedBinary: bin.Bin,
+							Options:        options,
+							Flags:          flags,
+						}
 
-			if specficTestsRequested {
-				continue
-			}
-			// else default test run includes snaggling a directory
-			for _, recursive := range []bool{false, true} {
-				desc := "Directory"
+						generateOutput(bin, &tc, inplace)
 
-				var bins []TestDetails
-				var options []snaggle.Option
-				var flags []string
+						if relative {
+							wd := pwd(t)
+							rel, err := filepath.Rel(wd, tc.Dest)
+							if err != nil {
+								t.Errorf("Unable to define %s relative to %s", rel, wd)
+							}
+							tc.Dest = rel
+						}
 
-				if inplace {
-					desc += "_inplace"
-					options = append(options, snaggle.InPlace())
-					flags = append(flags, "--in-place")
+						t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
+						testbody(t, tc)
+					})
 				}
 
-				if recursive {
-					desc += "_recursive"
-					options = append(options, snaggle.Recursive())
-					flags = append(flags, "--recursive")
-					bins = slices.Clone(defaultTests)
-				} else {
-					for _, bin := range defaultTests {
-						if !bin.InSubdir {
-							bins = append(bins, bin)
+				if specficTestsRequested {
+					continue
+				}
+				// else default test run includes snaggling a directory
+				for _, recursive := range []bool{false, true} {
+					desc := "Directory"
+
+					var bins []TestDetails
+					var options []snaggle.Option
+					var flags []string
+
+					if relative {
+						desc += "_relative"
+					}
+
+					if inplace {
+						desc += "_inplace"
+						options = append(options, snaggle.InPlace())
+						flags = append(flags, "--in-place")
+					}
+
+					if recursive {
+						desc += "_recursive"
+						options = append(options, snaggle.Recursive())
+						flags = append(flags, "--recursive")
+						bins = slices.Clone(defaultTests)
+					} else {
+						for _, bin := range defaultTests {
+							if !bin.InSubdir {
+								bins = append(bins, bin)
+							}
 						}
 					}
+
+					t.Run(desc, func(t *testing.T) {
+						tc := TestCase{
+							Src:            TestdataPath("."),
+							Dest:           WorkspaceTempDir(t),
+							ExpectedStdout: make([]string, 0),
+							ExpectedFiles:  make(map[string]string),
+							Options:        options,
+							Flags:          flags,
+						}
+
+						for _, bin := range bins {
+							generateOutput(bin, &tc, inplace)
+						}
+
+						if relative {
+							wd := pwd(t)
+							rel, err := filepath.Rel(wd, tc.Dest)
+							if err != nil {
+								t.Errorf("Unable to define %s relative to %s", rel, wd)
+							}
+							tc.Dest = rel
+						}
+
+						t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
+						testbody(t, tc)
+
+					})
+
 				}
-
-				t.Run(desc, func(t *testing.T) {
-					tc := TestCase{
-						Src:            TestdataPath("."),
-						Dest:           WorkspaceTempDir(t),
-						ExpectedStdout: make([]string, 0),
-						ExpectedFiles:  make(map[string]string),
-						Options:        options,
-						Flags:          flags,
-					}
-
-					for _, bin := range bins {
-						generateOutput(bin, &tc, inplace)
-					}
-
-					t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
-					testbody(t, tc)
-
-				})
-
 			}
 		}
 	}
@@ -219,4 +248,13 @@ func generateOutput(bin TestDetails, tc *TestCase, inplace bool) {
 		)
 		tc.ExpectedFiles[lib] = snaggedLib
 	}
+}
+
+func pwd(t *testing.T) string {
+	t.Helper()
+	pwd, err := os.Getwd()
+	if err != nil {
+		t.Error("Failed to get pwd. Error:", err)
+	}
+	return pwd
 }

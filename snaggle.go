@@ -33,7 +33,11 @@ func init() {
 // create a hardlink in targetDir which references sourcePath,
 // falls back to cp -a if sourcePath and targetDir are on different
 // filesystems.
-func link(sourcePath string, targetDir string) error {
+func link(sourcePath string, targetDir string) (err error) {
+	targetDir, err = filepath.Abs(targetDir)
+	if err != nil {
+		return err
+	}
 	filename := filepath.Base(sourcePath)
 	target := filepath.Join(targetDir, filename)
 	originalSourcePath := sourcePath
@@ -42,7 +46,7 @@ func link(sourcePath string, targetDir string) error {
 	// AFTER defining the target to be named as per initial sourcePath
 	// This avoids needing to ensure that any link/copy etc. actions
 	// follow symlinks and risking hard to find bugs.
-	sourcePath, err := filepath.EvalSymlinks(sourcePath)
+	sourcePath, err = filepath.EvalSymlinks(sourcePath)
 	if err != nil {
 		return err
 	}
