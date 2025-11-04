@@ -241,9 +241,15 @@ func generateOutput(bin TestDetails, tc *TestCase, inplace bool) {
 
 	if bin.Bin.HasInterpreter {
 		snaggedInterp := filepath.Join(tc.Dest, bin.Bin.Elf.Interpreter)
-		tc.ExpectedStdout = append(tc.ExpectedStdout,
-			bin.Bin.Elf.Interpreter+" -> "+snaggedInterp,
-		)
+		if P_ld_linux != P_ld_linux_resolved {
+			tc.ExpectedStdout = append(tc.ExpectedStdout,
+				bin.Bin.Elf.Interpreter+" ("+P_ld_linux_resolved+") -> "+snaggedInterp,
+			)
+		} else {
+			tc.ExpectedStdout = append(tc.ExpectedStdout,
+				bin.Bin.Elf.Interpreter+" -> "+snaggedInterp,
+			)
+		}
 		tc.ExpectedFiles[bin.Bin.Elf.Interpreter] = snaggedInterp
 	}
 
