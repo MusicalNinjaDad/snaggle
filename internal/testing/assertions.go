@@ -32,8 +32,14 @@ func Assert(t *testing.T) *Asserter {
 func (a *Asserter) DirectoryContents(ExpectedContents map[string]string, dir string) {
 	a.t.Helper()
 
+	var err error
+	dir, err = filepath.Abs(dir)
+	if !a.Testify.NoError(err) {
+		a.t.Error("Error getting absolute path")
+	}
+
 	contents := make([]string, 0, len(ExpectedContents))
-	err := filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
+	err = filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
 		if !entry.IsDir() {
 			contents = append(contents, path)
 		}
