@@ -140,6 +140,8 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 							Flags:          flags,
 						}
 
+						generateOutput(bin, &tc, inplace)
+
 						if relative {
 							wd := pwd(t)
 							rel, err := filepath.Rel(wd, tc.Dest)
@@ -148,8 +150,6 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 							}
 							tc.Dest = rel
 						}
-
-						generateOutput(bin, &tc, inplace)
 
 						t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
 						testbody(t, tc)
@@ -200,6 +200,10 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 							Flags:          flags,
 						}
 
+						for _, bin := range bins {
+							generateOutput(bin, &tc, inplace)
+						}
+
 						if relative {
 							wd := pwd(t)
 							rel, err := filepath.Rel(wd, tc.Dest)
@@ -207,10 +211,6 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 								t.Errorf("Unable to define %s relative to %s", rel, wd)
 							}
 							tc.Dest = rel
-						}
-
-						for _, bin := range bins {
-							generateOutput(bin, &tc, inplace)
 						}
 
 						t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
