@@ -227,9 +227,15 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 func generateOutput(bin TestDetails, tc *TestCase, inplace bool) {
 	if !inplace {
 		snaggedBin := filepath.Join(tc.Dest, bin.SnagTo, bin.SnagAs)
-		tc.ExpectedStdout = append(tc.ExpectedStdout,
-			bin.Path+" -> "+snaggedBin,
-		)
+		if bin.Symlink {
+			tc.ExpectedStdout = append(tc.ExpectedStdout,
+				bin.Path+" ("+bin.Bin.Elf.Path+") -> "+snaggedBin,
+			)
+		} else {
+			tc.ExpectedStdout = append(tc.ExpectedStdout,
+				bin.Path+" -> "+snaggedBin,
+			)
+		}
 		tc.ExpectedFiles[bin.Path] = snaggedBin
 	}
 
@@ -243,9 +249,16 @@ func generateOutput(bin TestDetails, tc *TestCase, inplace bool) {
 
 	for _, lib := range bin.Bin.Elf.Dependencies {
 		snaggedLib := filepath.Join(tc.Dest, "lib64", filepath.Base(lib))
-		tc.ExpectedStdout = append(tc.ExpectedStdout,
-			lib+" -> "+snaggedLib,
-		)
+		resolved, _ := filepath.EvalSymlinks(lib)
+		if lib != resolved {
+			tc.ExpectedStdout = append(tc.ExpectedStdout,
+				lib+" ("+resolved+") -> "+snaggedLib,
+			)
+		} else {
+			tc.ExpectedStdout = append(tc.ExpectedStdout,
+				lib+" -> "+snaggedLib,
+			)
+		}
 		tc.ExpectedFiles[lib] = snaggedLib
 	}
 }
