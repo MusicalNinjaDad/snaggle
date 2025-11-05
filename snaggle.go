@@ -273,20 +273,20 @@ func (e *InvocationError) Unwrap() error {
 // We need to lock a file while it is being copied. Othwerwise a second goroutine may attempt to
 // create the same link and fail because FileExists && !SameFile
 type fileLocks struct {
-	m     sync.RWMutex             // to avoid concurrent updates to fileLocks
-	locks map[string]*sync.RWMutex //keys: paths of locked files
+	m     sync.Mutex             // to avoid concurrent updates to fileLocks
+	locks map[string]*sync.Mutex //keys: paths of locked files
 }
 
 func newFileLock() *fileLocks {
 	fl := new(fileLocks)
-	fl.locks = make(map[string]*sync.RWMutex)
+	fl.locks = make(map[string]*sync.Mutex)
 	return fl
 }
 
 func (fl *fileLocks) lock(path string) {
 	fl.m.Lock()
 	if _, exists := fl.locks[path]; !exists {
-		fl.locks[path] = new(sync.RWMutex)
+		fl.locks[path] = new(sync.Mutex)
 	}
 	fl.locks[path].Lock()
 	fl.m.Unlock()
