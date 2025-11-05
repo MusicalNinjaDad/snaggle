@@ -149,11 +149,13 @@ func TestLinkDifferentFile(t *testing.T) {
 	for t, tc := range TestCases(t, tests...) {
 		Assert := Assert(t)
 
-		_ = os.MkdirAll(filepath.Join(tc.Dest, "lib64"), 0775)
-		os.Link(P_hello_pie, filepath.Join(tc.Dest, P_ld_linux))
+		err := os.MkdirAll(filepath.Join(tc.Dest, "lib64"), 0775)
+		Assert.Testify.NoError(err)
+		err = os.Link(P_hello_pie, filepath.Join(tc.Dest, P_ld_linux))
+		Assert.Testify.NoError(err)
 		Assert.LinkedFile(P_hello_pie, filepath.Join(tc.Dest, P_ld_linux))
 
-		err := snaggle.Snaggle(tc.Src, tc.Dest, tc.Options...)
+		err = snaggle.Snaggle(tc.Src, tc.Dest, tc.Options...)
 
 		var linkError *os.LinkError
 		if Assert.Testify.ErrorAs(err, &linkError) {
