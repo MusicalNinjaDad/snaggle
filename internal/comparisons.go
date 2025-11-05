@@ -10,8 +10,8 @@ import (
 )
 
 // Are two files identical?, Returns false on any fs/io errors.
-func SameFile(path1 string, path2 string) bool {
-	same, err := sameFile(path1, path2)
+func SameFile(src string, dest string) bool {
+	same, err := sameFile(src, dest)
 	if err != nil {
 		return false
 	}

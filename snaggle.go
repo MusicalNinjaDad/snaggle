@@ -18,6 +18,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 	"syscall"
 
 	"golang.org/x/sync/errgroup"
@@ -33,29 +34,38 @@ func init() {
 // create a hardlink in targetDir which references sourcePath,
 // falls back to cp -a if sourcePath and targetDir are on different
 // filesystems.
-func link(sourcePath string, targetDir string) (err error) {
+//
+// Errors returned will be [*fs.PathError] with Path=sourcePath,
+// errors wrapped further down the chain may include the resolved path.
+// Our PathError may wrap a further PathError or an [*os.LinkError].
+func link(sourcePath string, targetDir string, locks *fileLocks) (err error) {
+	originalSourcePath := sourcePath
+
+	op := "resolve target"
 	targetDir, err = filepath.Abs(targetDir)
 	if err != nil {
-		return err
+		return &fs.PathError{Op: op, Path: originalSourcePath, Err: err}
 	}
 	filename := filepath.Base(sourcePath)
 	target := filepath.Join(targetDir, filename)
-	originalSourcePath := sourcePath
 
 	// make sure we source the underlying file, not a symlink
 	// AFTER defining the target to be named as per initial sourcePath
 	// This avoids needing to ensure that any link/copy etc. actions
 	// follow symlinks and risking hard to find bugs.
+	op = "resolve"
 	sourcePath, err = filepath.EvalSymlinks(sourcePath)
 	if err != nil {
-		return err
+		return &fs.PathError{Op: op, Path: originalSourcePath, Err: err}
 	}
 
+	op = "mkdir target"
 	if err := os.MkdirAll(targetDir, 0775); err != nil {
-		return err
+		return &fs.PathError{Op: op, Path: originalSourcePath, Err: err}
 	}
 
-	op := "link"
+	op = "link"
+	locks.lock(target)
 	err = os.Link(sourcePath, target)
 	// Error codes: https://man7.org/linux/man-pages/man2/link.2.html
 	switch {
@@ -67,16 +77,18 @@ func link(sourcePath string, targetDir string) (err error) {
 	case errors.Is(err, syscall.EEXIST) && internal.SameFile(sourcePath, target):
 		err = nil
 	}
+	locks.unlock(target)
 
-	if err == nil {
-		if originalSourcePath == sourcePath {
-			log.Default().Println(op + " " + originalSourcePath + " -> " + target)
-		} else {
-			log.Default().Println(op + " " + originalSourcePath + " (" + sourcePath + ") -> " + target)
-		}
+	if err != nil {
+		return &fs.PathError{Op: op, Path: originalSourcePath, Err: err}
 	}
+	if originalSourcePath == sourcePath {
+		log.Default().Println(op + " " + originalSourcePath + " -> " + target)
+	} else {
+		log.Default().Println(op + " " + originalSourcePath + " (" + sourcePath + ") -> " + target)
+	}
+	return nil
 
-	return err
 }
 
 // Snaggle parses the file(s) given by path and build minimal /bin & /lib64 under root.
@@ -106,62 +118,70 @@ func link(sourcePath string, targetDir string) (err error) {
 //   - Copies will retain the original filemode
 //   - Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
 func Snaggle(path string, root string, opts ...Option) error {
+	snaggerrs := new(errgroup.Group)
+	locks := newFileLock()
+
 	var options options
 	for _, optfn := range opts {
 		optfn(&options)
 	}
 
-	binDir := filepath.Join(root, "bin")
-	libDir := filepath.Join(root, "lib64")
+	snagit := func(path string) error {
+		var badelf *debug_elf.FormatError
+		err := snaggle(path, root, options, locks)
+		switch {
+		case err == nil:
+			return nil // snagged
+		case errors.As(err, &badelf):
+			return nil // not an ELF
+		default:
+			return err
+		}
+	}
 
 	stat, err := os.Stat(path)
 	if err != nil {
 		return err
 	}
 
-	if stat.IsDir() {
-		snagit := func(path string, entry fs.DirEntry, _ error) error {
-			if !entry.IsDir() {
-				var badelf *debug_elf.FormatError
-				err := snaggle(path, binDir, libDir, options)
-				switch {
-				case err == nil:
-					return nil // snagged
-				case errors.As(err, &badelf):
-					return nil // not an ELF
-				default:
-					return err
-				}
+	switch {
+	case stat.IsDir() && options.recursive:
+		_ = filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
+			switch {
+			case d.IsDir():
+				return nil // skip Directory entries
+			default:
+				snaggerrs.Go(func() error { return snagit(path) })
+				return nil
 			}
-			return nil
+		})
+		return snaggerrs.Wait()
+	case stat.IsDir():
+		files, err := os.ReadDir(path)
+		if err != nil {
+			return err
 		}
-
-		switch {
-		case options.recursive:
-			return filepath.WalkDir(path, snagit)
-		default:
-			files, err := os.ReadDir(path)
-			if err != nil {
-				return err
-			}
-			for _, file := range files {
+		for _, file := range files {
+			switch {
+			case file.IsDir():
+				continue // skip Directory entries
+			default:
 				path := filepath.Join(path, file.Name())
-				if err := snagit(path, file, nil); err != nil {
-					return err
-				}
+				snaggerrs.Go(func() error { return snagit(path) })
 			}
-			return nil
 		}
-	} else {
-		if options.recursive {
-			err = &fs.PathError{Op: "--recursive", Path: path, Err: syscall.ENOTDIR}
-			return &InvocationError{Path: path, Target: root, err: err}
-		}
-		return snaggle(path, binDir, libDir, options)
+		return snaggerrs.Wait()
+	case options.recursive:
+		err = &fs.PathError{Op: "--recursive", Path: path, Err: syscall.ENOTDIR}
+		return &InvocationError{Path: path, Target: root, err: err}
+	default:
+		return snaggle(path, root, options, locks)
 	}
 }
 
-func snaggle(path string, binDir string, libDir string, options options) error {
+func snaggle(path string, root string, options options, locks *fileLocks) error {
+	binDir := filepath.Join(root, "bin")
+	libDir := filepath.Join(root, "lib64")
 	file, err := elf.New(path)
 	if err != nil {
 		return &SnaggleError{path, "", err}
@@ -174,24 +194,27 @@ func snaggle(path string, binDir string, libDir string, options options) error {
 		// do not link file
 	default:
 		if file.IsExe() {
-			linkerrs.Go(func() error { return link(path, binDir) })
+			linkerrs.Go(func() error { return link(path, binDir, locks) })
 		} else {
-			linkerrs.Go(func() error { return link(path, libDir) })
+			linkerrs.Go(func() error { return link(path, libDir, locks) })
 		}
 	}
 
 	// TODO: #50 make linking interpreter safer
 	if file.Interpreter != "" {
-		linkerrs.Go(func() error { return link(file.Interpreter, libDir) }) // currently OK - as it sits in /lib64 ... but ...
+		linkerrs.Go(func() error { return link(file.Interpreter, libDir, locks) }) // currently OK - as it sits in /lib64 ... but ...
 	}
 
 	for _, lib := range file.Dependencies {
-		linkerrs.Go(func() error { return link(lib, libDir) })
+		linkerrs.Go(func() error { return link(lib, libDir, locks) })
 	}
 
 	// TODO: #37 improve error handling with context, error collector, rollback
 	//       (probably requires link to return path of file created, if created)
-	return linkerrs.Wait()
+	if err := linkerrs.Wait(); err != nil {
+		return &SnaggleError{Src: path, Dst: root, err: err}
+	}
+	return nil
 }
 
 // options used by [Snaggle]
@@ -246,4 +269,30 @@ func (e *InvocationError) Error() string {
 
 func (e *InvocationError) Unwrap() error {
 	return e.err
+}
+
+// We need to lock a file while it is being copied. Othwerwise a second goroutine may attempt to
+// create the same link and fail because FileExists && !SameFile
+type fileLocks struct {
+	m     sync.Mutex             // to avoid concurrent updates to fileLocks
+	locks map[string]*sync.Mutex //keys: paths of locked files
+}
+
+func newFileLock() *fileLocks {
+	fl := new(fileLocks)
+	fl.locks = make(map[string]*sync.Mutex)
+	return fl
+}
+
+func (fl *fileLocks) lock(path string) {
+	fl.m.Lock()
+	if _, exists := fl.locks[path]; !exists {
+		fl.locks[path] = new(sync.Mutex)
+	}
+	fl.locks[path].Lock()
+	fl.m.Unlock()
+}
+
+func (fl *fileLocks) unlock(path string) {
+	fl.locks[path].Unlock()
 }

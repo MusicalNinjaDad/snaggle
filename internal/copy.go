@@ -27,6 +27,7 @@ func Copy(sourcePath string, target string) error {
 	if err != nil {
 		return err
 	}
+
 	dst, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, _srcstat.Mode())
 	if err != nil {
 		return err
