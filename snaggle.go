@@ -115,6 +115,8 @@ func link(sourcePath string, targetDir string) (err error) {
 //   - Copies will retain the original filemode
 //   - Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
 func Snaggle(path string, root string, opts ...Option) error {
+	snaggerrs := new(errgroup.Group)
+
 	var options options
 	for _, optfn := range opts {
 		optfn(&options)
@@ -145,8 +147,9 @@ func Snaggle(path string, root string, opts ...Option) error {
 			case d.IsDir():
 				return nil // skip Directory entries
 			default:
-				return snagit(path)
+				snaggerrs.Go(func() error { return snagit(path) })
 			}
+			return snaggerrs.Wait()
 		})
 	case stat.IsDir():
 		files, err := os.ReadDir(path)
@@ -159,12 +162,10 @@ func Snaggle(path string, root string, opts ...Option) error {
 				continue // skip Directory entries
 			default:
 				path := filepath.Join(path, file.Name())
-				if err := snagit(path); err != nil {
-					return err
-				}
+				snaggerrs.Go(func() error { return snagit(path) })
 			}
 		}
-		return nil
+		return snaggerrs.Wait()
 	case options.recursive:
 		err = &fs.PathError{Op: "--recursive", Path: path, Err: syscall.ENOTDIR}
 		return &InvocationError{Path: path, Target: root, err: err}
