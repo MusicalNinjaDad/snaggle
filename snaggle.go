@@ -146,15 +146,16 @@ func Snaggle(path string, root string, opts ...Option) error {
 
 	switch {
 	case stat.IsDir() && options.recursive:
-		return filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
+		_ = filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
 			switch {
 			case d.IsDir():
 				return nil // skip Directory entries
 			default:
 				snaggerrs.Go(func() error { return snagit(path) })
+				return nil
 			}
-			return snaggerrs.Wait()
 		})
+		return snaggerrs.Wait()
 	case stat.IsDir():
 		files, err := os.ReadDir(path)
 		if err != nil {
