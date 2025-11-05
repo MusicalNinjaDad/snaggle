@@ -120,12 +120,9 @@ func Snaggle(path string, root string, opts ...Option) error {
 		optfn(&options)
 	}
 
-	binDir := filepath.Join(root, "bin")
-	libDir := filepath.Join(root, "lib64")
-
 	snagit := func(path string) error {
 		var badelf *debug_elf.FormatError
-		err := snaggle(path, binDir, libDir, options)
+		err := snaggle(path, root, options)
 		switch {
 		case err == nil:
 			return nil // snagged
@@ -172,11 +169,13 @@ func Snaggle(path string, root string, opts ...Option) error {
 		err = &fs.PathError{Op: "--recursive", Path: path, Err: syscall.ENOTDIR}
 		return &InvocationError{Path: path, Target: root, err: err}
 	default:
-		return snaggle(path, binDir, libDir, options)
+		return snaggle(path, root, options)
 	}
 }
 
-func snaggle(path string, binDir string, libDir string, options options) error {
+func snaggle(path string, root string, options options) error {
+	binDir := filepath.Join(root, "bin")
+	libDir := filepath.Join(root, "lib64")
 	file, err := elf.New(path)
 	if err != nil {
 		return &SnaggleError{path, "", err}
@@ -207,7 +206,7 @@ func snaggle(path string, binDir string, libDir string, options options) error {
 	// TODO: #37 improve error handling with context, error collector, rollback
 	//       (probably requires link to return path of file created, if created)
 	if err := linkerrs.Wait(); err != nil {
-		return &SnaggleError{Src: path, Dst: filepath.Dir(binDir), err: err}
+		return &SnaggleError{Src: path, Dst: root, err: err}
 	}
 	return nil
 }
