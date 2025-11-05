@@ -55,7 +55,7 @@ func TestSetDocComment(t *testing.T) {
 	original := TestdataPath("hello/hello.go")
 	src := filepath.Join(tmp, filepath.Base(original))
 
-	err := Copy(original, src, NewFileLock())
+	err := Copy(original, src)
 	if !Assert.NoError(err) {
 		Assert.FailNow("")
 	}

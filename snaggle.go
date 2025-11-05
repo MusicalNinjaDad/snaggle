@@ -18,6 +18,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 	"syscall"
 
 	"golang.org/x/sync/errgroup"
@@ -37,7 +38,7 @@ func init() {
 // Errors returned will be [*fs.PathError] with Path=sourcePath,
 // errors wrapped further down the chain may include the resolved path.
 // Our PathError may wrap a further PathError or an [*os.LinkError].
-func link(sourcePath string, targetDir string, locks *internal.FileLocks) (err error) {
+func link(sourcePath string, targetDir string, locks *fileLocks) (err error) {
 	originalSourcePath := sourcePath
 
 	op := "resolve target"
@@ -64,17 +65,19 @@ func link(sourcePath string, targetDir string, locks *internal.FileLocks) (err e
 	}
 
 	op = "link"
+	locks.lock(target)
 	err = os.Link(sourcePath, target)
 	// Error codes: https://man7.org/linux/man-pages/man2/link.2.html
 	switch {
 	// X-Device link || No permission to link - Try simple copy
 	case errors.Is(err, syscall.EXDEV) || errors.Is(err, syscall.EPERM):
 		op = "copy"
-		err = internal.Copy(sourcePath, target, locks)
+		err = internal.Copy(sourcePath, target)
 	// File already exists - not an err if it's identical
-	case errors.Is(err, syscall.EEXIST) && internal.SameFile(sourcePath, target, locks):
+	case errors.Is(err, syscall.EEXIST) && internal.SameFile(sourcePath, target):
 		err = nil
 	}
+	locks.unlock(target)
 
 	if err != nil {
 		return &fs.PathError{Op: op, Path: originalSourcePath, Err: err}
@@ -116,7 +119,7 @@ func link(sourcePath string, targetDir string, locks *internal.FileLocks) (err e
 //   - Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
 func Snaggle(path string, root string, opts ...Option) error {
 	snaggerrs := new(errgroup.Group)
-	locks := internal.NewFileLock()
+	locks := newFileLock()
 
 	var options options
 	for _, optfn := range opts {
@@ -175,7 +178,7 @@ func Snaggle(path string, root string, opts ...Option) error {
 	}
 }
 
-func snaggle(path string, root string, options options, locks *internal.FileLocks) error {
+func snaggle(path string, root string, options options, locks *fileLocks) error {
 	binDir := filepath.Join(root, "bin")
 	libDir := filepath.Join(root, "lib64")
 	file, err := elf.New(path)
@@ -265,4 +268,34 @@ func (e *InvocationError) Error() string {
 
 func (e *InvocationError) Unwrap() error {
 	return e.err
+}
+
+// We need to lock a file while it is being copied. Othwerwise a second goroutine may attempt to
+// create the same link and fail because FileExists && !SameFile
+type fileLocks struct {
+	m     sync.RWMutex             // to avoid concurrent updates to fileLocks
+	locks map[string]*sync.RWMutex //keys: paths of locked files
+}
+
+func newFileLock() *fileLocks {
+	fl := new(fileLocks)
+	fl.locks = make(map[string]*sync.RWMutex)
+	return fl
+}
+
+func (fl *fileLocks) lock(path string) {
+	println("locking lockbox for lock " + path)
+	fl.m.Lock()
+	println("locking " + path)
+	if _, exists := fl.locks[path]; !exists {
+		fl.locks[path] = new(sync.RWMutex)
+	}
+	fl.locks[path].Lock()
+	println("unlocking lockbox for lock " + path)
+	fl.m.Unlock()
+}
+
+func (fl *fileLocks) unlock(path string) {
+	println("unlocking " + path)
+	fl.locks[path].Unlock()
 }
