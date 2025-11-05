@@ -206,7 +206,10 @@ func snaggle(path string, binDir string, libDir string, options options) error {
 
 	// TODO: #37 improve error handling with context, error collector, rollback
 	//       (probably requires link to return path of file created, if created)
-	return linkerrs.Wait()
+	if err := linkerrs.Wait(); err != nil {
+		return &SnaggleError{Src: path, Dst: filepath.Dir(binDir), err: err}
+	}
+	return nil
 }
 
 // options used by [Snaggle]
