@@ -1,6 +1,7 @@
 package snaggle_test
 
 import (
+	"errors"
 	"io"
 	"io/fs"
 	"log"
@@ -10,6 +11,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/MusicalNinjaDad/snaggle"
@@ -29,7 +31,14 @@ func Test(t *testing.T) {
 
 		err := snaggle.Snaggle(tc.Src, tc.Dest, tc.Options...)
 
-		Assert.Testify.NoError(err)
+		if !Assert.Testify.NoError(err) {
+			for {
+				t.Log(spew.Sdump(err))
+				if err = errors.Unwrap(err); err == nil {
+					break
+				}
+			}
+		}
 
 		Assert.DirectoryContents(tc.ExpectedFiles, tc.Dest)
 		Assert.LinkedFile(tc.Src, tc.ExpectedFiles[tc.Src])
