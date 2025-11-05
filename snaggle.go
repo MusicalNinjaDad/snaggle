@@ -33,29 +33,37 @@ func init() {
 // create a hardlink in targetDir which references sourcePath,
 // falls back to cp -a if sourcePath and targetDir are on different
 // filesystems.
+//
+// Errors returned will be [*fs.PathError] with Path=sourcePath,
+// errors wrapped further down the chain may include the resolved path.
+// Our PathError may wrap a further PathError or an [*os.LinkError].
 func link(sourcePath string, targetDir string) (err error) {
+	originalSourcePath := sourcePath
+
+	op := "resolve target"
 	targetDir, err = filepath.Abs(targetDir)
 	if err != nil {
-		return err
+		return &fs.PathError{Op: op, Path: originalSourcePath, Err: err}
 	}
 	filename := filepath.Base(sourcePath)
 	target := filepath.Join(targetDir, filename)
-	originalSourcePath := sourcePath
 
 	// make sure we source the underlying file, not a symlink
 	// AFTER defining the target to be named as per initial sourcePath
 	// This avoids needing to ensure that any link/copy etc. actions
 	// follow symlinks and risking hard to find bugs.
+	op = "resolve"
 	sourcePath, err = filepath.EvalSymlinks(sourcePath)
 	if err != nil {
-		return err
+		return &fs.PathError{Op: op, Path: originalSourcePath, Err: err}
 	}
 
+	op = "mkdir target"
 	if err := os.MkdirAll(targetDir, 0775); err != nil {
-		return err
+		return &fs.PathError{Op: op, Path: originalSourcePath, Err: err}
 	}
 
-	op := "link"
+	op = "link"
 	err = os.Link(sourcePath, target)
 	// Error codes: https://man7.org/linux/man-pages/man2/link.2.html
 	switch {
@@ -68,15 +76,16 @@ func link(sourcePath string, targetDir string) (err error) {
 		err = nil
 	}
 
-	if err == nil {
-		if originalSourcePath == sourcePath {
-			log.Default().Println(op + " " + originalSourcePath + " -> " + target)
-		} else {
-			log.Default().Println(op + " " + originalSourcePath + " (" + sourcePath + ") -> " + target)
-		}
+	if err != nil {
+		return &fs.PathError{Op: op, Path: originalSourcePath, Err: err}
 	}
+	if originalSourcePath == sourcePath {
+		log.Default().Println(op + " " + originalSourcePath + " -> " + target)
+	} else {
+		log.Default().Println(op + " " + originalSourcePath + " (" + sourcePath + ") -> " + target)
+	}
+	return nil
 
-	return err
 }
 
 // Snaggle parses the file(s) given by path and build minimal /bin & /lib64 under root.
