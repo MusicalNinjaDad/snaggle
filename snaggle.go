@@ -18,6 +18,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 	"syscall"
 
 	"golang.org/x/sync/errgroup"
@@ -264,4 +265,34 @@ func (e *InvocationError) Error() string {
 
 func (e *InvocationError) Unwrap() error {
 	return e.err
+}
+
+// We need to lock a file while it is being copied. Othwerwise a second goroutine may attempt to
+// create the same link and fail because FileExists && !SameFile
+type fileLocks struct {
+	m     sync.RWMutex    // to avoid concurrent updates to fileLocks
+	locks map[string]bool //keys: paths of locked files
+}
+
+func (fl *fileLocks) add(path string) {
+	fl.m.Lock()
+	defer func() { fl.m.Unlock() }()
+	fl.locks[path] = true
+}
+
+func (fl *fileLocks) wait(path string) {
+	fl.m.RLock()
+	defer func() { fl.m.RUnlock() }()
+	for {
+		if locked, exists := fl.locks[path]; exists && locked {
+			continue
+		}
+		break
+	}
+}
+
+func (fl *fileLocks) remove(path string) {
+	fl.m.Lock()
+	defer func() { fl.m.Unlock() }()
+	fl.locks[path] = false
 }
