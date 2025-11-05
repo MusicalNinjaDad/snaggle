@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"testing"
@@ -125,6 +126,49 @@ func TestRecurseFile(t *testing.T) {
 		Assert.DirectoryContents(expectedFiles, tc.Dest)
 		Assert.Stdout(expectedOut, StripLines(stdout.String()))
 	}
+}
+
+func TestLinkDifferentFile(t *testing.T) {
+	tests := []TestDetails{
+		{
+			Name: "hello_pie",
+			Path: P_hello_pie,
+			Bin:  GoodElfs["hello_pie"],
+		},
+	}
+
+	for t, tc := range TestCases(t, tests...) {
+		Assert := Assert(t)
+
+		_ = os.MkdirAll(filepath.Join(tc.Dest, "lib64"), 0775)
+		os.Link(P_hello_pie, filepath.Join(tc.Dest, P_ld_linux))
+		Assert.LinkedFile(P_hello_pie, filepath.Join(tc.Dest, P_ld_linux))
+
+		err := snaggle.Snaggle(tc.Src, tc.Dest, tc.Options...)
+
+		var linkError *os.LinkError
+		if Assert.Testify.ErrorAs(err, &linkError) {
+			Assert.Testify.Equal("link", linkError.Op)
+			Assert.Testify.Equal(P_ld_linux_resolved, linkError.Old)
+			Assert.Testify.Equal(tc.ExpectedFiles[P_ld_linux], linkError.New)
+			Assert.Testify.ErrorIs(linkError, syscall.EEXIST)
+		}
+
+		var pathError *fs.PathError
+		if Assert.Testify.ErrorAs(err, &pathError) {
+			Assert.Testify.Equal("link", pathError.Op)
+			Assert.Testify.Equal(P_ld_linux, pathError.Path)
+			Assert.Testify.Equal(linkError, pathError.Err)
+		}
+
+		var snaggleError *snaggle.SnaggleError
+		if Assert.Testify.ErrorAs(err, &snaggleError) {
+			Assert.Testify.Equal(tc.Src, snaggleError.Src)
+			Assert.Testify.Equal(tc.Dest, snaggleError.Dst)
+			Assert.Testify.Equal(pathError, snaggleError.Unwrap())
+		}
+	}
+
 }
 
 func BenchmarkCommonBinaries(b *testing.B) {
