@@ -284,18 +284,14 @@ func newFileLock() *fileLocks {
 }
 
 func (fl *fileLocks) lock(path string) {
-	println("locking lockbox for lock " + path)
 	fl.m.Lock()
-	println("locking " + path)
 	if _, exists := fl.locks[path]; !exists {
 		fl.locks[path] = new(sync.RWMutex)
 	}
 	fl.locks[path].Lock()
-	println("unlocking lockbox for lock " + path)
 	fl.m.Unlock()
 }
 
 func (fl *fileLocks) unlock(path string) {
-	println("unlocking " + path)
 	fl.locks[path].Unlock()
 }
