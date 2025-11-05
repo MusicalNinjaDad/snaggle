@@ -94,28 +94,20 @@ func (fl *FileLocks) lock(path string) {
 }
 
 func (fl *FileLocks) rlock(path string) {
-	println("Rlocking lockbox for rlock" + path)
-	fl.m.RLock()
-	if lock, exists := fl.locks[path]; exists {
-		println("unRlocking lockbox for rlock (known)" + path)
-		fl.m.RUnlock()
-		println("rlocking " + path)
-		lock.RLock()
-	} else {
-		println("unRlocking lockbox for rlock(unknown)" + path)
-		fl.m.RUnlock()
+	println("Locking lockbox for rlock" + path)
+	fl.m.Lock()
+	if _, exists := fl.locks[path]; !exists {
+		fl.locks[path] = new(sync.RWMutex)
 	}
+	fl.locks[path].RLock()
+	println("unlocking lockbox for lock " + path)
+	fl.m.Unlock()
 }
 
 func (fl *FileLocks) runlock(path string) {
-	println("Rlocking lockbox for runlock " + path)
-	fl.m.RLock()
-	if lock, exists := fl.locks[path]; exists {
-		println("unRlocking lockbox for runlock (known)" + path)
-		fl.m.RUnlock()
-		println("runlocking " + path)
-		lock.RUnlock()
-	}
+	println("runlocking " + path)
+	fl.locks[path].RUnlock()
+
 }
 
 func (fl *FileLocks) unlock(path string) {
