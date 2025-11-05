@@ -10,8 +10,10 @@ import (
 )
 
 // Are two files identical?, Returns false on any fs/io errors.
-func SameFile(path1 string, path2 string) bool {
-	same, err := sameFile(path1, path2)
+// Will wait until dest is not locked before proceeding.
+func SameFile(src string, dest string, locks *FileLocks) bool {
+	locks.wait(dest)
+	same, err := sameFile(src, dest)
 	if err != nil {
 		return false
 	}

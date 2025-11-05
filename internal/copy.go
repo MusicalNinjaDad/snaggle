@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"syscall"
 )
 
@@ -12,7 +13,7 @@ import (
 //
 // Errors returned will be of type [*fs.PathError] (unless they came from [io.Copy],
 // which sadly doesn't document error details ...)
-func Copy(sourcePath string, target string) error {
+func Copy(sourcePath string, target string, locks *FileLocks) error {
 	src, err := os.Open(sourcePath)
 	if err != nil {
 		return err
@@ -27,6 +28,10 @@ func Copy(sourcePath string, target string) error {
 	if err != nil {
 		return err
 	}
+
+	locks.add(target)
+	defer locks.remove(target)
+
 	dst, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, _srcstat.Mode())
 	if err != nil {
 		return err
@@ -61,4 +66,40 @@ func Copy(sourcePath string, target string) error {
 		return err
 	}
 	return err
+}
+
+// We need to lock a file while it is being copied. Othwerwise a second goroutine may attempt to
+// create the same link and fail because FileExists && !SameFile
+type FileLocks struct {
+	m     sync.RWMutex    // to avoid concurrent updates to fileLocks
+	locks map[string]bool //keys: paths of locked files
+}
+
+func NewFileLock() *FileLocks {
+	fl := new(FileLocks)
+	fl.locks = make(map[string]bool)
+	return fl
+}
+
+func (fl *FileLocks) add(path string) {
+	fl.m.Lock()
+	defer func() { fl.m.Unlock() }()
+	fl.locks[path] = true
+}
+
+func (fl *FileLocks) wait(path string) {
+	fl.m.RLock()
+	defer fl.m.RUnlock()
+	for {
+		if locked, exists := fl.locks[path]; exists && locked {
+			continue
+		}
+		break
+	}
+}
+
+func (fl *FileLocks) remove(path string) {
+	fl.m.Lock()
+	defer fl.m.Unlock()
+	fl.locks[path] = false
 }

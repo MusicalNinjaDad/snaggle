@@ -18,7 +18,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"sync"
 	"syscall"
 
 	"golang.org/x/sync/errgroup"
@@ -38,7 +37,7 @@ func init() {
 // Errors returned will be [*fs.PathError] with Path=sourcePath,
 // errors wrapped further down the chain may include the resolved path.
 // Our PathError may wrap a further PathError or an [*os.LinkError].
-func link(sourcePath string, targetDir string) (err error) {
+func link(sourcePath string, targetDir string, locks *internal.FileLocks) (err error) {
 	originalSourcePath := sourcePath
 
 	op := "resolve target"
@@ -71,9 +70,9 @@ func link(sourcePath string, targetDir string) (err error) {
 	// X-Device link || No permission to link - Try simple copy
 	case errors.Is(err, syscall.EXDEV) || errors.Is(err, syscall.EPERM):
 		op = "copy"
-		err = internal.Copy(sourcePath, target)
+		err = internal.Copy(sourcePath, target, locks)
 	// File already exists - not an err if it's identical
-	case errors.Is(err, syscall.EEXIST) && internal.SameFile(sourcePath, target):
+	case errors.Is(err, syscall.EEXIST) && internal.SameFile(sourcePath, target, locks):
 		err = nil
 	}
 
@@ -117,6 +116,7 @@ func link(sourcePath string, targetDir string) (err error) {
 //   - Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
 func Snaggle(path string, root string, opts ...Option) error {
 	snaggerrs := new(errgroup.Group)
+	locks := internal.NewFileLock()
 
 	var options options
 	for _, optfn := range opts {
@@ -125,7 +125,7 @@ func Snaggle(path string, root string, opts ...Option) error {
 
 	snagit := func(path string) error {
 		var badelf *debug_elf.FormatError
-		err := snaggle(path, root, options)
+		err := snaggle(path, root, options, locks)
 		switch {
 		case err == nil:
 			return nil // snagged
@@ -171,11 +171,11 @@ func Snaggle(path string, root string, opts ...Option) error {
 		err = &fs.PathError{Op: "--recursive", Path: path, Err: syscall.ENOTDIR}
 		return &InvocationError{Path: path, Target: root, err: err}
 	default:
-		return snaggle(path, root, options)
+		return snaggle(path, root, options, locks)
 	}
 }
 
-func snaggle(path string, root string, options options) error {
+func snaggle(path string, root string, options options, locks *internal.FileLocks) error {
 	binDir := filepath.Join(root, "bin")
 	libDir := filepath.Join(root, "lib64")
 	file, err := elf.New(path)
@@ -190,19 +190,19 @@ func snaggle(path string, root string, options options) error {
 		// do not link file
 	default:
 		if file.IsExe() {
-			linkerrs.Go(func() error { return link(path, binDir) })
+			linkerrs.Go(func() error { return link(path, binDir, locks) })
 		} else {
-			linkerrs.Go(func() error { return link(path, libDir) })
+			linkerrs.Go(func() error { return link(path, libDir, locks) })
 		}
 	}
 
 	// TODO: #50 make linking interpreter safer
 	if file.Interpreter != "" {
-		linkerrs.Go(func() error { return link(file.Interpreter, libDir) }) // currently OK - as it sits in /lib64 ... but ...
+		linkerrs.Go(func() error { return link(file.Interpreter, libDir, locks) }) // currently OK - as it sits in /lib64 ... but ...
 	}
 
 	for _, lib := range file.Dependencies {
-		linkerrs.Go(func() error { return link(lib, libDir) })
+		linkerrs.Go(func() error { return link(lib, libDir, locks) })
 	}
 
 	// TODO: #37 improve error handling with context, error collector, rollback
@@ -265,34 +265,4 @@ func (e *InvocationError) Error() string {
 
 func (e *InvocationError) Unwrap() error {
 	return e.err
-}
-
-// We need to lock a file while it is being copied. Othwerwise a second goroutine may attempt to
-// create the same link and fail because FileExists && !SameFile
-type fileLocks struct {
-	m     sync.RWMutex    // to avoid concurrent updates to fileLocks
-	locks map[string]bool //keys: paths of locked files
-}
-
-func (fl *fileLocks) add(path string) {
-	fl.m.Lock()
-	defer func() { fl.m.Unlock() }()
-	fl.locks[path] = true
-}
-
-func (fl *fileLocks) wait(path string) {
-	fl.m.RLock()
-	defer func() { fl.m.RUnlock() }()
-	for {
-		if locked, exists := fl.locks[path]; exists && locked {
-			continue
-		}
-		break
-	}
-}
-
-func (fl *fileLocks) remove(path string) {
-	fl.m.Lock()
-	defer func() { fl.m.Unlock() }()
-	fl.locks[path] = false
 }
