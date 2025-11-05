@@ -12,7 +12,9 @@ import (
 // Are two files identical?, Returns false on any fs/io errors.
 // Will wait until dest is not locked before proceeding.
 func SameFile(src string, dest string, locks *FileLocks) bool {
-	locks.wait(dest)
+	locks.rlock(dest)
+	defer locks.runlock(dest)
+
 	same, err := sameFile(src, dest)
 	if err != nil {
 		return false

@@ -29,8 +29,8 @@ func Copy(sourcePath string, target string, locks *FileLocks) error {
 		return err
 	}
 
-	locks.add(target)
-	defer locks.remove(target)
+	locks.lock(target)
+	defer locks.unlock(target)
 
 	dst, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, _srcstat.Mode())
 	if err != nil {
@@ -71,35 +71,54 @@ func Copy(sourcePath string, target string, locks *FileLocks) error {
 // We need to lock a file while it is being copied. Othwerwise a second goroutine may attempt to
 // create the same link and fail because FileExists && !SameFile
 type FileLocks struct {
-	m     sync.RWMutex    // to avoid concurrent updates to fileLocks
-	locks map[string]bool //keys: paths of locked files
+	m     sync.RWMutex             // to avoid concurrent updates to fileLocks
+	locks map[string]*sync.RWMutex //keys: paths of locked files
 }
 
 func NewFileLock() *FileLocks {
 	fl := new(FileLocks)
-	fl.locks = make(map[string]bool)
+	fl.locks = make(map[string]*sync.RWMutex)
 	return fl
 }
 
-func (fl *FileLocks) add(path string) {
+func (fl *FileLocks) lock(path string) {
+	println("locking lockbox for lock " + path)
 	fl.m.Lock()
-	defer func() { fl.m.Unlock() }()
-	fl.locks[path] = true
+	println("locking " + path)
+	if _, exists := fl.locks[path]; !exists {
+		fl.locks[path] = new(sync.RWMutex)
+	}
+	fl.locks[path].Lock()
+	println("unlocking lockbox for lock " + path)
+	fl.m.Unlock()
 }
 
-func (fl *FileLocks) wait(path string) {
+func (fl *FileLocks) rlock(path string) {
+	println("Rlocking lockbox for rlock" + path)
 	fl.m.RLock()
-	defer fl.m.RUnlock()
-	for {
-		if locked, exists := fl.locks[path]; exists && locked {
-			continue
-		}
-		break
+	if lock, exists := fl.locks[path]; exists {
+		println("unRlocking lockbox for rlock (known)" + path)
+		fl.m.RUnlock()
+		println("rlocking " + path)
+		lock.RLock()
+	} else {
+		println("unRlocking lockbox for rlock(unknown)" + path)
+		fl.m.RUnlock()
 	}
 }
 
-func (fl *FileLocks) remove(path string) {
-	fl.m.Lock()
-	defer fl.m.Unlock()
-	fl.locks[path] = false
+func (fl *FileLocks) runlock(path string) {
+	println("Rlocking lockbox for runlock " + path)
+	fl.m.RLock()
+	if lock, exists := fl.locks[path]; exists {
+		println("unRlocking lockbox for runlock (known)" + path)
+		fl.m.RUnlock()
+		println("runlocking " + path)
+		lock.RUnlock()
+	}
+}
+
+func (fl *FileLocks) unlock(path string) {
+	println("unlocking " + path)
+	fl.locks[path].Unlock()
 }
