@@ -384,7 +384,11 @@ func libpathcmp(path1 string, path2 string) int {
 }
 
 func (e *ErrElf) Error() string {
-	return "parsing " + e.path + ":\n" + errors.Join(e.errs...).Error()
+	if e.IsError() {
+		return "parsing " + e.path + ":\n" + errors.Join(e.errs...).Error()
+	} else {
+		return ""
+	}
 
 }
 
