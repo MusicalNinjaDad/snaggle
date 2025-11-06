@@ -69,12 +69,18 @@ Exit Codes:
 
 > Install with `go install https://github.com/MusicalNinjaDad/snaggle@latest`
 
+## Known limitations
+
+- will not recurse into symlinked subdirectories ([#93](https://github.com/MusicalNinjaDad/snaggle/issues/93))
+- only handles dynamic binaries with `/lib64/ld_linux...so` as an interpreter, no interpreter and static binaries.
+- does not handle binaries compiled with dependencies in a custom `RUNPATH` or `RPATH` ([#13](https://github.com/MusicalNinjaDad/snaggle/issues/13))
+
 ## Planned improvements
 
 Future versions will:
 
-- provide a guaranteed error type from the snaggle library & make exit code handling more robust in the cli
 - provide standard profiles for apps with non-linked dependencies such as SSL certs, locales, gconv etc.
+- further improve performance by bailing early on an error ([#37](https://github.com/MusicalNinjaDad/snaggle/issues/37))
 
 ## Why Go?
 
