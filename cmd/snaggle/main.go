@@ -132,6 +132,10 @@ https://github.com/MusicalNinjaDad/snaggle
 		if recursive {
 			options = append(options, snaggle.Recursive())
 		}
+		if verbose {
+			options = append(options, snaggle.Verbose())
+		}
+
 		return snaggle.Snaggle(args[0], args[1], options...)
 	},
 }
