@@ -186,18 +186,63 @@ func BenchmarkCommonBinaries(b *testing.B) {
 	log.SetOutput(io.Discard)
 	b.Cleanup(func() { log.SetOutput(os.Stdout) })
 
-	for _, tc := range GoodElfs {
-		b.Run(tc.Description, func(b *testing.B) {
-			basetmp := WorkspaceTempDir(b)
+	benchtmp := WorkspaceTempDir(b)
+
+	for _, verbose := range []bool{false, true} {
+		for _, tc := range GoodElfs {
+			desc := tc.Description
+			if verbose {
+				desc += "_verbose"
+			}
+			b.Run(desc, func(b *testing.B) {
+				i := 0
+				for b.Loop() {
+					b.StopTimer()
+					i++
+					tmp, err := os.MkdirTemp(benchtmp, desc)
+					if err != nil {
+						b.Fatalf("creating %s (%v): %v", tmp, i, err)
+					}
+					b.Cleanup(func() { _ = os.RemoveAll(tmp) })
+
+					opts := make([]snaggle.Option, 0, 1)
+					if verbose {
+						opts = append(opts, snaggle.Verbose())
+					}
+
+					b.StartTimer()
+					if err := snaggle.Snaggle(tc.Elf.Path, tmp, opts...); err != nil {
+						b.Fatalf("running %s (%v): %v", desc, i, err)
+					}
+				}
+			})
+		}
+
+		desc := "Directory"
+		if verbose {
+			desc += "_verbose"
+		}
+		b.Run(desc, func(b *testing.B) {
 			i := 0
+			src := TestdataPath(".")
 			for b.Loop() {
+				b.StopTimer()
 				i++
-				tmp, err := os.MkdirTemp(basetmp, tc.Description)
+				tmp, err := os.MkdirTemp(benchtmp, desc)
 				if err != nil {
 					b.Fatalf("creating %s (%v): %v", tmp, i, err)
 				}
-				if err := snaggle.Snaggle(tc.Elf.Path, tmp); err != nil {
-					b.Fatalf("running %s (%v): %v", tc.Description, i, err)
+				b.Cleanup(func() { _ = os.RemoveAll(tmp) })
+
+				opts := make([]snaggle.Option, 0, 2)
+				opts = append(opts, snaggle.Recursive())
+				if verbose {
+					opts = append(opts, snaggle.Verbose())
+				}
+
+				b.StartTimer()
+				if err := snaggle.Snaggle(src, tmp, opts...); err != nil {
+					b.Fatalf("running %s (%v): %v", desc, i, err)
 				}
 			}
 		})

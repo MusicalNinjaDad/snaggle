@@ -17,6 +17,8 @@ Flags:
 	-h, --help        help for snaggle
 	    --in-place    Snag in place: only snag dependencies & interpreter
 	-r, --recursive   Recurse subdirectories & snag everything
+	-v, --verbose     Output to stdout and process sequentially for readability
+	    --version     version for snaggle
 
 In the form "snaggle FILE DESTINATION":
 
@@ -31,15 +33,16 @@ Snaggle will hardlink (or copy, see notes):
 - Executables              -> DESTINATION/bin
 - Dynamic libraries (*.so) -> DESTINATION/lib64
 
-Note:
-- Hardlinks will be created if possible.
-- A copy will be performed if hardlinking fails for one of the following reasons:
-  - FILE/DIRECTORY & DESTINATION are on different filesystems
-  - the user does not have permission to hardlink (e.g.
+Notes:
+  - Hardlinks will be created if possible.
+  - A copy will be performed if hardlinking fails for one of the following reasons:
+    FILE/DIRECTORY & DESTINATION are on different filesystems or
+    the user does not have permission to hardlink (e.g.
     https://docs.kernel.org/admin-guide/sysctl/fs.html#protected-hardlinks)
-
-- Copies will retain the original filemode
-- Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
+  - Copies will retain the original filemode
+  - Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
+  - Running with --verbose will be slower, not only due to processing stdout, but also as each file will be processed
+    sequentially to provide readable output. Running silently will process all files and dependencies in parallel.
 
 Exit Codes:
 
@@ -66,17 +69,18 @@ import (
 var (
 	inplace   bool
 	recursive bool
+	verbose   bool
 )
 
 func init() {
 	log.Default().SetOutput(os.Stdout)
-	// Do not implement until we also add --verbose -> avoid breaking change of repurposing `-v`
-	// rootCmd.Version = snaggle.Version
+	rootCmd.Version = snaggle.Version
 
 	helpTemplate := []string{rootCmd.HelpTemplate(), helpNotes, exitCodes}
 	rootCmd.SetHelpTemplate(strings.Join(helpTemplate, "\n"))
 	rootCmd.Flags().BoolVar(&inplace, "in-place", false, "Snag in place: only snag dependencies & interpreter")
 	rootCmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "Recurse subdirectories & snag everything")
+	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Output to stdout and process sequentially for readability")
 	// These are called somewhere in execute - which is not available to integration tests
 	rootCmd.InitDefaultHelpFlag()
 	rootCmd.InitDefaultVersionFlag()
@@ -130,6 +134,10 @@ https://github.com/MusicalNinjaDad/snaggle
 		if recursive {
 			options = append(options, snaggle.Recursive())
 		}
+		if verbose {
+			options = append(options, snaggle.Verbose())
+		}
+
 		return snaggle.Snaggle(args[0], args[1], options...)
 	},
 }
@@ -151,14 +159,16 @@ Snaggle will hardlink (or copy, see notes):
 - Executables              -> DESTINATION/bin
 - Dynamic libraries (*.so) -> DESTINATION/lib64
 
-Note:
+Notes:
 - Hardlinks will be created if possible.
 - A copy will be performed if hardlinking fails for one of the following reasons:
-  - FILE/DIRECTORY & DESTINATION are on different filesystems
-  - the user does not have permission to hardlink (e.g.
-    https://docs.kernel.org/admin-guide/sysctl/fs.html#protected-hardlinks)
+    FILE/DIRECTORY & DESTINATION are on different filesystems or
+    the user does not have permission to hardlink (e.g.
+      https://docs.kernel.org/admin-guide/sysctl/fs.html#protected-hardlinks)
 - Copies will retain the original filemode
 - Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
+- Running with --verbose will be slower, not only due to processing stdout, but also as each file will be processed
+  sequentially to provide readable output. Running silently will process all files and dependencies in parallel.
 `
 
 var exitCodes = `Exit Codes:

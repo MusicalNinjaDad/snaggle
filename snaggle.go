@@ -14,6 +14,7 @@ package snaggle
 import (
 	debug_elf "debug/elf"
 	"errors"
+	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -132,6 +133,15 @@ func Snaggle(path string, root string, opts ...Option) error {
 		optfn(&options)
 	}
 
+	switch {
+	case !options.verbose:
+		output := log.Writer()
+		log.SetOutput(io.Discard)
+		defer log.SetOutput(output)
+	case options.verbose:
+		snaggerrs.SetLimit(1)
+	}
+
 	snagit := func(path string) error {
 		var badelf *debug_elf.FormatError
 		err := snaggle(path, root, options, checker)
@@ -196,6 +206,11 @@ func snaggle(path string, root string, options options, checker chan<- skipCheck
 	linkerrs := new(errgroup.Group)
 
 	switch {
+	case options.verbose:
+		linkerrs.SetLimit(1)
+	}
+
+	switch {
 	case options.inplace:
 		// do not link file
 	default:
@@ -227,6 +242,7 @@ func snaggle(path string, root string, options options, checker chan<- skipCheck
 type options struct {
 	inplace   bool // snag in place, only snag dependencies & interpreter
 	recursive bool // recurse subdirectories & snag everything
+	verbose   bool // output to stdout and process sequentially for readability
 }
 
 // Option setting functions
@@ -237,6 +253,9 @@ func InPlace() Option { return func(o *options) { o.inplace = true } }
 
 // Snag recursively: only works when snaggling a directory
 func Recursive() Option { return func(o *options) { o.recursive = true } }
+
+// Output to stdout and process sequentially for readability
+func Verbose() Option { return func(o *options) { o.verbose = true } }
 
 // An error occurred during snaglling
 type SnaggleError struct {
