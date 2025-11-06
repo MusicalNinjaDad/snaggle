@@ -138,6 +138,8 @@ func Snaggle(path string, root string, opts ...Option) error {
 		output := log.Writer()
 		log.SetOutput(io.Discard)
 		defer log.SetOutput(output)
+	case options.verbose:
+		snaggerrs.SetLimit(1)
 	}
 
 	snagit := func(path string) error {
@@ -202,6 +204,11 @@ func snaggle(path string, root string, options options, checker chan<- skipCheck
 	}
 
 	linkerrs := new(errgroup.Group)
+
+	switch {
+	case options.verbose:
+		linkerrs.SetLimit(1)
+	}
 
 	switch {
 	case options.inplace:
