@@ -63,13 +63,13 @@ func link(sourcePath string, targetDir string, checker chan<- skipCheck) (err er
 		return &fs.PathError{Op: op, Path: originalSourcePath, Err: err}
 	}
 
-	op = "link"
 	reply := make(chan bool)
 	checker <- skipCheck{hardLink{source: originalSourcePath, resolved: sourcePath, destination: target}, reply}
 
 	if <-reply {
-		// skip
+		op = "skip"
 	} else {
+		op = "link"
 		err = os.Link(sourcePath, target)
 		// Error codes: https://man7.org/linux/man-pages/man2/link.2.html
 		switch {

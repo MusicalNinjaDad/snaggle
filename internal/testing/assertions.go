@@ -93,8 +93,9 @@ func (a *Asserter) LinkedFile(path1 string, path2 string) {
 
 // Assert:
 //  1. Actual contains all expected lines, in correct order (ignoring prefix "link" / "copy")
-//  1. All lines are prefixed with either "link" or "copy"
+//  1. All lines are prefixed with either "link", "skip" or "copy"
 //  1. All lines referencing paths in mustBeLinked are prefixed with "link"
+//  1. Each file is only reported as linked or copied once, all other occurances are "skip"
 func (a *Asserter) Stdout(expected []string, actual []string, mustBeLinked ...string) {
 	a.t.Helper()
 
@@ -104,15 +105,25 @@ func (a *Asserter) Stdout(expected []string, actual []string, mustBeLinked ...st
 	for n, line := range actual {
 		if strippedline, ok := strings.CutPrefix(line, "copy "); ok {
 			stripped = append(stripped, strippedline)
+			if _, seen := linked[strings.Fields(strippedline)[0]]; seen {
+				a.t.Errorf("line %v: %s copied but should have been skipped", n, strings.Fields(strippedline)[0])
+			}
 			linked[strings.Fields(strippedline)[0]] = false
 			continue
 		}
 		if strippedline, ok := strings.CutPrefix(line, "link "); ok {
 			stripped = append(stripped, strippedline)
+			if _, seen := linked[strings.Fields(strippedline)[0]]; seen {
+				a.t.Errorf("line %v: %s linked but should have been skipped", n, strings.Fields(strippedline)[0])
+			}
 			linked[strings.Fields(strippedline)[0]] = true
 			continue
 		}
-		a.t.Errorf("Line %v does not start with `copy` or `line`: %s", n+1, line)
+		if strippedline, ok := strings.CutPrefix(line, "skip "); ok {
+			stripped = append(stripped, strippedline)
+			continue
+		}
+		a.t.Errorf("Line %v does not start with `copy`, `link` or `skip`: %s", n+1, line)
 	}
 
 	// TODO with #84 - assert Equal (ordering guaranteed with --verbose)
