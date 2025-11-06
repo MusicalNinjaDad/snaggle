@@ -160,6 +160,10 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 								tc.Dest = rel
 							}
 
+							if !verbose {
+								tc.ExpectedStdout = make([]string, 0)
+							}
+
 							t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
 							testbody(t, tc)
 						})
@@ -228,6 +232,10 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 									t.Errorf("Unable to define %s relative to %s", rel, wd)
 								}
 								tc.Dest = rel
+							}
+
+							if !verbose {
+								tc.ExpectedStdout = make([]string, 0)
 							}
 
 							t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
