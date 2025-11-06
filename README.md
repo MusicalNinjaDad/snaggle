@@ -19,6 +19,7 @@ Flags:
   -h, --help        help for snaggle
       --in-place    Snag in place: only snag dependencies & interpreter
   -r, --recursive   Recurse subdirectories & snag everything
+  -v, --verbose     Output to stdout and process sequentially for readability
 
 
 In the form "snaggle FILE DESTINATION":
@@ -32,14 +33,16 @@ Snaggle will hardlink (or copy, see notes):
 - Executables              -> DESTINATION/bin
 - Dynamic libraries (*.so) -> DESTINATION/lib64
 
-Note:
+Notes:
 - Hardlinks will be created if possible.
 - A copy will be performed if hardlinking fails for one of the following reasons:
-  - FILE/DIRECTORY & DESTINATION are on different filesystems
-  - the user does not have permission to hardlink (e.g.
-    https://docs.kernel.org/admin-guide/sysctl/fs.html#protected-hardlinks)
+    FILE/DIRECTORY & DESTINATION are on different filesystems or
+    the user does not have permission to hardlink (e.g.
+      https://docs.kernel.org/admin-guide/sysctl/fs.html#protected-hardlinks)
 - Copies will retain the original filemode
 - Copies will attempt to retain the original ownership, although this will likely fail if running as non-root
+- Running with --verbose will be slower, not only due to processing stdout, but also as each file will be processed
+  sequentially to provide readable output. Running silently will process all files and dependencies in parallel.
 
 Exit Codes:
   0: Success
