@@ -64,7 +64,7 @@ func link(sourcePath string, targetDir string, checker chan<- skipCheck) (err er
 	}
 
 	reply := make(chan bool)
-	checker <- skipCheck{hardLink{source: originalSourcePath, resolved: sourcePath, destination: target}, reply}
+	checker <- skipCheck{target, reply}
 
 	if <-reply {
 		op = "skip"
@@ -278,14 +278,8 @@ func (e *InvocationError) Unwrap() error {
 }
 
 type skipCheck struct {
-	hardLink
-	response chan bool
-}
-
-type hardLink struct {
-	source      string
-	resolved    string
 	destination string
+	response    chan bool
 }
 
 func skipHandler(in <-chan skipCheck) {
