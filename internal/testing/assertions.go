@@ -126,8 +126,9 @@ func (a *Asserter) Stdout(expected []string, actual []string, mustBeLinked ...st
 		a.t.Errorf("Line %v does not start with `copy`, `link` or `skip`: %s", n+1, line)
 	}
 
-	// TODO with #84 - assert Equal (ordering guaranteed with --verbose)
-	a.Testify.ElementsMatch(expected, stripped, "A: expected, B: actual")
+	if !a.Testify.Equal(expected, stripped, "A: expected, B: actual") {
+		a.t.Log("Stdout:\n" + strings.Join(actual, "\n"))
+	}
 
 	for _, filename := range mustBeLinked {
 		if linked, ok := linked[filename]; ok {

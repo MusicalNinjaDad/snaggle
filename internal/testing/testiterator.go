@@ -15,35 +15,8 @@ import (
 	. "github.com/MusicalNinjaDad/snaggle/internal" //lint:ignore ST1001 test helpers
 )
 
+// Ordered lexically in alphabetical order of full path :-x
 var defaultTests = []TestDetails{
-	{
-		Name:   "PIE_0_deps",
-		Path:   P_hello_pie,
-		Bin:    GoodElfs["hello_pie"],
-		SnagTo: "bin",
-		SnagAs: "hello_pie",
-	},
-	{
-		Name:   "static",
-		Path:   P_hello_static,
-		Bin:    GoodElfs["hello_static"],
-		SnagTo: "bin",
-		SnagAs: "hello_static",
-	},
-	{
-		Name:   "PIE_1_dep",
-		Path:   P_which,
-		Bin:    GoodElfs["which"],
-		SnagTo: "bin",
-		SnagAs: "which",
-	},
-	{
-		Name:   "PIE_many_deps",
-		Path:   P_id,
-		Bin:    GoodElfs["id"],
-		SnagTo: "bin",
-		SnagAs: "id",
-	},
 	{
 		Name:   "dyn_lib",
 		Path:   P_ctypes_so,
@@ -60,6 +33,27 @@ var defaultTests = []TestDetails{
 		InSubdir: true,
 	},
 	{
+		Name:   "PIE_0_deps",
+		Path:   P_hello_pie,
+		Bin:    GoodElfs["hello_pie"],
+		SnagTo: "bin",
+		SnagAs: "hello_pie",
+	},
+	{
+		Name:   "static",
+		Path:   P_hello_static,
+		Bin:    GoodElfs["hello_static"],
+		SnagTo: "bin",
+		SnagAs: "hello_static",
+	},
+	{
+		Name:   "PIE_many_deps",
+		Path:   P_id,
+		Bin:    GoodElfs["id"],
+		SnagTo: "bin",
+		SnagAs: "id",
+	},
+	{
 		Name:     "symlink",
 		Path:     P_symlinked_id,
 		Bin:      GoodElfs["id"],
@@ -67,6 +61,13 @@ var defaultTests = []TestDetails{
 		SnagAs:   "id2",
 		InSubdir: true,
 		Symlink:  true,
+	},
+	{
+		Name:   "PIE_1_dep",
+		Path:   P_which,
+		Bin:    GoodElfs["which"],
+		SnagTo: "bin",
+		SnagAs: "which",
 	},
 }
 
