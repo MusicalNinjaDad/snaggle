@@ -20,6 +20,7 @@ Flags:
       --in-place    Snag in place: only snag dependencies & interpreter
   -r, --recursive   Recurse subdirectories & snag everything
   -v, --verbose     Output to stdout and process sequentially for readability
+      --version     version for snaggle
 
 
 In the form "snaggle FILE DESTINATION":
