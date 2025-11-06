@@ -2,4 +2,4 @@
 
 package snaggle
 
-const Version = "0.3.1"
+const Version = "1.0.0"
