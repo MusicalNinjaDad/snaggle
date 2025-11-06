@@ -42,7 +42,6 @@ import (
 
 // All errors returned will be of the type ErrElf.
 //   - ErrElf can store multiple errors for a single Elf struct. Use .Join() to add an error.
-//   - Will PANIC! if .Error is called and no errors are contained
 //   - Will not == nil, even if empty. Use .IsEmpty() to check and then manually return (something, nil)
 //
 // To extract the path use [errors.As] followed by .Path()
@@ -385,10 +384,12 @@ func libpathcmp(path1 string, path2 string) int {
 }
 
 func (e *ErrElf) Error() string {
-	if e.errs != nil {
+	if e.IsError() {
 		return "parsing " + e.path + ":\n" + errors.Join(e.errs...).Error()
+	} else {
+		return ""
 	}
-	panic("Don't call .Error() on an empty ErrElf")
+
 }
 
 // Does this [ErrElf] contain any errors?
