@@ -66,6 +66,7 @@ import (
 var (
 	inplace   bool
 	recursive bool
+	verbose   bool
 )
 
 func init() {
@@ -77,6 +78,7 @@ func init() {
 	rootCmd.SetHelpTemplate(strings.Join(helpTemplate, "\n"))
 	rootCmd.Flags().BoolVar(&inplace, "in-place", false, "Snag in place: only snag dependencies & interpreter")
 	rootCmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "Recurse subdirectories & snag everything")
+	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Output to stdout and process sequentially for readability")
 	// These are called somewhere in execute - which is not available to integration tests
 	rootCmd.InitDefaultHelpFlag()
 	rootCmd.InitDefaultVersionFlag()

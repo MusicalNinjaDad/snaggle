@@ -227,6 +227,7 @@ func snaggle(path string, root string, options options, checker chan<- skipCheck
 type options struct {
 	inplace   bool // snag in place, only snag dependencies & interpreter
 	recursive bool // recurse subdirectories & snag everything
+	verbose   bool // output to stdout and process sequentially for readability
 }
 
 // Option setting functions
@@ -237,6 +238,9 @@ func InPlace() Option { return func(o *options) { o.inplace = true } }
 
 // Snag recursively: only works when snaggling a directory
 func Recursive() Option { return func(o *options) { o.recursive = true } }
+
+// Output to stdout and process sequentially for readability
+func Verbose() Option { return func(o *options) { o.verbose = true } }
 
 // An error occurred during snaglling
 type SnaggleError struct {
