@@ -42,7 +42,6 @@ import (
 
 // All errors returned will be of the type ErrElf.
 //   - ErrElf can store multiple errors for a single Elf struct. Use .Join() to add an error.
-//   - Will PANIC! if .Error is called and no errors are contained
 //   - Will not == nil, even if empty. Use .IsEmpty() to check and then manually return (something, nil)
 //
 // To extract the path use [errors.As] followed by .Path()

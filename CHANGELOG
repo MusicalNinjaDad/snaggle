@@ -7,6 +7,7 @@
 - stdout is prefixed with "link" or "copy"
 - stdout lists absolute DESTINATION, even when relative path is given
 - stdout will include SRC (RESOLVED_SRC) -> DESTINATION if SRC is, or is behind, a symlink
+- ElfErr will not panic if .Error() is called on a nil error. Instead it will return `""` (nicer than stdlib errors which return partially formed strings)
 
 ### Features
 
