@@ -199,6 +199,14 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 							}
 						}
 
+						if verbose {
+							desc += "_verbose"
+							flags = append(flags, "--verbose")
+							options = append(options, snaggle.Verbose())
+						} else {
+							desc += "_silent"
+						}
+
 						t.Run(desc, func(t *testing.T) {
 							tc := TestCase{
 								Src:            TestdataPath("."),
