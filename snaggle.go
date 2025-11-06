@@ -14,6 +14,7 @@ package snaggle
 import (
 	debug_elf "debug/elf"
 	"errors"
+	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -130,6 +131,13 @@ func Snaggle(path string, root string, opts ...Option) error {
 	var options options
 	for _, optfn := range opts {
 		optfn(&options)
+	}
+
+	switch {
+	case !options.verbose:
+		output := log.Writer()
+		log.SetOutput(io.Discard)
+		defer log.SetOutput(output)
 	}
 
 	snagit := func(path string) error {
