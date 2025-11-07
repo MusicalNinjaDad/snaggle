@@ -16,6 +16,7 @@ Usage:
   snaggle [--in-place] [--recursive] DIRECTORY DESTINATION
 
 Flags:
+      --copy        Copy entire directory contents to /DESTINATION/full/source/path
   -h, --help        help for snaggle
       --in-place    Snag in place: only snag dependencies & interpreter
   -r, --recursive   Recurse subdirectories & snag everything

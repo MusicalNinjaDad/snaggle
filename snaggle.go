@@ -134,6 +134,8 @@ func Snaggle(path string, root string, opts ...Option) error {
 	}
 
 	switch {
+	case options.copy && options.inplace:
+		return &InvocationError{Path: path, Target: root, err: ErrCopyInplace}
 	case !options.verbose:
 		output := log.Writer()
 		log.SetOutput(io.Discard)
@@ -199,7 +201,17 @@ func snaggle(path string, root string, options options, checker chan<- skipCheck
 	binDir := filepath.Join(root, "bin")
 	libDir := filepath.Join(root, "lib64")
 	file, err := elf.New(path)
-	if err != nil {
+	switch {
+	case err == nil:
+		break
+	case options.copy:
+		var formatError *debug_elf.FormatError
+		if errors.As(err, &formatError) {
+			break
+		} else {
+			return &SnaggleError{path, "", err}
+		}
+	default:
 		return &SnaggleError{path, "", err}
 	}
 
@@ -213,6 +225,9 @@ func snaggle(path string, root string, options options, checker chan<- skipCheck
 	switch {
 	case options.inplace:
 		// do not link file
+	case options.copy:
+		dest := filepath.Join(root, filepath.Dir(path))
+		linkerrs.Go(func() error { return link(path, dest, checker) })
 	default:
 		if file.IsExe() {
 			linkerrs.Go(func() error { return link(path, binDir, checker) })
@@ -240,6 +255,7 @@ func snaggle(path string, root string, options options, checker chan<- skipCheck
 
 // options used by [Snaggle]
 type options struct {
+	copy      bool // copy entire directory contents to /destinationroot/full/source/path
 	inplace   bool // snag in place, only snag dependencies & interpreter
 	recursive bool // recurse subdirectories & snag everything
 	verbose   bool // output to stdout and process sequentially for readability
@@ -247,6 +263,9 @@ type options struct {
 
 // Option setting functions
 type Option func(*options)
+
+// Copy entire directory contents to /destinationroot/full/source/path
+func Copy() Option { return func(o *options) { o.copy = true } }
 
 // Snag in place: only snag dependencies & interpreter
 func InPlace() Option { return func(o *options) { o.inplace = true } }
@@ -284,6 +303,10 @@ type InvocationError struct {
 	Target string
 	err    error
 }
+
+var (
+	ErrCopyInplace = errors.New("cannot copy in-place")
+)
 
 func (e *InvocationError) Error() string {
 	if e.err == nil {
