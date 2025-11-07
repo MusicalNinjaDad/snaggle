@@ -320,16 +320,37 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 							}
 
 							var stdout []string
-							for _, line := range tc.ExpectedStdout {
-								bits := strings.Fields(line)
-								src := bits[0]
-								if slices.Contains(srcs, src) {
-									bits[len(bits)-1] = filepath.Join(tc.Dest, src)
+							switch {
+							case recursive:
+								for _, line := range tc.ExpectedStdout {
+									bits := strings.Fields(line)
+									src := bits[0]
+									if slices.Contains(srcs, src) {
+										bits[len(bits)-1] = filepath.Join(tc.Dest, src)
+									}
+									if src == P_symlinked_id {
+										stdout = append(stdout, P_ldd+" -> "+filepath.Join(tc.Dest, P_ldd))
+									}
+									if src == P_hello_dynamic {
+										stdout = append(stdout, TestdataPath("hello/build.sh")+" -> "+filepath.Join(tc.Dest, TestdataPath("hello/build.sh")))
+									}
+									if src == P_hello_pie {
+										stdout = append(stdout, TestdataPath("hello/hello.go")+" -> "+filepath.Join(tc.Dest, TestdataPath("hello/hello.go")))
+									}
+									stdout = append(stdout, strings.Join(bits, " "))
 								}
-								if src == P_which {
-									stdout = append(stdout, P_ldd+" -> "+filepath.Join(tc.Dest, P_ldd))
+							default:
+								for _, line := range tc.ExpectedStdout {
+									bits := strings.Fields(line)
+									src := bits[0]
+									if slices.Contains(srcs, src) {
+										bits[len(bits)-1] = filepath.Join(tc.Dest, src)
+									}
+									if src == P_which {
+										stdout = append(stdout, P_ldd+" -> "+filepath.Join(tc.Dest, P_ldd))
+									}
+									stdout = append(stdout, strings.Join(bits, " "))
 								}
-								stdout = append(stdout, strings.Join(bits, " "))
 							}
 							tc.ExpectedStdout = stdout
 
