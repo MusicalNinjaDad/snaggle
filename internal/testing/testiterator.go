@@ -245,6 +245,82 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 						})
 
 					}
+
+					// and copy directory
+					for _, recursive := range []bool{false, true} {
+						desc := "Directory_copy"
+
+						var bins []TestDetails
+						var options []snaggle.Option
+						var flags []string
+
+						options = append(options, snaggle.Copy())
+
+						if relative {
+							desc += "_relative"
+						}
+
+						if inplace {
+							desc += "_inplace"
+							options = append(options, snaggle.InPlace())
+							flags = append(flags, "--in-place")
+						}
+
+						if recursive {
+							desc += "_recursive"
+							options = append(options, snaggle.Recursive())
+							flags = append(flags, "--recursive")
+							bins = slices.Clone(defaultTests)
+						} else {
+							for _, bin := range defaultTests {
+								if !bin.InSubdir {
+									bins = append(bins, bin)
+								}
+							}
+						}
+
+						if verbose {
+							desc += "_verbose"
+							flags = append(flags, "--verbose")
+							options = append(options, snaggle.Verbose())
+						} else {
+							desc += "_silent"
+						}
+
+						t.Run(desc, func(t *testing.T) {
+							tc := TestCase{
+								Src:            TestdataPath("."),
+								Dest:           WorkspaceTempDir(t),
+								ExpectedStdout: make([]string, 0),
+								ExpectedFiles:  make(map[string]string),
+								Options:        options,
+								Flags:          flags,
+							}
+
+							for _, bin := range bins {
+								generateOutput(bin, &tc, inplace)
+							}
+
+							if relative {
+								wd := pwd(t)
+								rel, err := filepath.Rel(wd, tc.Dest)
+								if err != nil {
+									t.Errorf("Unable to define %s relative to %s", rel, wd)
+								}
+								tc.Dest = rel
+							}
+
+							if !verbose {
+								tc.ExpectedStdout = make([]string, 0)
+							}
+
+							t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
+							testbody(t, tc)
+
+						})
+
+					}
+
 				}
 			}
 		}

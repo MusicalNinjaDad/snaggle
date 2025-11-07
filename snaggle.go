@@ -240,6 +240,7 @@ func snaggle(path string, root string, options options, checker chan<- skipCheck
 
 // options used by [Snaggle]
 type options struct {
+	copy      bool // copy entire directory contents to /destinationroot/full/source/path
 	inplace   bool // snag in place, only snag dependencies & interpreter
 	recursive bool // recurse subdirectories & snag everything
 	verbose   bool // output to stdout and process sequentially for readability
@@ -247,6 +248,9 @@ type options struct {
 
 // Option setting functions
 type Option func(*options)
+
+// Copy entire directory contents to /destinationroot/full/source/path
+func Copy() Option { return func(o *options) { o.copy = true } }
 
 // Snag in place: only snag dependencies & interpreter
 func InPlace() Option { return func(o *options) { o.inplace = true } }
