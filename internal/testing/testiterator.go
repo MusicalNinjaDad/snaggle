@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
@@ -298,10 +299,10 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 
 							// as if inplace (don't copy the files, just deps)
 							for _, bin := range bins {
-								generateOutput(bin, &tc, true)
+								generateOutput(bin, &tc, false)
 							}
 
-							// then add the files
+							// then adjust the files
 							for _, bin := range bins {
 								tc.ExpectedFiles[bin.Path] = filepath.Join(tc.Dest, bin.Path)
 							}
@@ -313,7 +314,24 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 								}
 							}
 
-							// TODO Need to add in the stdout too somehow ...
+							var srcs []string
+							for _, bin := range bins {
+								srcs = append(srcs, bin.Path)
+							}
+
+							var stdout []string
+							for _, line := range tc.ExpectedStdout {
+								bits := strings.Fields(line)
+								src := bits[0]
+								if slices.Contains(srcs, src) {
+									bits[len(bits)-1] = filepath.Join(tc.Dest, src)
+								}
+								if src == P_which {
+									stdout = append(stdout, P_ldd+" -> "+filepath.Join(tc.Dest, P_ldd))
+								}
+								stdout = append(stdout, strings.Join(bits, " "))
+							}
+							tc.ExpectedStdout = stdout
 
 							if relative {
 								wd := pwd(t)
