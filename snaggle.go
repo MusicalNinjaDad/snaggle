@@ -213,6 +213,9 @@ func snaggle(path string, root string, options options, checker chan<- skipCheck
 	switch {
 	case options.inplace:
 		// do not link file
+	case options.copy:
+		dest := filepath.Join(root, filepath.Dir(path))
+		linkerrs.Go(func() error { return link(path, dest, checker) })
 	default:
 		if file.IsExe() {
 			linkerrs.Go(func() error { return link(path, binDir, checker) })
