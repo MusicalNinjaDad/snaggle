@@ -102,6 +102,36 @@ func TestRecurseFile(t *testing.T) {
 	}
 }
 
+func TestCopyInplace(t *testing.T) {
+	Assert := Assert(t)
+
+	src := TestdataPath(".")
+	dest := WorkspaceTempDir(t)
+
+	expectedErr := "Error: cannot copy in-place\n"
+	expectedErr += rootCmd.UsageString()
+	expectedErr += "\n"
+
+	snaggle := exec.Command(snaggleBin, "--copy", "--in-place")
+	snaggle.Args = append(snaggle.Args, src, dest)
+
+	stdout, err := snaggle.Output()
+
+	Assert.Testify.Empty(stdout)
+	Assert.DirectoryContents(nil, dest)
+
+	t.Logf("Stdout:\n%s", stdout)
+
+	if Assert.Testify.Error(err) {
+		var exitError *exec.ExitError
+		if Assert.Testify.ErrorAs(err, &exitError) {
+			Assert.Testify.Equal(2, exitError.ExitCode())
+			Assert.Testify.Equal(expectedErr, string(exitError.Stderr))
+		}
+		t.Logf("Stderr:\n%s", exitError.Stderr)
+	}
+}
+
 func TestNotAnELF(t *testing.T) {
 	tests := []TestDetails{
 		{
