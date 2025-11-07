@@ -255,6 +255,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 						var flags []string
 
 						options = append(options, snaggle.Copy())
+						flags = append(flags, "--copy")
 
 						if relative {
 							desc += "_relative"
