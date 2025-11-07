@@ -298,9 +298,24 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 								Flags:          flags,
 							}
 
+							// as if inplace (don't copy the files, just deps)
 							for _, bin := range bins {
-								generateOutput(bin, &tc, inplace)
+								generateOutput(bin, &tc, true)
 							}
+
+							// then add the files
+							for _, bin := range bins {
+								tc.ExpectedFiles[bin.Path] = filepath.Join(tc.Dest, bin.Path)
+							}
+							tc.ExpectedFiles[P_ldd] = filepath.Join(tc.Dest, P_ldd)
+
+							if recursive {
+								for _, otherfile := range []string{TestdataPath("hello/build.sh"), TestdataPath("hello/hello.go")} {
+									tc.ExpectedFiles[otherfile] = filepath.Join(tc.Dest, otherfile)
+								}
+							}
+
+							// TODO Need to add in the stdout too somehow ...
 
 							if relative {
 								wd := pwd(t)
