@@ -199,7 +199,17 @@ func snaggle(path string, root string, options options, checker chan<- skipCheck
 	binDir := filepath.Join(root, "bin")
 	libDir := filepath.Join(root, "lib64")
 	file, err := elf.New(path)
-	if err != nil {
+	switch {
+	case err == nil:
+		break
+	case options.copy:
+		var formatError *debug_elf.FormatError
+		if errors.As(err, &formatError) {
+			break
+		} else {
+			return &SnaggleError{path, "", err}
+		}
+	default:
 		return &SnaggleError{path, "", err}
 	}
 
