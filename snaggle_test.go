@@ -137,6 +137,36 @@ func TestRecurseFile(t *testing.T) {
 	}
 }
 
+func TestCopyInplace(t *testing.T) {
+	var stdout strings.Builder
+	log.SetOutput(&stdout)
+	t.Cleanup(func() { log.SetOutput(os.Stdout) })
+
+	Assert := Assert(t)
+
+	src := TestdataPath(".")
+	dest := WorkspaceTempDir(t)
+
+	expectedOut := make([]string, 0)
+	expectedFiles := make(map[string]string, 0)
+
+	err := snaggle.Snaggle(src, dest, snaggle.Copy(), snaggle.InPlace())
+
+	var invocationError *snaggle.InvocationError
+	if Assert.Testify.ErrorAs(err, &invocationError) {
+		Assert.Testify.Equal(src, invocationError.Path)
+		Assert.Testify.Equal(dest, invocationError.Target)
+		Assert.Testify.ErrorIs(err, snaggle.ErrCopyInplace)
+	}
+
+	var snaggleError *snaggle.SnaggleError
+	Assert.Testify.NotErrorAs(err, &snaggleError)
+	Assert.Testify.NotErrorIs(err, elf.ErrInvalidElf)
+
+	Assert.DirectoryContents(expectedFiles, dest)
+	Assert.Stdout(expectedOut, StripLines(stdout.String()))
+}
+
 func TestLinkDifferentFile(t *testing.T) {
 	tests := []TestDetails{
 		{

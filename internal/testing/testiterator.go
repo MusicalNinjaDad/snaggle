@@ -262,9 +262,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 						}
 
 						if inplace {
-							desc += "_inplace"
-							options = append(options, snaggle.InPlace())
-							flags = append(flags, "--in-place")
+							break
 						}
 
 						if recursive {

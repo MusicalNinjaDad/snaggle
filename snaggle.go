@@ -134,6 +134,8 @@ func Snaggle(path string, root string, opts ...Option) error {
 	}
 
 	switch {
+	case options.copy && options.inplace:
+		return &InvocationError{Path: path, Target: root, err: ErrCopyInplace}
 	case !options.verbose:
 		output := log.Writer()
 		log.SetOutput(io.Discard)
@@ -301,6 +303,10 @@ type InvocationError struct {
 	Target string
 	err    error
 }
+
+var (
+	ErrCopyInplace = errors.New("cannot copy in-place")
+)
 
 func (e *InvocationError) Error() string {
 	if e.err == nil {
