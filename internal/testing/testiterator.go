@@ -139,10 +139,10 @@ func appendif[Type any](slice []Type, elem Type) []Type {
 }
 
 var (
-	inplace   = testOption{name: "inplace", option: snaggle.InPlace(), flag: "in-place"}
-	recursive = testOption{name: "recursive", option: snaggle.Recursive(), flag: "recursive"}
+	inplace   = testOption{name: "inplace", option: snaggle.InPlace(), flag: "--in-place"}
+	recursive = testOption{name: "recursive", option: snaggle.Recursive(), flag: "--recursive"}
 	relative  = testOption{name: "relative"}
-	verbose   = testOption{name: "verbose", negativeSuffix: "silent", option: snaggle.Verbose(), flag: "verbose"}
+	verbose   = testOption{name: "verbose", negativeSuffix: "silent", option: snaggle.Verbose(), flag: "--verbose"}
 )
 
 // Is a specific option set?
@@ -283,7 +283,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 					ExpectedStdout: make([]string, 0),
 					ExpectedFiles:  make(map[string]string),
 					Options:        append(options.options, snaggle.Copy()),
-					Flags:          append(options.flags, "copy"),
+					Flags:          append(options.flags, "--copy"),
 				}
 
 				// as if inplace (don't copy the files, just deps)
