@@ -166,6 +166,7 @@ func (o *testOptions) is(name string) bool {
 // goroutine clarity. There is probably a good fix with channels but I can't be bothered right now...
 func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCase] {
 	var runDirTests bool
+
 	if tests == nil {
 		tests = slices.Clone(defaultTests)
 		runDirTests = true
@@ -177,6 +178,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 		for _, options := range combine(relative, inplace, verbose) {
 			for _, bin := range tests {
 				var err error
+
 				desc := strings.Join(append([]string{bin.Name}, options.names...), "_")
 				t.Run(desc, func(t *testing.T) {
 					tc := TestCase{
@@ -211,6 +213,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 					options.names = appendif(options.names, process.name)
 					options.options = appendif(options.options, process.option)
 					options.flags = appendif(options.flags, process.flag)
+
 					desc := strings.Join(append([]string{"directory"}, options.names...), "_")
 
 					var bins []TestDetails
