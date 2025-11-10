@@ -220,45 +220,45 @@ func TestLoop(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCase
 	}
 
 	return func(testbody func(t *testing.T, tc TestCase) bool) {
+		runTest := func(name string, src string, options testOptions, bins ...TestDetails) {
+			var err error
+
+			desc := strings.Join(append([]string{name}, options.names...), "_")
+			t.Run(desc, func(t *testing.T) {
+				tc := TestCase{
+					Src:            src,
+					Dest:           WorkspaceTempDir(t),
+					ExpectedStdout: make([]string, 0),
+					ExpectedFiles:  make(map[string]string),
+					Options:        options.options,
+					Flags:          options.flags,
+				}
+				generateOutput(&tc, options, bins...)
+
+				if options.includes(relative) {
+					tc.Dest, err = filepath.Rel(pwd(t), tc.Dest)
+					assert.NoError(t, err, "conversion to relative path failed")
+				}
+
+				t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
+				t.Logf("\n\nTest options: %s", spew.Sdump(options))
+
+				testbody(t, tc)
+			})
+		}
+
 		for _, options := range combine(relative, inplace, verbose) {
 			for _, bin := range tests {
-				var err error
-
-				desc := strings.Join(append([]string{bin.Name}, options.names...), "_")
-				t.Run(desc, func(t *testing.T) {
-					tc := TestCase{
-						Src:            bin.Path,
-						Dest:           WorkspaceTempDir(t),
-						ExpectedStdout: make([]string, 0, len(bin.Bin.Elf.Dependencies)+2),
-						ExpectedFiles:  make(map[string]string, len(bin.Bin.Elf.Dependencies)+2),
-						Options:        options.options,
-						Flags:          options.flags,
-					}
-					generateOutput(&tc, options, bin)
-
-					if options.includes(relative) {
-						tc.Dest, err = filepath.Rel(pwd(t), tc.Dest)
-						assert.NoError(t, err, "conversion to relative path failed")
-					}
-
-					t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
-					t.Logf("\n\nTest options: %s", spew.Sdump(options))
-
-					testbody(t, tc)
-				})
+				runTest(bin.Name, bin.Path, options, bin)
 			}
 		}
 
 		if runDirTests {
 			for _, process := range []testOption{no_option, copy_option, inplace} {
 				for _, options := range combine(relative, verbose, recursive) {
-					var err error
-
 					options.names = appendif(options.names, process.name)
 					options.options = appendif(options.options, process.option)
 					options.flags = appendif(options.flags, process.flag)
-
-					desc := strings.Join(append([]string{"directory"}, options.names...), "_")
 
 					var bins []TestDetails
 					switch {
@@ -272,28 +272,7 @@ func TestLoop(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCase
 						bins = noSubDirs()
 					}
 
-					t.Run(desc, func(t *testing.T) {
-						tc := TestCase{
-							Src:            TestdataPath("."),
-							Dest:           WorkspaceTempDir(t),
-							ExpectedStdout: make([]string, 0),
-							ExpectedFiles:  make(map[string]string),
-							Options:        options.options,
-							Flags:          options.flags,
-						}
-
-						generateOutput(&tc, options, bins...)
-
-						if options.includes(relative) {
-							tc.Dest, err = filepath.Rel(pwd(t), tc.Dest)
-							assert.NoError(t, err, "conversion to relative path failed")
-						}
-
-						t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
-						t.Logf("\n\nTest options: %s", spew.Sdump(options))
-
-						testbody(t, tc)
-					})
+					runTest("directory", TestdataPath("."), options, bins...)
 				}
 			}
 		}
