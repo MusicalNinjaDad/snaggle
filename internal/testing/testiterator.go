@@ -2,6 +2,7 @@ package testing
 
 import (
 	"iter"
+	"maps"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -18,16 +19,17 @@ import (
 	. "github.com/MusicalNinjaDad/snaggle/internal" //lint:ignore ST1001 test helpers
 )
 
-// Ordered lexically in alphabetical order of full path :-x
-var defaultTests = []TestDetails{
-	{
+type testListing = map[string]TestDetails
+
+var tests = map[string]TestDetails{
+	P_ctypes_so: {
 		Name:   "dyn_lib",
 		Path:   P_ctypes_so,
 		Bin:    GoodElfs["ctypes_so"],
 		SnagTo: "lib64",
 		SnagAs: "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
 	},
-	{
+	P_hello_dynamic: {
 		Name:     "subdir",
 		Path:     P_hello_dynamic,
 		Bin:      GoodElfs["hello_dynamic"],
@@ -35,28 +37,28 @@ var defaultTests = []TestDetails{
 		SnagAs:   "hello",
 		InSubdir: true,
 	},
-	{
+	P_hello_pie: {
 		Name:   "PIE_0_deps",
 		Path:   P_hello_pie,
 		Bin:    GoodElfs["hello_pie"],
 		SnagTo: "bin",
 		SnagAs: "hello_pie",
 	},
-	{
+	P_hello_static: {
 		Name:   "static",
 		Path:   P_hello_static,
 		Bin:    GoodElfs["hello_static"],
 		SnagTo: "bin",
 		SnagAs: "hello_static",
 	},
-	{
+	P_id: {
 		Name:   "PIE_many_deps",
 		Path:   P_id,
 		Bin:    GoodElfs["id"],
 		SnagTo: "bin",
 		SnagAs: "id",
 	},
-	{
+	P_symlinked_id: {
 		Name:     "symlink",
 		Path:     P_symlinked_id,
 		Bin:      GoodElfs["id"],
@@ -65,13 +67,22 @@ var defaultTests = []TestDetails{
 		InSubdir: true,
 		Symlink:  true,
 	},
-	{
+	P_which: {
 		Name:   "PIE_1_dep",
 		Path:   P_which,
 		Bin:    GoodElfs["which"],
 		SnagTo: "bin",
 		SnagAs: "which",
 	},
+}
+
+// Ordered lexically in alphabetical order of full path :-x
+var defaultTests = filterTests(func(testListing) bool { return true })
+
+func filterTests(func(testListing) bool) []TestDetails {
+	ts := slices.Collect(maps.Values(tests))
+	slices.SortFunc(ts, func(a TestDetails, b TestDetails) int { return strings.Compare(a.Path, b.Path) })
+	return ts
 }
 
 type TestDetails struct {
