@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/MusicalNinjaDad/snaggle"
 
@@ -175,6 +176,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 	return func(testbody func(t *testing.T, tc TestCase) bool) {
 		for _, options := range combine(relative, inplace, verbose) {
 			for _, bin := range tests {
+				var err error
 				desc := strings.Join(append([]string{bin.Name}, options.names...), "_")
 				t.Run(desc, func(t *testing.T) {
 					tc := TestCase{
@@ -189,7 +191,8 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 					generateOutput(&tc, options, bin)
 
 					if options.is("relative") {
-						tc.Dest, _ = filepath.Rel(pwd(t), tc.Dest)
+						tc.Dest, err = filepath.Rel(pwd(t), tc.Dest)
+						assert.NoError(t, err, "conversion to relative path failed")
 					}
 
 					t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
@@ -208,6 +211,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 		// else default test run includes snaggling a directory
 		for _, process := range []testOption{no_option, copy_option, inplace} {
 			for _, options := range combine(relative, verbose, recursive) {
+				var err error
 
 				options.names = appendif(options.names, process.name)
 				options.options = appendif(options.options, process.option)
@@ -291,12 +295,8 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 					}
 
 					if options.is("relative") {
-						wd := pwd(t)
-						rel, err := filepath.Rel(wd, tc.Dest)
-						if err != nil {
-							t.Errorf("Unable to define %s relative to %s", rel, wd)
-						}
-						tc.Dest = rel
+						tc.Dest, err = filepath.Rel(pwd(t), tc.Dest)
+						assert.NoError(t, err, "conversion to relative path failed")
 					}
 
 					t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
