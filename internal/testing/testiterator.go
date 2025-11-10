@@ -210,8 +210,8 @@ func (o *testOptions) includes(opt testOption) bool {
 // Just don't try to use SkipNow, FailNow or t.Parallel as Go's rangefunc & t.Run hacks collide and mess up
 // goroutine clarity. There is probably a good fix with channels but I can't be bothered right now...
 func TestLoop(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCase] {
-	var runDirTests bool
 
+	var runDirTests bool
 	if tests == nil {
 		tests = defaultTests()
 		runDirTests = true
@@ -256,6 +256,7 @@ func TestLoop(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCase
 		if runDirTests {
 			for _, process := range []testOption{no_option, copy_option, inplace} {
 				for _, options := range combine(relative, verbose, recursive) {
+
 					options.names = appendif(options.names, process.name)
 					options.options = appendif(options.options, process.option)
 					options.flags = appendif(options.flags, process.flag)
