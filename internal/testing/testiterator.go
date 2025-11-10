@@ -255,9 +255,10 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 					desc := strings.Join(append([]string{"directory"}, options.names...), "_")
 
 					var bins []TestDetails
-					if options.includes(recursive) {
+					switch {
+					case options.includes(recursive):
 						bins = defaultTests()
-					} else {
+					default:
 						bins = noSubDirs()
 					}
 
