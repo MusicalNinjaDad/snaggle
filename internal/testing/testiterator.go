@@ -286,59 +286,6 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 
 						generateOutput(&tc, options, bins...)
 
-						if options.includes(copy_option) {
-							for _, bin := range bins {
-								tc.ExpectedFiles[bin.Path] = filepath.Join(tc.Dest, bin.Path)
-							}
-							tc.ExpectedFiles[P_ldd] = filepath.Join(tc.Dest, P_ldd)
-
-							if options.includes(recursive) {
-								for _, otherfile := range []string{TestdataPath("hello/build.sh"), TestdataPath("hello/hello.go")} {
-									tc.ExpectedFiles[otherfile] = filepath.Join(tc.Dest, otherfile)
-								}
-							}
-
-							var srcs []string
-							for _, bin := range bins {
-								srcs = append(srcs, bin.Path)
-							}
-
-							stdout := make([]string, 0)
-							switch {
-							case options.includes(recursive):
-								for _, line := range tc.ExpectedStdout {
-									bits := strings.Fields(line)
-									src := bits[0]
-									if slices.Contains(srcs, src) {
-										bits[len(bits)-1] = filepath.Join(tc.Dest, src)
-									}
-									if src == P_symlinked_id {
-										stdout = append(stdout, P_ldd+" -> "+filepath.Join(tc.Dest, P_ldd))
-									}
-									if src == P_hello_dynamic {
-										stdout = append(stdout, TestdataPath("hello/build.sh")+" -> "+filepath.Join(tc.Dest, TestdataPath("hello/build.sh")))
-									}
-									if src == P_hello_pie {
-										stdout = append(stdout, TestdataPath("hello/hello.go")+" -> "+filepath.Join(tc.Dest, TestdataPath("hello/hello.go")))
-									}
-									stdout = append(stdout, strings.Join(bits, " "))
-								}
-							default:
-								for _, line := range tc.ExpectedStdout {
-									bits := strings.Fields(line)
-									src := bits[0]
-									if slices.Contains(srcs, src) {
-										bits[len(bits)-1] = filepath.Join(tc.Dest, src)
-									}
-									if src == P_which {
-										stdout = append(stdout, P_ldd+" -> "+filepath.Join(tc.Dest, P_ldd))
-									}
-									stdout = append(stdout, strings.Join(bits, " "))
-								}
-							}
-							tc.ExpectedStdout = stdout
-						}
-
 						if options.includes(relative) {
 							tc.Dest, err = filepath.Rel(pwd(t), tc.Dest)
 							assert.NoError(t, err, "conversion to relative path failed")
