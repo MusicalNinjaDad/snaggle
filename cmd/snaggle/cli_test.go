@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 }
 
 func Test(t *testing.T) {
-	for t, tc := range TestCases(t) {
+	for t, tc := range TestLoop(t) {
 		Assert := Assert(t)
 
 		snaggle := exec.Command(snaggleBin, tc.Flags...)
@@ -72,7 +72,7 @@ func TestRecurseFile(t *testing.T) {
 			Bin:  Ldd,
 		},
 	}
-	for t, tc := range TestCases(t, tests...) {
+	for t, tc := range TestLoop(t, tests...) {
 		Assert := Assert(t)
 
 		expectedErr := "Error: --recursive " + tc.Src + ": not a directory\n"
@@ -140,7 +140,7 @@ func TestNotAnELF(t *testing.T) {
 			Bin:  Ldd,
 		},
 	}
-	for t, tc := range TestCases(t, tests...) {
+	for t, tc := range TestLoop(t, tests...) {
 		Assert := Assert(t)
 
 		expectedErr := "Error: parsing " + tc.Src + ":\n"

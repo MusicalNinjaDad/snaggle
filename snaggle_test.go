@@ -25,7 +25,7 @@ func Test(t *testing.T) {
 	log.SetOutput(&stdout)
 	t.Cleanup(func() { log.SetOutput(os.Stdout) })
 
-	for t, tc := range TestCases(t) {
+	for t, tc := range TestLoop(t) {
 		t.Cleanup(func() { stdout.Reset() })
 		Assert := Assert(t)
 
@@ -69,7 +69,7 @@ func TestNotAnELF(t *testing.T) {
 			Bin:  Ldd,
 		},
 	}
-	for t, tc := range TestCases(t, tests...) {
+	for t, tc := range TestLoop(t, tests...) {
 		t.Cleanup(func() { stdout.Reset() })
 		Assert := Assert(t)
 
@@ -104,7 +104,7 @@ func TestRecurseFile(t *testing.T) {
 		},
 	}
 
-	for t, tc := range TestCases(t, tests...) {
+	for t, tc := range TestLoop(t, tests...) {
 		t.Cleanup(func() { stdout.Reset() })
 		Assert := Assert(t)
 
@@ -176,7 +176,7 @@ func TestLinkDifferentFile(t *testing.T) {
 		},
 	}
 
-	for t, tc := range TestCases(t, tests...) {
+	for t, tc := range TestLoop(t, tests...) {
 		Assert := Assert(t)
 
 		err := os.MkdirAll(filepath.Join(tc.Dest, "lib64"), 0775)

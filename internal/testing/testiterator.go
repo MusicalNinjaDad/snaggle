@@ -200,7 +200,7 @@ func (o *testOptions) includes(opt testOption) bool {
 
 // Calls t.Run on the test body for all our test case binaries e.g.:
 //
-//	for t, tc := range TestCases(t) {
+//	for t, tc := range TestLoop(t) {
 //		Assert := assert.New(t)
 //		Assert.NotEmpty(tc)
 //	}
@@ -209,7 +209,7 @@ func (o *testOptions) includes(opt testOption) bool {
 //
 // Just don't try to use SkipNow, FailNow or t.Parallel as Go's rangefunc & t.Run hacks collide and mess up
 // goroutine clarity. There is probably a good fix with channels but I can't be bothered right now...
-func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCase] {
+func TestLoop(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCase] {
 	var runDirTests bool
 
 	if tests == nil {
