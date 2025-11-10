@@ -197,6 +197,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 
 					t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
 					t.Logf("\n\nTest options: %s", spew.Sdump(options))
+
 					testbody(t, tc)
 				})
 			}
@@ -300,6 +301,8 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 					}
 
 					t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
+					t.Logf("\n\nTest options: %s", spew.Sdump(options))
+
 					testbody(t, tc)
 				})
 			}
