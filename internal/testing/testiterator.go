@@ -75,10 +75,15 @@ var tests = map[string]TestDetails{
 	},
 }
 
-// Ordered lexically in alphabetical order of full path :-x
-var defaultTests = filterTests(tests, func(_ TestDetails) bool { return true })
-var noSubDirs = filterTests(tests, func(td TestDetails) bool { return !td.InSubdir })
+func defaultTests() []TestDetails {
+	return filterTests(tests, func(_ TestDetails) bool { return true })
+}
 
+func noSubDirs() []TestDetails {
+	return filterTests(tests, func(td TestDetails) bool { return !td.InSubdir })
+}
+
+// Ordered lexically in alphabetical order of full path :-x
 func filterTests(tests testListing, filterFunc func(TestDetails) bool) []TestDetails {
 	ts := make([]TestDetails, 0)
 	for _, t := range tests {
@@ -184,7 +189,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 	var runDirTests bool
 
 	if tests == nil {
-		tests = slices.Clone(defaultTests)
+		tests = defaultTests()
 		runDirTests = true
 	} else {
 		runDirTests = false
@@ -234,9 +239,9 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 
 					var bins []TestDetails
 					if options.is("recursive") {
-						bins = slices.Clone(defaultTests)
+						bins = defaultTests()
 					} else {
-						bins = slices.Clone(noSubDirs)
+						bins = noSubDirs()
 					}
 
 					t.Run(desc, func(t *testing.T) {
