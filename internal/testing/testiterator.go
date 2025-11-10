@@ -187,7 +187,7 @@ var (
 )
 
 // Is a specific option set?
-func (o *testOptions) is(opt testOption) bool {
+func (o *testOptions) includes(opt testOption) bool {
 	return slices.Contains(o.names, opt.name)
 }
 
@@ -230,7 +230,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 					}
 					generateOutput(&tc, options, bin)
 
-					if options.is(relative) {
+					if options.includes(relative) {
 						tc.Dest, err = filepath.Rel(pwd(t), tc.Dest)
 						assert.NoError(t, err, "conversion to relative path failed")
 					}
@@ -255,7 +255,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 					desc := strings.Join(append([]string{"directory"}, options.names...), "_")
 
 					var bins []TestDetails
-					if options.is(recursive) {
+					if options.includes(recursive) {
 						bins = defaultTests()
 					} else {
 						bins = noSubDirs()
@@ -273,13 +273,13 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 
 						generateOutput(&tc, options, bins...)
 
-						if options.is(copy_option) {
+						if options.includes(copy_option) {
 							for _, bin := range bins {
 								tc.ExpectedFiles[bin.Path] = filepath.Join(tc.Dest, bin.Path)
 							}
 							tc.ExpectedFiles[P_ldd] = filepath.Join(tc.Dest, P_ldd)
 
-							if options.is(recursive) {
+							if options.includes(recursive) {
 								for _, otherfile := range []string{TestdataPath("hello/build.sh"), TestdataPath("hello/hello.go")} {
 									tc.ExpectedFiles[otherfile] = filepath.Join(tc.Dest, otherfile)
 								}
@@ -292,7 +292,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 
 							stdout := make([]string, 0)
 							switch {
-							case options.is(recursive):
+							case options.includes(recursive):
 								for _, line := range tc.ExpectedStdout {
 									bits := strings.Fields(line)
 									src := bits[0]
@@ -326,7 +326,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 							tc.ExpectedStdout = stdout
 						}
 
-						if options.is(relative) {
+						if options.includes(relative) {
 							tc.Dest, err = filepath.Rel(pwd(t), tc.Dest)
 							assert.NoError(t, err, "conversion to relative path failed")
 						}
@@ -344,7 +344,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 
 func generateOutput(tc *TestCase, options testOptions, bins ...TestDetails) {
 	for _, bin := range bins {
-		if !options.is(inplace) {
+		if !options.includes(inplace) {
 			snaggedBin := filepath.Join(tc.Dest, bin.SnagTo, bin.SnagAs)
 			if bin.Symlink {
 				tc.ExpectedStdout = append(tc.ExpectedStdout,
@@ -387,7 +387,7 @@ func generateOutput(tc *TestCase, options testOptions, bins ...TestDetails) {
 			tc.ExpectedFiles[lib] = snaggedLib
 		}
 	}
-	if options.is(verbose) {
+	if options.includes(verbose) {
 		// we want stdout
 	} else {
 		tc.ExpectedStdout = make([]string, 0)
