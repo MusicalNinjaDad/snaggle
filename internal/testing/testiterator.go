@@ -96,6 +96,14 @@ func defaultTests() []TestDetails {
 }
 
 func noSubDirs() []TestDetails {
+	return filterTests(testdata, func(td TestDetails) bool { return !td.InSubdir && !td.NotAnElf })
+}
+
+func allFiles() []TestDetails {
+	return filterTests(testdata, func(_ TestDetails) bool { return true })
+}
+
+func withLdd() []TestDetails {
 	return filterTests(testdata, func(td TestDetails) bool { return !td.InSubdir })
 }
 
@@ -256,6 +264,10 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 
 					var bins []TestDetails
 					switch {
+					case options.includes(copy_option) && options.includes(recursive):
+						bins = allFiles()
+					case options.includes(copy_option):
+						bins = withLdd()
 					case options.includes(recursive):
 						bins = defaultTests()
 					default:
