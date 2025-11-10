@@ -246,9 +246,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 						Flags:          options.flags,
 					}
 
-					for _, bin := range bins {
-						generateOutput(&tc, options.is("inplace"), bin)
-					}
+					generateOutput(&tc, options.is("inplace"), bins...)
 
 					if options.is("copy") {
 						for _, bin := range bins {
@@ -325,48 +323,49 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 }
 
 func generateOutput(tc *TestCase, inplace bool, bins ...TestDetails) {
-	bin := bins[0]
-	if !inplace {
-		snaggedBin := filepath.Join(tc.Dest, bin.SnagTo, bin.SnagAs)
-		if bin.Symlink {
-			tc.ExpectedStdout = append(tc.ExpectedStdout,
-				bin.Path+" ("+bin.Bin.Elf.Path+") -> "+snaggedBin,
-			)
-		} else {
-			tc.ExpectedStdout = append(tc.ExpectedStdout,
-				bin.Path+" -> "+snaggedBin,
-			)
+	for _, bin := range bins {
+		if !inplace {
+			snaggedBin := filepath.Join(tc.Dest, bin.SnagTo, bin.SnagAs)
+			if bin.Symlink {
+				tc.ExpectedStdout = append(tc.ExpectedStdout,
+					bin.Path+" ("+bin.Bin.Elf.Path+") -> "+snaggedBin,
+				)
+			} else {
+				tc.ExpectedStdout = append(tc.ExpectedStdout,
+					bin.Path+" -> "+snaggedBin,
+				)
+			}
+			tc.ExpectedFiles[bin.Path] = snaggedBin
 		}
-		tc.ExpectedFiles[bin.Path] = snaggedBin
-	}
 
-	if bin.Bin.HasInterpreter {
-		snaggedInterp := filepath.Join(tc.Dest, bin.Bin.Elf.Interpreter)
-		if P_ld_linux != P_ld_linux_resolved {
-			tc.ExpectedStdout = append(tc.ExpectedStdout,
-				bin.Bin.Elf.Interpreter+" ("+P_ld_linux_resolved+") -> "+snaggedInterp,
-			)
-		} else {
-			tc.ExpectedStdout = append(tc.ExpectedStdout,
-				bin.Bin.Elf.Interpreter+" -> "+snaggedInterp,
-			)
+		if bin.Bin.HasInterpreter {
+			snaggedInterp := filepath.Join(tc.Dest, bin.Bin.Elf.Interpreter)
+			if P_ld_linux != P_ld_linux_resolved {
+				tc.ExpectedStdout = append(tc.ExpectedStdout,
+					bin.Bin.Elf.Interpreter+" ("+P_ld_linux_resolved+") -> "+snaggedInterp,
+				)
+			} else {
+				tc.ExpectedStdout = append(tc.ExpectedStdout,
+					bin.Bin.Elf.Interpreter+" -> "+snaggedInterp,
+				)
+			}
+			tc.ExpectedFiles[bin.Bin.Elf.Interpreter] = snaggedInterp
 		}
-		tc.ExpectedFiles[bin.Bin.Elf.Interpreter] = snaggedInterp
-	}
 
-	for _, lib := range bin.Bin.Elf.Dependencies {
-		snaggedLib := filepath.Join(tc.Dest, "lib64", filepath.Base(lib))
-		resolved, _ := filepath.EvalSymlinks(lib)
-		if lib != resolved {
-			tc.ExpectedStdout = append(tc.ExpectedStdout,
-				lib+" ("+resolved+") -> "+snaggedLib,
-			)
-		} else {
-			tc.ExpectedStdout = append(tc.ExpectedStdout,
-				lib+" -> "+snaggedLib,
-			)
+		for _, lib := range bin.Bin.Elf.Dependencies {
+			snaggedLib := filepath.Join(tc.Dest, "lib64", filepath.Base(lib))
+			resolved, _ := filepath.EvalSymlinks(lib)
+			if lib != resolved {
+				tc.ExpectedStdout = append(tc.ExpectedStdout,
+					lib+" ("+resolved+") -> "+snaggedLib,
+				)
+			} else {
+				tc.ExpectedStdout = append(tc.ExpectedStdout,
+					lib+" -> "+snaggedLib,
+				)
+			}
+			tc.ExpectedFiles[lib] = snaggedLib
 		}
-		tc.ExpectedFiles[lib] = snaggedLib
 	}
 }
 
