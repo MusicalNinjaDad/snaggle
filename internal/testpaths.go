@@ -17,7 +17,9 @@ var (
 	P_id            = TestdataPath("id")
 	P_ldd           = TestdataPath("ldd")
 	P_ctypes_so     = TestdataPath("_ctypes_test.cpython-314-x86_64-linux-gnu.so")
+	P_build_sh      = TestdataPath("hello/build.sh")
 	P_hello_dynamic = TestdataPath("hello/hello")
+	P_hello_go      = TestdataPath("hello/hello.go")
 	P_symlinked_id  = TestdataPath("symlink/id2")
 )
 

@@ -28,6 +28,11 @@ var testdata = map[string]TestDetails{
 		SnagTo: "lib64",
 		SnagAs: "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
 	},
+	P_build_sh: {
+		Path:     P_build_sh,
+		InSubdir: true,
+		NotAnElf: true,
+	},
 	P_hello_dynamic: {
 		Name:     "subdir",
 		Path:     P_hello_dynamic,
@@ -35,6 +40,11 @@ var testdata = map[string]TestDetails{
 		SnagTo:   "bin",
 		SnagAs:   "hello",
 		InSubdir: true,
+	},
+	P_hello_go: {
+		Path:     P_hello_go,
+		InSubdir: true,
+		NotAnElf: true,
 	},
 	P_hello_pie: {
 		Name:   "PIE_0_deps",
@@ -57,6 +67,12 @@ var testdata = map[string]TestDetails{
 		SnagTo: "bin",
 		SnagAs: "id",
 	},
+	P_ldd: {
+		Name:     "ldd",
+		Path:     P_ldd,
+		Bin:      Ldd,
+		NotAnElf: true,
+	},
 	P_symlinked_id: {
 		Name:     "symlink",
 		Path:     P_symlinked_id,
@@ -76,7 +92,7 @@ var testdata = map[string]TestDetails{
 }
 
 func defaultTests() []TestDetails {
-	return filterTests(testdata, func(_ TestDetails) bool { return true })
+	return filterTests(testdata, func(td TestDetails) bool { return !td.NotAnElf })
 }
 
 func noSubDirs() []TestDetails {
@@ -103,6 +119,7 @@ type TestDetails struct {
 	SnagAs   string
 	InSubdir bool
 	Symlink  bool
+	NotAnElf bool
 }
 
 type TestCase struct {
