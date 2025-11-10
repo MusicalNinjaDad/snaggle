@@ -2,7 +2,6 @@ package testing
 
 import (
 	"iter"
-	"maps"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -77,10 +76,16 @@ var tests = map[string]TestDetails{
 }
 
 // Ordered lexically in alphabetical order of full path :-x
-var defaultTests = filterTests(func(testListing) bool { return true })
+var defaultTests = filterTests(tests, func(_ TestDetails) bool { return true })
+var noSubDirs = filterTests(tests, func(td TestDetails) bool { return !td.InSubdir })
 
-func filterTests(func(testListing) bool) []TestDetails {
-	ts := slices.Collect(maps.Values(tests))
+func filterTests(tests testListing, filterFunc func(TestDetails) bool) []TestDetails {
+	ts := make([]TestDetails, 0)
+	for _, t := range tests {
+		if filterFunc(t) {
+			ts = append(ts, t)
+		}
+	}
 	slices.SortFunc(ts, func(a TestDetails, b TestDetails) int { return strings.Compare(a.Path, b.Path) })
 	return ts
 }
