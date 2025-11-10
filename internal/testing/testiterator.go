@@ -139,10 +139,12 @@ func appendif[Type any](slice []Type, elem Type) []Type {
 }
 
 var (
-	inplace   = testOption{name: "inplace", option: snaggle.InPlace(), flag: "--in-place"}
-	recursive = testOption{name: "recursive", option: snaggle.Recursive(), flag: "--recursive"}
-	relative  = testOption{name: "relative"}
-	verbose   = testOption{name: "verbose", negativeSuffix: "silent", option: snaggle.Verbose(), flag: "--verbose"}
+	no_option   = testOption{}
+	copy_option = testOption{name: "copy", option: snaggle.Copy(), flag: "--copy"}
+	inplace     = testOption{name: "inplace", option: snaggle.InPlace(), flag: "--in-place"}
+	recursive   = testOption{name: "recursive", option: snaggle.Recursive(), flag: "--recursive"}
+	relative    = testOption{name: "relative"}
+	verbose     = testOption{name: "verbose", negativeSuffix: "silent", option: snaggle.Verbose(), flag: "--verbose"}
 )
 
 // Is a specific option set?
@@ -215,50 +217,109 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 		} // ===================
 
 		// else default test run includes snaggling a directory
-		for _, options := range combine(relative, inplace, verbose, recursive) {
-			desc := strings.Join(append([]string{"directory"}, options.names...), "_")
+		for _, process := range []testOption{no_option, copy_option, inplace} {
+			for _, options := range combine(relative, verbose, recursive) {
 
-			var bins []TestDetails
-			if options.is("recursive") {
-				bins = slices.Clone(defaultTests)
-			} else {
-				for _, bin := range defaultTests {
-					if !bin.InSubdir {
-						bins = append(bins, bin)
+				options.names = appendif(options.names, process.name)
+				options.options = appendif(options.options, process.option)
+				options.flags = appendif(options.flags, process.flag)
+				desc := strings.Join(append([]string{"directory"}, options.names...), "_")
+
+				var bins []TestDetails
+				if options.is("recursive") {
+					bins = slices.Clone(defaultTests)
+				} else {
+					for _, bin := range defaultTests {
+						if !bin.InSubdir {
+							bins = append(bins, bin)
+						}
 					}
 				}
+
+				t.Run(desc, func(t *testing.T) {
+					tc := TestCase{
+						Src:            TestdataPath("."),
+						Dest:           WorkspaceTempDir(t),
+						ExpectedStdout: make([]string, 0),
+						ExpectedFiles:  make(map[string]string),
+						Options:        options.options,
+						Flags:          options.flags,
+					}
+
+					for _, bin := range bins {
+						generateOutput(bin, &tc, options.is("inplace"))
+					}
+
+					if options.is("copy") {
+						for _, bin := range bins {
+							tc.ExpectedFiles[bin.Path] = filepath.Join(tc.Dest, bin.Path)
+						}
+						tc.ExpectedFiles[P_ldd] = filepath.Join(tc.Dest, P_ldd)
+
+						if options.is("recursive") {
+							for _, otherfile := range []string{TestdataPath("hello/build.sh"), TestdataPath("hello/hello.go")} {
+								tc.ExpectedFiles[otherfile] = filepath.Join(tc.Dest, otherfile)
+							}
+						}
+
+						var srcs []string
+						for _, bin := range bins {
+							srcs = append(srcs, bin.Path)
+						}
+
+						var stdout []string
+						switch {
+						case options.is("recursive"):
+							for _, line := range tc.ExpectedStdout {
+								bits := strings.Fields(line)
+								src := bits[0]
+								if slices.Contains(srcs, src) {
+									bits[len(bits)-1] = filepath.Join(tc.Dest, src)
+								}
+								if src == P_symlinked_id {
+									stdout = append(stdout, P_ldd+" -> "+filepath.Join(tc.Dest, P_ldd))
+								}
+								if src == P_hello_dynamic {
+									stdout = append(stdout, TestdataPath("hello/build.sh")+" -> "+filepath.Join(tc.Dest, TestdataPath("hello/build.sh")))
+								}
+								if src == P_hello_pie {
+									stdout = append(stdout, TestdataPath("hello/hello.go")+" -> "+filepath.Join(tc.Dest, TestdataPath("hello/hello.go")))
+								}
+								stdout = append(stdout, strings.Join(bits, " "))
+							}
+						default:
+							for _, line := range tc.ExpectedStdout {
+								bits := strings.Fields(line)
+								src := bits[0]
+								if slices.Contains(srcs, src) {
+									bits[len(bits)-1] = filepath.Join(tc.Dest, src)
+								}
+								if src == P_which {
+									stdout = append(stdout, P_ldd+" -> "+filepath.Join(tc.Dest, P_ldd))
+								}
+								stdout = append(stdout, strings.Join(bits, " "))
+							}
+						}
+						tc.ExpectedStdout = stdout
+					}
+
+					if options.is("relative") {
+						wd := pwd(t)
+						rel, err := filepath.Rel(wd, tc.Dest)
+						if err != nil {
+							t.Errorf("Unable to define %s relative to %s", rel, wd)
+						}
+						tc.Dest = rel
+					}
+
+					if !options.is("verbose") {
+						tc.ExpectedStdout = make([]string, 0)
+					}
+
+					t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
+					testbody(t, tc)
+				})
 			}
-
-			t.Run(desc, func(t *testing.T) {
-				tc := TestCase{
-					Src:            TestdataPath("."),
-					Dest:           WorkspaceTempDir(t),
-					ExpectedStdout: make([]string, 0),
-					ExpectedFiles:  make(map[string]string),
-					Options:        options.options,
-					Flags:          options.flags,
-				}
-
-				for _, bin := range bins {
-					generateOutput(bin, &tc, options.is("inplace"))
-				}
-
-				if options.is("relative") {
-					wd := pwd(t)
-					rel, err := filepath.Rel(wd, tc.Dest)
-					if err != nil {
-						t.Errorf("Unable to define %s relative to %s", rel, wd)
-					}
-					tc.Dest = rel
-				}
-
-				if !options.is("verbose") {
-					tc.ExpectedStdout = make([]string, 0)
-				}
-
-				t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
-				testbody(t, tc)
-			})
 		}
 
 		// and copy directory
