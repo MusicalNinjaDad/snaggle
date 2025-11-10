@@ -304,7 +304,17 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 
 func generateOutput(tc *TestCase, options testOptions, bins ...TestDetails) {
 	for _, bin := range bins {
-		if !options.includes(inplace) {
+		var copy_bin bool
+		switch {
+		case bin.NotAnElf && !options.includes(copy_option):
+			copy_bin = false
+		case options.includes(inplace):
+			copy_bin = false
+		default:
+			copy_bin = true
+		}
+
+		if copy_bin {
 			snaggedBin := filepath.Join(tc.Dest, bin.SnagTo, bin.SnagAs)
 			if bin.Symlink {
 				tc.ExpectedStdout = append(tc.ExpectedStdout,
