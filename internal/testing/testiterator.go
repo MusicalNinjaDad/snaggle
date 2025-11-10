@@ -197,12 +197,6 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 						tc.Dest = rel
 					}
 
-					if options.is("verbose") {
-						// we want stdout
-					} else {
-						tc.ExpectedStdout = make([]string, 0)
-					}
-
 					t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
 					t.Logf("\n\nTest options: %s", spew.Sdump(options))
 					testbody(t, tc)
@@ -265,7 +259,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 							srcs = append(srcs, bin.Path)
 						}
 
-						var stdout []string
+						stdout := make([]string, 0)
 						switch {
 						case options.is("recursive"):
 							for _, line := range tc.ExpectedStdout {
@@ -308,10 +302,6 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 							t.Errorf("Unable to define %s relative to %s", rel, wd)
 						}
 						tc.Dest = rel
-					}
-
-					if !options.is("verbose") {
-						tc.ExpectedStdout = make([]string, 0)
 					}
 
 					t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
@@ -366,6 +356,11 @@ func generateOutput(tc *TestCase, options testOptions, bins ...TestDetails) {
 			}
 			tc.ExpectedFiles[lib] = snaggedLib
 		}
+	}
+	if options.is("verbose") {
+		// we want stdout
+	} else {
+		tc.ExpectedStdout = make([]string, 0)
 	}
 }
 
