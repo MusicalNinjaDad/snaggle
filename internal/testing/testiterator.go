@@ -20,7 +20,7 @@ import (
 
 type testListing = map[string]TestDetails
 
-var tests = map[string]TestDetails{
+var testdata = map[string]TestDetails{
 	P_ctypes_so: {
 		Name:   "dyn_lib",
 		Path:   P_ctypes_so,
@@ -76,11 +76,11 @@ var tests = map[string]TestDetails{
 }
 
 func defaultTests() []TestDetails {
-	return filterTests(tests, func(_ TestDetails) bool { return true })
+	return filterTests(testdata, func(_ TestDetails) bool { return true })
 }
 
 func noSubDirs() []TestDetails {
-	return filterTests(tests, func(td TestDetails) bool { return !td.InSubdir })
+	return filterTests(testdata, func(td TestDetails) bool { return !td.InSubdir })
 }
 
 // Ordered lexically in alphabetical order of full path :-x
