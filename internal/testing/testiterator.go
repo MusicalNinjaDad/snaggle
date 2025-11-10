@@ -189,12 +189,10 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 					generateOutput(&tc, options, bin)
 
 					if options.is("relative") {
-						wd := pwd(t)
-						rel, err := filepath.Rel(wd, tc.Dest)
-						if err != nil {
-							t.Errorf("Unable to define %s relative to %s", rel, wd)
+						var err error
+						if tc.Dest, err = filepath.Rel(pwd(t), tc.Dest); err != nil {
+							t.Errorf("Unable to define destination relative to %s", pwd(t))
 						}
-						tc.Dest = rel
 					}
 
 					t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
