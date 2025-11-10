@@ -186,7 +186,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 						Options:        options.options,
 						Flags:          options.flags,
 					}
-					generateOutput(bin, &tc, options.is("inplace"))
+					generateOutput(&tc, options.is("inplace"), bin)
 
 					if options.is("relative") {
 						wd := pwd(t)
@@ -247,7 +247,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 					}
 
 					for _, bin := range bins {
-						generateOutput(bin, &tc, options.is("inplace"))
+						generateOutput(&tc, options.is("inplace"), bin)
 					}
 
 					if options.is("copy") {
@@ -324,7 +324,8 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 	}
 }
 
-func generateOutput(bin TestDetails, tc *TestCase, inplace bool) {
+func generateOutput(tc *TestCase, inplace bool, bins ...TestDetails) {
+	bin := bins[0]
 	if !inplace {
 		snaggedBin := filepath.Join(tc.Dest, bin.SnagTo, bin.SnagAs)
 		if bin.Symlink {
