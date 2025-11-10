@@ -236,11 +236,7 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 					if options.is("recursive") {
 						bins = slices.Clone(defaultTests)
 					} else {
-						for _, bin := range defaultTests {
-							if !bin.InSubdir {
-								bins = append(bins, bin)
-							}
-						}
+						bins = slices.Clone(noSubDirs)
 					}
 
 					t.Run(desc, func(t *testing.T) {
