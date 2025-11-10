@@ -165,12 +165,12 @@ func (o *testOptions) is(name string) bool {
 // Just don't try to use SkipNow, FailNow or t.Parallel as Go's rangefunc & t.Run hacks collide and mess up
 // goroutine clarity. There is probably a good fix with channels but I can't be bothered right now...
 func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCase] {
-	var specficTestsRequested bool
+	var runDirTests bool
 	if tests == nil {
 		tests = slices.Clone(defaultTests)
-		specficTestsRequested = false
+		runDirTests = true
 	} else {
-		specficTestsRequested = true
+		runDirTests = false
 	}
 
 	return func(testbody func(t *testing.T, tc TestCase) bool) {
@@ -203,108 +203,103 @@ func TestCases(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCas
 			}
 		}
 
-		// =====================
-		if specficTestsRequested {
-			// =================
-			return // stop here
-		} // ===================
+		if runDirTests {
+			for _, process := range []testOption{no_option, copy_option, inplace} {
+				for _, options := range combine(relative, verbose, recursive) {
+					var err error
 
-		// else default test run includes snaggling a directory
-		for _, process := range []testOption{no_option, copy_option, inplace} {
-			for _, options := range combine(relative, verbose, recursive) {
-				var err error
+					options.names = appendif(options.names, process.name)
+					options.options = appendif(options.options, process.option)
+					options.flags = appendif(options.flags, process.flag)
+					desc := strings.Join(append([]string{"directory"}, options.names...), "_")
 
-				options.names = appendif(options.names, process.name)
-				options.options = appendif(options.options, process.option)
-				options.flags = appendif(options.flags, process.flag)
-				desc := strings.Join(append([]string{"directory"}, options.names...), "_")
-
-				var bins []TestDetails
-				if options.is("recursive") {
-					bins = slices.Clone(defaultTests)
-				} else {
-					for _, bin := range defaultTests {
-						if !bin.InSubdir {
-							bins = append(bins, bin)
+					var bins []TestDetails
+					if options.is("recursive") {
+						bins = slices.Clone(defaultTests)
+					} else {
+						for _, bin := range defaultTests {
+							if !bin.InSubdir {
+								bins = append(bins, bin)
+							}
 						}
 					}
+
+					t.Run(desc, func(t *testing.T) {
+						tc := TestCase{
+							Src:            TestdataPath("."),
+							Dest:           WorkspaceTempDir(t),
+							ExpectedStdout: make([]string, 0),
+							ExpectedFiles:  make(map[string]string),
+							Options:        options.options,
+							Flags:          options.flags,
+						}
+
+						generateOutput(&tc, options, bins...)
+
+						if options.is("copy") {
+							for _, bin := range bins {
+								tc.ExpectedFiles[bin.Path] = filepath.Join(tc.Dest, bin.Path)
+							}
+							tc.ExpectedFiles[P_ldd] = filepath.Join(tc.Dest, P_ldd)
+
+							if options.is("recursive") {
+								for _, otherfile := range []string{TestdataPath("hello/build.sh"), TestdataPath("hello/hello.go")} {
+									tc.ExpectedFiles[otherfile] = filepath.Join(tc.Dest, otherfile)
+								}
+							}
+
+							var srcs []string
+							for _, bin := range bins {
+								srcs = append(srcs, bin.Path)
+							}
+
+							stdout := make([]string, 0)
+							switch {
+							case options.is("recursive"):
+								for _, line := range tc.ExpectedStdout {
+									bits := strings.Fields(line)
+									src := bits[0]
+									if slices.Contains(srcs, src) {
+										bits[len(bits)-1] = filepath.Join(tc.Dest, src)
+									}
+									if src == P_symlinked_id {
+										stdout = append(stdout, P_ldd+" -> "+filepath.Join(tc.Dest, P_ldd))
+									}
+									if src == P_hello_dynamic {
+										stdout = append(stdout, TestdataPath("hello/build.sh")+" -> "+filepath.Join(tc.Dest, TestdataPath("hello/build.sh")))
+									}
+									if src == P_hello_pie {
+										stdout = append(stdout, TestdataPath("hello/hello.go")+" -> "+filepath.Join(tc.Dest, TestdataPath("hello/hello.go")))
+									}
+									stdout = append(stdout, strings.Join(bits, " "))
+								}
+							default:
+								for _, line := range tc.ExpectedStdout {
+									bits := strings.Fields(line)
+									src := bits[0]
+									if slices.Contains(srcs, src) {
+										bits[len(bits)-1] = filepath.Join(tc.Dest, src)
+									}
+									if src == P_which {
+										stdout = append(stdout, P_ldd+" -> "+filepath.Join(tc.Dest, P_ldd))
+									}
+									stdout = append(stdout, strings.Join(bits, " "))
+								}
+							}
+							tc.ExpectedStdout = stdout
+						}
+
+						if options.is("relative") {
+							tc.Dest, err = filepath.Rel(pwd(t), tc.Dest)
+							assert.NoError(t, err, "conversion to relative path failed")
+						}
+
+						t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
+						t.Logf("\n\nTest options: %s", spew.Sdump(options))
+
+						testbody(t, tc)
+					})
 				}
-
-				t.Run(desc, func(t *testing.T) {
-					tc := TestCase{
-						Src:            TestdataPath("."),
-						Dest:           WorkspaceTempDir(t),
-						ExpectedStdout: make([]string, 0),
-						ExpectedFiles:  make(map[string]string),
-						Options:        options.options,
-						Flags:          options.flags,
-					}
-
-					generateOutput(&tc, options, bins...)
-
-					if options.is("copy") {
-						for _, bin := range bins {
-							tc.ExpectedFiles[bin.Path] = filepath.Join(tc.Dest, bin.Path)
-						}
-						tc.ExpectedFiles[P_ldd] = filepath.Join(tc.Dest, P_ldd)
-
-						if options.is("recursive") {
-							for _, otherfile := range []string{TestdataPath("hello/build.sh"), TestdataPath("hello/hello.go")} {
-								tc.ExpectedFiles[otherfile] = filepath.Join(tc.Dest, otherfile)
-							}
-						}
-
-						var srcs []string
-						for _, bin := range bins {
-							srcs = append(srcs, bin.Path)
-						}
-
-						stdout := make([]string, 0)
-						switch {
-						case options.is("recursive"):
-							for _, line := range tc.ExpectedStdout {
-								bits := strings.Fields(line)
-								src := bits[0]
-								if slices.Contains(srcs, src) {
-									bits[len(bits)-1] = filepath.Join(tc.Dest, src)
-								}
-								if src == P_symlinked_id {
-									stdout = append(stdout, P_ldd+" -> "+filepath.Join(tc.Dest, P_ldd))
-								}
-								if src == P_hello_dynamic {
-									stdout = append(stdout, TestdataPath("hello/build.sh")+" -> "+filepath.Join(tc.Dest, TestdataPath("hello/build.sh")))
-								}
-								if src == P_hello_pie {
-									stdout = append(stdout, TestdataPath("hello/hello.go")+" -> "+filepath.Join(tc.Dest, TestdataPath("hello/hello.go")))
-								}
-								stdout = append(stdout, strings.Join(bits, " "))
-							}
-						default:
-							for _, line := range tc.ExpectedStdout {
-								bits := strings.Fields(line)
-								src := bits[0]
-								if slices.Contains(srcs, src) {
-									bits[len(bits)-1] = filepath.Join(tc.Dest, src)
-								}
-								if src == P_which {
-									stdout = append(stdout, P_ldd+" -> "+filepath.Join(tc.Dest, P_ldd))
-								}
-								stdout = append(stdout, strings.Join(bits, " "))
-							}
-						}
-						tc.ExpectedStdout = stdout
-					}
-
-					if options.is("relative") {
-						tc.Dest, err = filepath.Rel(pwd(t), tc.Dest)
-						assert.NoError(t, err, "conversion to relative path failed")
-					}
-
-					t.Logf("\n\nTestcase details: %s", spew.Sdump(tc))
-					t.Logf("\n\nTest options: %s", spew.Sdump(options))
-
-					testbody(t, tc)
-				})
 			}
 		}
 	}
