@@ -29,9 +29,9 @@ var testdata = map[string]TestDetails{
 		SnagAs: "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
 	},
 	P_build_sh: {
-		Path:     P_build_sh,
-		InSubdir: true,
-		NotAnElf: true,
+		Path:         P_build_sh,
+		InSubdir:     true,
+		InvalidAsElf: true,
 	},
 	P_hello_dynamic: {
 		Name:     "subdir",
@@ -42,9 +42,9 @@ var testdata = map[string]TestDetails{
 		InSubdir: true,
 	},
 	P_hello_go: {
-		Path:     P_hello_go,
-		InSubdir: true,
-		NotAnElf: true,
+		Path:         P_hello_go,
+		InSubdir:     true,
+		InvalidAsElf: true,
 	},
 	P_hello_pie: {
 		Name:   "PIE_0_deps",
@@ -68,10 +68,10 @@ var testdata = map[string]TestDetails{
 		SnagAs: "id",
 	},
 	P_ldd: {
-		Name:     "ldd",
-		Path:     P_ldd,
-		Bin:      Ldd,
-		NotAnElf: true,
+		Name:         "ldd",
+		Path:         P_ldd,
+		Bin:          Ldd,
+		InvalidAsElf: true,
 	},
 	P_symlinked_id: {
 		Name:     "symlink",
@@ -92,11 +92,11 @@ var testdata = map[string]TestDetails{
 }
 
 func defaultTests() []TestDetails {
-	return filterTests(testdata, func(td TestDetails) bool { return !td.NotAnElf })
+	return filterTests(testdata, func(td TestDetails) bool { return !td.InvalidAsElf })
 }
 
 func noSubDirs() []TestDetails {
-	return filterTests(testdata, func(td TestDetails) bool { return !td.InSubdir && !td.NotAnElf })
+	return filterTests(testdata, func(td TestDetails) bool { return !td.InSubdir && !td.InvalidAsElf })
 }
 
 func allFiles() []TestDetails {
@@ -120,14 +120,14 @@ func filterTests(tests testListing, filterFunc func(TestDetails) bool) []TestDet
 }
 
 type TestDetails struct {
-	Name     string
-	Path     string
-	Bin      binaryDetails
-	SnagTo   string
-	SnagAs   string
-	InSubdir bool
-	Symlink  bool
-	NotAnElf bool
+	Name         string
+	Path         string
+	Bin          binaryDetails
+	SnagTo       string
+	SnagAs       string
+	InSubdir     bool
+	Symlink      bool
+	InvalidAsElf bool
 }
 
 type TestCase struct {
@@ -285,7 +285,7 @@ func generateOutput(tc *TestCase, options testOptions, bins ...TestDetails) {
 		var copy_bin bool
 		var snaggedBin string
 		switch {
-		case bin.NotAnElf && !options.includes(copy_option):
+		case bin.InvalidAsElf && !options.includes(copy_option):
 			copy_bin = false
 		case options.includes(inplace):
 			copy_bin = false
