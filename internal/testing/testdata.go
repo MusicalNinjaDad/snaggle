@@ -3,11 +3,30 @@
 package testing
 
 import (
+	"slices"
+	"strings"
+
 	"github.com/MusicalNinjaDad/snaggle/elf"
 
 	//nolint:staticcheck
 	. "github.com/MusicalNinjaDad/snaggle/internal" //lint:ignore ST1001 test helpers
 )
+
+func DefaultTests() []TestDetails {
+	return filterTests(TestData, func(td TestDetails) bool { return !td.NonElf })
+}
+
+func noSubDirs() []TestDetails {
+	return filterTests(TestData, func(td TestDetails) bool { return !td.InSubdir && !td.NonElf })
+}
+
+func allFiles() []TestDetails {
+	return filterTests(TestData, func(_ TestDetails) bool { return true })
+}
+
+func allFilesBaseDirOnly() []TestDetails {
+	return filterTests(TestData, func(td TestDetails) bool { return !td.InSubdir })
+}
 
 type TestDetails struct {
 	Name           string
@@ -26,7 +45,7 @@ type TestDetails struct {
 
 type testListing = map[string]TestDetails
 
-var TestData = map[string]TestDetails{
+var TestData = testListing{
 	P_ctypes_so: {
 		Name:           "dyn_lib",
 		Path:           P_ctypes_so,
@@ -183,4 +202,16 @@ var TestData = map[string]TestDetails{
 		Lib:            false,
 		HasInterpreter: true,
 	},
+}
+
+// Ordered lexically in alphabetical order of full path :-x
+func filterTests(tests testListing, filterFunc func(TestDetails) bool) []TestDetails {
+	ts := make([]TestDetails, 0)
+	for _, t := range tests {
+		if filterFunc(t) {
+			ts = append(ts, t)
+		}
+	}
+	slices.SortFunc(ts, func(a TestDetails, b TestDetails) int { return strings.Compare(a.Path, b.Path) })
+	return ts
 }

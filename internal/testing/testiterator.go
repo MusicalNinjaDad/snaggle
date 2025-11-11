@@ -18,34 +18,6 @@ import (
 	. "github.com/MusicalNinjaDad/snaggle/internal" //lint:ignore ST1001 test helpers
 )
 
-func DefaultTests() []TestDetails {
-	return filterTests(TestData, func(td TestDetails) bool { return !td.NonElf })
-}
-
-func noSubDirs() []TestDetails {
-	return filterTests(TestData, func(td TestDetails) bool { return !td.InSubdir && !td.NonElf })
-}
-
-func allFiles() []TestDetails {
-	return filterTests(TestData, func(_ TestDetails) bool { return true })
-}
-
-func allFilesBaseDirOnly() []TestDetails {
-	return filterTests(TestData, func(td TestDetails) bool { return !td.InSubdir })
-}
-
-// Ordered lexically in alphabetical order of full path :-x
-func filterTests(tests testListing, filterFunc func(TestDetails) bool) []TestDetails {
-	ts := make([]TestDetails, 0)
-	for _, t := range tests {
-		if filterFunc(t) {
-			ts = append(ts, t)
-		}
-	}
-	slices.SortFunc(ts, func(a TestDetails, b TestDetails) int { return strings.Compare(a.Path, b.Path) })
-	return ts
-}
-
 type TestCase struct {
 	Src            string            // source path
 	Dest           string            // destination path
