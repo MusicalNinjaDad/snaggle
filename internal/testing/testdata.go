@@ -126,3 +126,87 @@ var Ldd = binaryDetails{
 	Lib:            false,
 	HasInterpreter: false,
 }
+
+type TestDetails struct {
+	Name     string
+	Path     string
+	Bin      binaryDetails
+	SnagTo   string
+	SnagAs   string
+	InSubdir bool
+	Symlink  bool
+	NonElf   bool
+}
+
+type testListing = map[string]TestDetails
+
+var testdata = map[string]TestDetails{
+	P_ctypes_so: {
+		Name:   "dyn_lib",
+		Path:   P_ctypes_so,
+		Bin:    GoodElfs["ctypes_so"],
+		SnagTo: "lib64",
+		SnagAs: "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
+	},
+	P_build_sh: {
+		Path:     P_build_sh,
+		InSubdir: true,
+		NonElf:   true,
+	},
+	P_hello_dynamic: {
+		Name:     "subdir",
+		Path:     P_hello_dynamic,
+		Bin:      GoodElfs["hello_dynamic"],
+		SnagTo:   "bin",
+		SnagAs:   "hello",
+		InSubdir: true,
+	},
+	P_hello_go: {
+		Path:     P_hello_go,
+		InSubdir: true,
+		NonElf:   true,
+	},
+	P_hello_pie: {
+		Name:   "PIE_0_deps",
+		Path:   P_hello_pie,
+		Bin:    GoodElfs["hello_pie"],
+		SnagTo: "bin",
+		SnagAs: "hello_pie",
+	},
+	P_hello_static: {
+		Name:   "static",
+		Path:   P_hello_static,
+		Bin:    GoodElfs["hello_static"],
+		SnagTo: "bin",
+		SnagAs: "hello_static",
+	},
+	P_id: {
+		Name:   "PIE_many_deps",
+		Path:   P_id,
+		Bin:    GoodElfs["id"],
+		SnagTo: "bin",
+		SnagAs: "id",
+	},
+	P_ldd: {
+		Name:   "ldd",
+		Path:   P_ldd,
+		Bin:    Ldd,
+		NonElf: true,
+	},
+	P_symlinked_id: {
+		Name:     "symlink",
+		Path:     P_symlinked_id,
+		Bin:      GoodElfs["id"],
+		SnagTo:   "bin",
+		SnagAs:   "id2",
+		InSubdir: true,
+		Symlink:  true,
+	},
+	P_which: {
+		Name:   "PIE_1_dep",
+		Path:   P_which,
+		Bin:    GoodElfs["which"],
+		SnagTo: "bin",
+		SnagAs: "which",
+	},
+}
