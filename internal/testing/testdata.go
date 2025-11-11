@@ -12,7 +12,7 @@ import (
 	. "github.com/MusicalNinjaDad/snaggle/internal" //lint:ignore ST1001 test helpers
 )
 
-func DefaultTests() []TestDetails {
+func AllElfs() []TestDetails {
 	return filterTests(TestData, func(td TestDetails) bool { return !td.NonElf })
 }
 

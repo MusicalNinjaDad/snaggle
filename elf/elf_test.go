@@ -11,7 +11,7 @@ import (
 )
 
 func Test(t *testing.T) {
-	for _, details := range DefaultTests() {
+	for _, details := range AllElfs() {
 		t.Run(details.Name, func(t *testing.T) {
 			Assert := assert.New(t)
 

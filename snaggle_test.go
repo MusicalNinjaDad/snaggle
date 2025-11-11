@@ -201,7 +201,7 @@ func BenchmarkCommonBinaries(b *testing.B) {
 	benchtmp := WorkspaceTempDir(b)
 
 	for _, verbose := range []bool{false, true} {
-		for _, tc := range DefaultTests() {
+		for _, tc := range AllElfs() {
 			desc := tc.Name
 			if verbose {
 				desc += "_verbose"

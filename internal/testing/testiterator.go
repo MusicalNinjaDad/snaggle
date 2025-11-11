@@ -101,7 +101,7 @@ func TestLoop(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCase
 
 	var runDirTests bool
 	if tests == nil {
-		tests = DefaultTests()
+		tests = AllElfs()
 		runDirTests = true
 	} else {
 		runDirTests = false
@@ -159,7 +159,7 @@ func TestLoop(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCase
 					case options.includes(copy_option):
 						bins = allFilesBaseDirOnly()
 					case options.includes(recursive):
-						bins = DefaultTests()
+						bins = AllElfs()
 					default:
 						bins = noSubDirs()
 					}
