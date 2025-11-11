@@ -27,65 +27,6 @@ type TestCase struct {
 	Flags          []string
 }
 
-type testOption struct {
-	name           string
-	negativeSuffix string
-	option         snaggle.Option
-	flag           string
-}
-
-type testOptions struct {
-	names   []string
-	options []snaggle.Option
-	flags   []string
-}
-
-func combine(opts ...testOption) []testOptions {
-	n := len(opts)
-	options := make([]testOptions, 0, n)
-
-	bitmask := (1 << n)
-	for mask := range bitmask {
-		option := testOptions{
-			names:   make([]string, 0, n),
-			options: make([]snaggle.Option, 0, n),
-			flags:   make([]string, 0, n),
-		}
-		for i, opt := range opts {
-			if mask&(1<<i) > 0 { //i-th bit is set
-				option.names = appendif(option.names, opt.name)
-				option.options = appendif(option.options, opt.option)
-				option.flags = appendif(option.flags, opt.flag)
-			} else {
-				option.names = appendif(option.names, opt.negativeSuffix)
-			}
-		}
-		options = append(options, option)
-	}
-	return options
-}
-
-func appendif[Type any](slice []Type, elem Type) []Type {
-	if reflect.ValueOf(elem).IsZero() {
-		return slice
-	}
-	return append(slice, elem)
-}
-
-var (
-	no_option   = testOption{}
-	copy_option = testOption{name: "copy", option: snaggle.Copy(), flag: "--copy"}
-	inplace     = testOption{name: "inplace", option: snaggle.InPlace(), flag: "--in-place"}
-	recursive   = testOption{name: "recursive", option: snaggle.Recursive(), flag: "--recursive"}
-	relative    = testOption{name: "relative"}
-	verbose     = testOption{name: "verbose", negativeSuffix: "silent", option: snaggle.Verbose(), flag: "--verbose"}
-)
-
-// Is a specific option set?
-func (o *testOptions) includes(opt testOption) bool {
-	return slices.Contains(o.names, opt.name)
-}
-
 // Calls t.Run on the test body for all our test case binaries e.g.:
 //
 //	for t, tc := range TestLoop(t) {
@@ -244,4 +185,63 @@ func pwd(t *testing.T) string {
 		t.Error("Failed to get pwd. Error:", err)
 	}
 	return pwd
+}
+
+var (
+	no_option   = testOption{}
+	copy_option = testOption{name: "copy", option: snaggle.Copy(), flag: "--copy"}
+	inplace     = testOption{name: "inplace", option: snaggle.InPlace(), flag: "--in-place"}
+	recursive   = testOption{name: "recursive", option: snaggle.Recursive(), flag: "--recursive"}
+	relative    = testOption{name: "relative"}
+	verbose     = testOption{name: "verbose", negativeSuffix: "silent", option: snaggle.Verbose(), flag: "--verbose"}
+)
+
+type testOption struct {
+	name           string
+	negativeSuffix string
+	option         snaggle.Option
+	flag           string
+}
+
+type testOptions struct {
+	names   []string
+	options []snaggle.Option
+	flags   []string
+}
+
+func combine(opts ...testOption) []testOptions {
+	n := len(opts)
+	options := make([]testOptions, 0, n)
+
+	bitmask := (1 << n)
+	for mask := range bitmask {
+		option := testOptions{
+			names:   make([]string, 0, n),
+			options: make([]snaggle.Option, 0, n),
+			flags:   make([]string, 0, n),
+		}
+		for i, opt := range opts {
+			if mask&(1<<i) > 0 { //i-th bit is set
+				option.names = appendif(option.names, opt.name)
+				option.options = appendif(option.options, opt.option)
+				option.flags = appendif(option.flags, opt.flag)
+			} else {
+				option.names = appendif(option.names, opt.negativeSuffix)
+			}
+		}
+		options = append(options, option)
+	}
+	return options
+}
+
+func appendif[Type any](slice []Type, elem Type) []Type {
+	if reflect.ValueOf(elem).IsZero() {
+		return slice
+	}
+	return append(slice, elem)
+}
+
+// Is a specific option set?
+func (o *testOptions) includes(opt testOption) bool {
+	return slices.Contains(o.names, opt.name)
 }
