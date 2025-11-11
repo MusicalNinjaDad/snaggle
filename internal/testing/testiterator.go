@@ -103,7 +103,7 @@ func allFiles() []TestDetails {
 	return filterTests(testdata, func(_ TestDetails) bool { return true })
 }
 
-func withLdd() []TestDetails {
+func allFilesBaseDirOnly() []TestDetails {
 	return filterTests(testdata, func(td TestDetails) bool { return !td.InSubdir })
 }
 
@@ -266,7 +266,7 @@ func TestLoop(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCase
 					case options.includes(copy_option) && options.includes(recursive):
 						bins = allFiles()
 					case options.includes(copy_option):
-						bins = withLdd()
+						bins = allFilesBaseDirOnly()
 					case options.includes(recursive):
 						bins = defaultTests()
 					default:
