@@ -18,20 +18,20 @@ import (
 	. "github.com/MusicalNinjaDad/snaggle/internal" //lint:ignore ST1001 test helpers
 )
 
-func defaultTests() []TestDetails {
-	return filterTests(testdata, func(td TestDetails) bool { return !td.NonElf })
+func DefaultTests() []TestDetails {
+	return filterTests(TestData, func(td TestDetails) bool { return !td.NonElf })
 }
 
 func noSubDirs() []TestDetails {
-	return filterTests(testdata, func(td TestDetails) bool { return !td.InSubdir && !td.NonElf })
+	return filterTests(TestData, func(td TestDetails) bool { return !td.InSubdir && !td.NonElf })
 }
 
 func allFiles() []TestDetails {
-	return filterTests(testdata, func(_ TestDetails) bool { return true })
+	return filterTests(TestData, func(_ TestDetails) bool { return true })
 }
 
 func allFilesBaseDirOnly() []TestDetails {
-	return filterTests(testdata, func(td TestDetails) bool { return !td.InSubdir })
+	return filterTests(TestData, func(td TestDetails) bool { return !td.InSubdir })
 }
 
 // Ordered lexically in alphabetical order of full path :-x
@@ -129,7 +129,7 @@ func TestLoop(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCase
 
 	var runDirTests bool
 	if tests == nil {
-		tests = defaultTests()
+		tests = DefaultTests()
 		runDirTests = true
 	} else {
 		runDirTests = false
@@ -187,7 +187,7 @@ func TestLoop(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCase
 					case options.includes(copy_option):
 						bins = allFilesBaseDirOnly()
 					case options.includes(recursive):
-						bins = defaultTests()
+						bins = DefaultTests()
 					default:
 						bins = noSubDirs()
 					}
@@ -219,7 +219,7 @@ func generateOutput(tc *TestCase, options testOptions, bins ...TestDetails) {
 		if copy_bin {
 			if bin.Symlink {
 				tc.ExpectedStdout = append(tc.ExpectedStdout,
-					bin.Path+" ("+bin.Bin.Elf.Path+") -> "+snaggedBin,
+					bin.Path+" ("+bin.Elf.Path+") -> "+snaggedBin,
 				)
 			} else {
 				tc.ExpectedStdout = append(tc.ExpectedStdout,
@@ -229,21 +229,21 @@ func generateOutput(tc *TestCase, options testOptions, bins ...TestDetails) {
 			tc.ExpectedFiles[bin.Path] = snaggedBin
 		}
 
-		if bin.Bin.HasInterpreter {
-			snaggedInterp := filepath.Join(tc.Dest, bin.Bin.Elf.Interpreter)
+		if bin.HasInterpreter {
+			snaggedInterp := filepath.Join(tc.Dest, bin.Elf.Interpreter)
 			if P_ld_linux != P_ld_linux_resolved {
 				tc.ExpectedStdout = append(tc.ExpectedStdout,
-					bin.Bin.Elf.Interpreter+" ("+P_ld_linux_resolved+") -> "+snaggedInterp,
+					bin.Elf.Interpreter+" ("+P_ld_linux_resolved+") -> "+snaggedInterp,
 				)
 			} else {
 				tc.ExpectedStdout = append(tc.ExpectedStdout,
-					bin.Bin.Elf.Interpreter+" -> "+snaggedInterp,
+					bin.Elf.Interpreter+" -> "+snaggedInterp,
 				)
 			}
-			tc.ExpectedFiles[bin.Bin.Elf.Interpreter] = snaggedInterp
+			tc.ExpectedFiles[bin.Elf.Interpreter] = snaggedInterp
 		}
 
-		for _, lib := range bin.Bin.Elf.Dependencies {
+		for _, lib := range bin.Elf.Dependencies {
 			snaggedLib := filepath.Join(tc.Dest, "lib64", filepath.Base(lib))
 			resolved, _ := filepath.EvalSymlinks(lib)
 			if lib != resolved {

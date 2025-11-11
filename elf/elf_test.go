@@ -11,8 +11,8 @@ import (
 )
 
 func Test(t *testing.T) {
-	for name, details := range GoodElfs {
-		t.Run(name, func(t *testing.T) {
+	for _, details := range DefaultTests() {
+		t.Run(details.Name, func(t *testing.T) {
 			Assert := assert.New(t)
 
 			parsed, err := elf.New(details.Elf.Path)

@@ -65,13 +65,7 @@ func TestInvalidNumberArgs(t *testing.T) {
 	t.Logf("Stderr:\n%s", exitError.Stderr)
 }
 func TestRecurseFile(t *testing.T) {
-	tests := []TestDetails{
-		{
-			Name: "ldd",
-			Path: P_ldd,
-			Bin:  Ldd,
-		},
-	}
+	tests := []TestDetails{TestData[P_ldd]}
 	for t, tc := range TestLoop(t, tests...) {
 		Assert := Assert(t)
 
@@ -133,13 +127,7 @@ func TestCopyInplace(t *testing.T) {
 }
 
 func TestNotAnELF(t *testing.T) {
-	tests := []TestDetails{
-		{
-			Name: "ldd",
-			Path: P_ldd,
-			Bin:  Ldd,
-		},
-	}
+	tests := []TestDetails{TestData[P_ldd]}
 	for t, tc := range TestLoop(t, tests...) {
 		Assert := Assert(t)
 

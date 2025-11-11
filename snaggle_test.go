@@ -62,13 +62,7 @@ func TestNotAnELF(t *testing.T) {
 	log.SetOutput(&stdout)
 	t.Cleanup(func() { log.SetOutput(os.Stdout) })
 
-	tests := []TestDetails{
-		{
-			Name: "ldd",
-			Path: P_ldd,
-			Bin:  Ldd,
-		},
-	}
+	tests := []TestDetails{TestData[P_ldd]}
 	for t, tc := range TestLoop(t, tests...) {
 		t.Cleanup(func() { stdout.Reset() })
 		Assert := Assert(t)
@@ -96,13 +90,7 @@ func TestRecurseFile(t *testing.T) {
 	log.SetOutput(&stdout)
 	t.Cleanup(func() { log.SetOutput(os.Stdout) })
 
-	tests := []TestDetails{
-		{
-			Name: "ldd",
-			Path: P_ldd,
-			Bin:  Ldd,
-		},
-	}
+	tests := []TestDetails{TestData[P_ldd]}
 
 	for t, tc := range TestLoop(t, tests...) {
 		t.Cleanup(func() { stdout.Reset() })
@@ -168,13 +156,7 @@ func TestCopyInplace(t *testing.T) {
 }
 
 func TestLinkDifferentFile(t *testing.T) {
-	tests := []TestDetails{
-		{
-			Name: "hello_pie",
-			Path: P_hello_pie,
-			Bin:  GoodElfs["hello_pie"],
-		},
-	}
+	tests := []TestDetails{TestData[P_hello_pie]}
 
 	for t, tc := range TestLoop(t, tests...) {
 		Assert := Assert(t)
@@ -219,8 +201,8 @@ func BenchmarkCommonBinaries(b *testing.B) {
 	benchtmp := WorkspaceTempDir(b)
 
 	for _, verbose := range []bool{false, true} {
-		for _, tc := range GoodElfs {
-			desc := tc.Description
+		for _, tc := range DefaultTests() {
+			desc := tc.Name
 			if verbose {
 				desc += "_verbose"
 			}
