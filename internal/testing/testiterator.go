@@ -211,10 +211,10 @@ type testOptions struct {
 
 func combine(opts ...testOption) []testOptions {
 	n := len(opts)
-	options := make([]testOptions, 0, n)
+	options := make([]testOptions, 0, 2^n)
 
-	bitmask := (1 << n)
-	for mask := range bitmask {
+	bitmask := (1 << n)         // effectively a set of option flags
+	for mask := range bitmask { // iterate through every possible combination of flags
 		option := testOptions{
 			names:   make([]string, 0, n),
 			options: make([]snaggle.Option, 0, n),
