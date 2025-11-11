@@ -220,6 +220,7 @@ func TestLoop(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCase
 	}
 
 	return func(testbody func(t *testing.T, tc TestCase) bool) {
+
 		runTest := func(name string, src string, options testOptions, bins ...TestDetails) {
 			var err error
 
@@ -233,8 +234,10 @@ func TestLoop(t *testing.T, tests ...TestDetails) iter.Seq2[*testing.T, TestCase
 					Options:        options.options,
 					Flags:          options.flags,
 				}
+
 				generateOutput(&tc, options, bins...)
 
+				// Do this after generateOutput to avoid extra complexity there
 				if options.includes(relative) {
 					tc.Dest, err = filepath.Rel(pwd(t), tc.Dest)
 					assert.NoError(t, err, "conversion to relative path failed")
