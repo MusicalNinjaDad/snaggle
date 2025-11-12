@@ -108,8 +108,9 @@ func panicHandler(exitcode int) {
 
 func main() {
 	defer panicHandler(3)
-	err := rootCmd.Execute()
+
 	var snaggleError *snaggle.SnaggleError
+	err := rootCmd.Execute()
 	switch {
 	case err == nil:
 		os.Exit(0)
