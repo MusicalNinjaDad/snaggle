@@ -68,10 +68,10 @@ import (
 )
 
 var (
-	copy      bool
-	inplace   bool
-	recursive bool
-	verbose   bool
+	copy_option bool
+	inplace     bool
+	recursive   bool
+	verbose     bool
 )
 
 func init() {
@@ -80,7 +80,7 @@ func init() {
 
 	helpTemplate := []string{rootCmd.HelpTemplate(), helpNotes, exitCodes}
 	rootCmd.SetHelpTemplate(strings.Join(helpTemplate, "\n"))
-	rootCmd.Flags().BoolVar(&copy, "copy", false, "Copy entire directory contents to /DESTINATION/full/source/path")
+	rootCmd.Flags().BoolVar(&copy_option, "copy", false, "Copy entire directory contents to /DESTINATION/full/source/path")
 	rootCmd.Flags().BoolVar(&inplace, "in-place", false, "Snag in place: only snag dependencies & interpreter")
 	rootCmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "Recurse subdirectories & snag everything")
 	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Output to stdout and process sequentially for readability")
@@ -131,7 +131,7 @@ https://github.com/MusicalNinjaDad/snaggle
 	Args: ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var options []snaggle.Option
-		if copy {
+		if copy_option {
 			options = append(options, snaggle.Copy())
 		}
 		if inplace {
