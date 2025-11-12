@@ -76,14 +76,17 @@ var (
 
 func init() {
 	log.Default().SetOutput(os.Stdout)
+
 	rootCmd.Version = snaggle.Version
 
 	helpTemplate := []string{rootCmd.HelpTemplate(), helpNotes, exitCodes}
 	rootCmd.SetHelpTemplate(strings.Join(helpTemplate, "\n"))
+
 	rootCmd.Flags().BoolVar(&copy_option, "copy", false, "Copy entire directory contents to /DESTINATION/full/source/path")
 	rootCmd.Flags().BoolVar(&inplace, "in-place", false, "Snag in place: only snag dependencies & interpreter")
 	rootCmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "Recurse subdirectories & snag everything")
 	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Output to stdout and process sequentially for readability")
+
 	// These are called somewhere in execute - which is not available to integration tests
 	rootCmd.InitDefaultHelpFlag()
 	rootCmd.InitDefaultVersionFlag()
