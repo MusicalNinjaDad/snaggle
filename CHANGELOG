@@ -6,7 +6,7 @@
 
 ### Features
 
-- `--copy` will cp -r --parents && snaggle --inplace
+- `--copy` will copy the fully contents of a directory (optionally recursively) and snaggle in-place
 
 ### Fixes
 
