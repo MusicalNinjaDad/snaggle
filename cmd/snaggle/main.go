@@ -72,6 +72,7 @@ var (
 	inplace     bool
 	recursive   bool
 	verbose     bool
+	options     []snaggle.Option
 )
 
 func init() {
@@ -134,9 +135,8 @@ https://github.com/MusicalNinjaDad/snaggle
 `,
 	Args: ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var options []snaggle.Option
 		if copy_option {
-			options = append(options, snaggle.Copy())
+			addOption(snaggle.Copy())("")
 		}
 		if inplace {
 			options = append(options, snaggle.InPlace())
@@ -150,6 +150,13 @@ https://github.com/MusicalNinjaDad/snaggle
 
 		return snaggle.Snaggle(args[0], args[1], options...)
 	},
+}
+
+func addOption(option snaggle.Option) func(string) error {
+	return func(_ string) error {
+		options = append(options, option)
+		return nil
+	}
 }
 
 var usages = []string{
