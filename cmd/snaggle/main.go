@@ -67,13 +67,14 @@ import (
 	"github.com/MusicalNinjaDad/snaggle"
 )
 
-var (
-	copy_option bool
-	inplace     bool
-	recursive   bool
-	verbose     bool
-	options     []snaggle.Option
-)
+var options []snaggle.Option
+
+func addOption(option snaggle.Option) func(string) error {
+	return func(_ string) error {
+		options = append(options, option)
+		return nil
+	}
+}
 
 func init() {
 	log.Default().SetOutput(os.Stdout)
@@ -83,10 +84,10 @@ func init() {
 	helpTemplate := []string{rootCmd.HelpTemplate(), helpNotes, exitCodes}
 	rootCmd.SetHelpTemplate(strings.Join(helpTemplate, "\n"))
 
-	rootCmd.Flags().BoolVar(&copy_option, "copy", false, "Copy entire directory contents to /DESTINATION/full/source/path")
-	rootCmd.Flags().BoolVar(&inplace, "in-place", false, "Snag in place: only snag dependencies & interpreter")
-	rootCmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "Recurse subdirectories & snag everything")
-	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Output to stdout and process sequentially for readability")
+	rootCmd.Flags().BoolFunc("copy", "Copy entire directory contents to /DESTINATION/full/source/path", addOption(snaggle.Copy()))
+	rootCmd.Flags().BoolFunc("in-place", "Snag in place: only snag dependencies & interpreter", addOption(snaggle.InPlace()))
+	rootCmd.Flags().BoolFuncP("recursive", "r", "Recurse subdirectories & snag everything", addOption(snaggle.Recursive()))
+	rootCmd.Flags().BoolFuncP("verbose", "v", "Output to stdout and process sequentially for readability", addOption(snaggle.Verbose()))
 
 	// These are called somewhere in execute - which is not available to integration tests
 	rootCmd.InitDefaultHelpFlag()
@@ -135,28 +136,8 @@ https://github.com/MusicalNinjaDad/snaggle
 `,
 	Args: ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if copy_option {
-			addOption(snaggle.Copy())("")
-		}
-		if inplace {
-			options = append(options, snaggle.InPlace())
-		}
-		if recursive {
-			options = append(options, snaggle.Recursive())
-		}
-		if verbose {
-			options = append(options, snaggle.Verbose())
-		}
-
 		return snaggle.Snaggle(args[0], args[1], options...)
 	},
-}
-
-func addOption(option snaggle.Option) func(string) error {
-	return func(_ string) error {
-		options = append(options, option)
-		return nil
-	}
 }
 
 var usages = []string{
