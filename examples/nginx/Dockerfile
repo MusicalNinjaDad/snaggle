@@ -1,7 +1,7 @@
 # For example to get a locked-down nginx webserver running in 4 simple steps...
 
 # You can use any base distro you like. I find fedora generally does well staying up to date with latest versions.
-FROM fedora:latest@sha256:aa7befe5cfd1f0e062728c16453cd1c479d4134c7b85eac00172f3025ab0d522 AS installer
+FROM fedora:latest AS installer
 
 # 1. Install nginx and tini (for pid1)
 RUN dnf install -y \
