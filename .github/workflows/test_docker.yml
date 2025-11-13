@@ -51,4 +51,4 @@ jobs:
           tags: ng
 
       - name: Test run nginx example
-        run: docker run -p8000:8000 ng && curl 127.0.0.1:8000
+        run: docker run -d -p8000:8000 ng && curl 127.0.0.1:8000
