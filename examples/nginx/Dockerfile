@@ -9,7 +9,7 @@ RUN dnf install -y \
   tini
 
 # 2. Install snaggle
-COPY --from=ghcr.io/musicalninjadad/snaggle:v1.1.0 /snaggle /bin/
+COPY --from=ghcr.io/musicalninjadad/snaggle:latest /snaggle /bin/
 
 # 3. Build the runtime root filesystem
 WORKDIR /runtime
