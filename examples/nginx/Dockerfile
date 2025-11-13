@@ -10,9 +10,12 @@ WORKDIR /runtime
     RUN mkdir ./tmp && chmod 1777 ./tmp \
      && snaggle /bin/tini . \
      && snaggle /bin/nginx .
+    COPY nginx.conf ./etc/nginx/
 
 FROM scratch AS runtime
 
 COPY --from=installer /runtime /
+
 USER 1000
+EXPOSE 8000
 ENTRYPOINT [ "tini", "--", "nginx" ]
