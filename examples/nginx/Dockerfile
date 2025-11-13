@@ -7,10 +7,21 @@ RUN dnf install -y \
 COPY --from=ghcr.io/musicalninjadad/snaggle:v1.1.0 /snaggle /bin/
 
 WORKDIR /runtime
-    RUN mkdir --parents ./var/lib/nginx/tmp && chmod 1777 ./var/lib/nginx/tmp \
-     && snaggle /bin/tini . \
+    RUN snaggle /bin/tini . \
      && snaggle /bin/nginx .
+
     COPY nginx.conf ./etc/nginx/
+
+    # Create the few standard locations nginx needs
+    RUN \
+        # for temp files
+        mkdir --parents ./var/lib/nginx/tmp && chmod 1777 ./var/lib/nginx/tmp \
+        # for logs & link logs to stdout & stderr
+     && mkdir --parents ./var/log/nginx && chmod 0777 ./var/log/nginx \
+     && ln -sf /dev/stdout ./var/log/nginx/access.log \
+     && ln -sf /dev/stderr ./var/log/nginx/error.log \
+        # for the pid file
+     && mkdir ./run && chmod 1777 ./run
 
 FROM scratch AS runtime
 
