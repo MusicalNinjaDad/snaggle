@@ -27,9 +27,7 @@ jobs:
           context: .
           push: false
           load: true
-          tags:
-            snaggle
-            ghcr.io/musicalninjadad/snaggle:latest
+          tags: snaggle,ghcr.io/musicalninjadad/snaggle:latest
 
       - name: Build test docker image
         id: test_image
