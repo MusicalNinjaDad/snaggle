@@ -144,7 +144,7 @@ func Snaggle(path string, root string, opts ...Option) error {
 		snaggerrs.SetLimit(1)
 	}
 
-	snagit := func(path string) error {
+	snagfile := func(path string) error {
 		var badelf *debug_elf.FormatError
 		err := snaggle(path, root, options, checker)
 		switch {
@@ -157,40 +157,40 @@ func Snaggle(path string, root string, opts ...Option) error {
 		}
 	}
 
-	stat, err := os.Stat(path)
-	if err != nil {
-		return err
-	}
-
-	switch {
-	case stat.IsDir() && options.recursive:
-		_ = filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
-			switch {
-			case d.IsDir():
-				return nil // skip Directory entries
-			default:
-				snaggerrs.Go(func() error { return snagit(path) })
-				return nil
-			}
-		})
-		return snaggerrs.Wait()
-	case stat.IsDir():
-		files, err := os.ReadDir(path)
+	var snagdir func(dir string) error //see https://github.com/golang/go/issues/226 :-x FFS!
+	snagdir = func(dir string) error {
+		files, err := os.ReadDir(dir)
 		if err != nil {
 			return err
 		}
+
 		for _, file := range files {
+			path := filepath.Join(dir, file.Name())
+			isDir := internal.IsDir(path)
+
 			switch {
-			case file.IsDir():
+			case isDir && options.recursive:
+				if err := snagdir(path); err != nil {
+					return err
+				}
+			case isDir:
 				continue // skip Directory entries
 			default:
-				path := filepath.Join(path, file.Name())
-				snaggerrs.Go(func() error { return snagit(path) })
+				snaggerrs.Go(func() error { return snagfile(path) })
 			}
+		}
+
+		return nil
+	}
+
+	switch {
+	case internal.IsDir(path):
+		if err := snagdir(path); err != nil {
+			return &SnaggleError{Src: path, Dst: root, err: err}
 		}
 		return snaggerrs.Wait()
 	case options.recursive:
-		err = &fs.PathError{Op: "--recursive", Path: path, Err: syscall.ENOTDIR}
+		err := &fs.PathError{Op: "--recursive", Path: path, Err: syscall.ENOTDIR}
 		return &InvocationError{Path: path, Target: root, err: err}
 	default:
 		return snaggle(path, root, options, checker)

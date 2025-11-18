@@ -23,7 +23,10 @@ var (
 	P_hello_dynamic = TestdataPath("hello/hello")
 	P_hello_go      = TestdataPath("hello/hello.go")
 
-	P_symlinked_id = TestdataPath("symlink/id2")
+	P_symlinked_id            = TestdataPath("symlink/id2")
+	P_symlinked_build_sh      = TestdataPath("symlink/hello/build.sh")
+	P_symlinked_hello_dynamic = TestdataPath("symlink/hello/hello")
+	P_symlinked_hello_go      = TestdataPath("symlink/hello/hello.go")
 )
 
 // Test helper: Provides a temporary file which exists but has no read permission

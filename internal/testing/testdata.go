@@ -180,6 +180,42 @@ var TestData = testListing{
 		HasInterpreter: false,
 		StdErr:         "invalid ELF file: bad magic number '[35 33 47 117]' in record at byte 0x0",
 	},
+	P_symlinked_build_sh: {
+		Path:     P_symlinked_build_sh,
+		Elf:      elf.Elf{Path: P_build_sh},
+		NonElf:   true,
+		Symlink:  true,
+		InSubdir: true,
+	},
+	P_symlinked_hello_dynamic: {
+		//Note: if not snagged during directory tests, this will only show in stdout
+		//      the file will be present from directly snagging the underlying target
+		Name:     "symlinked_dir",
+		Path:     P_symlinked_hello_dynamic,
+		SnagTo:   "bin",
+		SnagAs:   "hello",
+		Symlink:  true,
+		InSubdir: true,
+		Elf: elf.Elf{
+			Name:         "hello",
+			Path:         P_hello_dynamic,
+			Class:        elf.EI_CLASS(elf.ELF64),
+			Type:         elf.PIE,
+			Interpreter:  P_ld_linux,
+			Dependencies: []string{P_libc},
+		},
+		Dynamic:        true,
+		Exe:            true,
+		Lib:            false,
+		HasInterpreter: true,
+	},
+	P_symlinked_hello_go: {
+		Path:     P_symlinked_hello_go,
+		Elf:      elf.Elf{Path: P_hello_go},
+		NonElf:   true,
+		Symlink:  true,
+		InSubdir: true,
+	},
 	P_symlinked_id: {
 		Name:     "symlink",
 		Path:     P_symlinked_id,

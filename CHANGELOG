@@ -1,5 +1,11 @@
 # Changelog snaggle
 
+## [v1.2.0] - Follow Symlinks
+
+### Features
+
+- Follows symlinks in the directory tree when snaggling directories
+
 ## [v1.1.2] - Handle empty files
 
 ### Fixes
