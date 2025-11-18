@@ -13,7 +13,7 @@ https://github.com/MusicalNinjaDad/snaggle
 
 Usage:
   snaggle [--in-place] FILE DESTINATION
-  snaggle [--in-place] [--recursive] DIRECTORY DESTINATION
+  snaggle [--copy | --in-place] [--recursive] DIRECTORY DESTINATION
 
 Flags:
       --copy        Copy entire directory contents to /DESTINATION/full/source/path
@@ -36,6 +36,7 @@ Snaggle will hardlink (or copy, see notes):
 - Dynamic libraries (*.so) -> DESTINATION/lib64
 
 Notes:
+- Follows symlinks
 - Hardlinks will be created if possible.
 - A copy will be performed if hardlinking fails for one of the following reasons:
     FILE/DIRECTORY & DESTINATION are on different filesystems or
