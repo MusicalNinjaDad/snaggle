@@ -120,7 +120,6 @@ ENTRYPOINT [ "tini", "--", "nginx" ]
 
 ## Known limitations
 
-- will not recurse into symlinked subdirectories ([#93](https://github.com/MusicalNinjaDad/snaggle/issues/93))
 - only handles dynamic binaries with `/lib64/ld_linux...so` as an interpreter, no interpreter and static binaries.
 - does not handle binaries compiled with dependencies in a custom `RUNPATH` or `RPATH` ([#13](https://github.com/MusicalNinjaDad/snaggle/issues/13))
 
