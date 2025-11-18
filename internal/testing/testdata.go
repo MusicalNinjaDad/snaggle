@@ -41,6 +41,7 @@ type TestDetails struct {
 	Lib            bool
 	HasInterpreter bool
 	Elf            elf.Elf
+	StdErr         string
 }
 
 type testListing = map[string]TestDetails
@@ -76,6 +77,7 @@ var TestData = testListing{
 			Interpreter:  "",
 			Dependencies: nil,
 		},
+		StdErr: "invalid ELF file: no data in record at byte 0x0",
 	},
 	P_build_sh: {
 		Path:     P_build_sh,
@@ -176,6 +178,7 @@ var TestData = testListing{
 		Exe:            false,
 		Lib:            false,
 		HasInterpreter: false,
+		StdErr:         "invalid ELF file: bad magic number '[35 33 47 117]' in record at byte 0x0",
 	},
 	P_symlinked_id: {
 		Name:     "symlink",

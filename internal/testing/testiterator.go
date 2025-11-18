@@ -171,7 +171,9 @@ func generateOutput(tc *TestCase, options testOptions, bins ...TestDetails) {
 			}
 			tc.ExpectedFiles[lib] = snaggedLib
 		}
-		tc.ExpectedStderr = []string{"Error: parsing " + tc.Src + ":", "invalid ELF file: bad magic number '[35 33 47 117]' in record at byte 0x0"}
+		if bin.StdErr != "" {
+			tc.ExpectedStderr = []string{"Error: parsing " + tc.Src + ":", bin.StdErr}
+		}
 	}
 	if options.includes(verbose) {
 		// we want stdout
