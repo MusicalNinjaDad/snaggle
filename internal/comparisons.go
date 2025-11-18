@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"slices"
 )
 
@@ -91,4 +93,20 @@ func HashFile(path string) ([]byte, error) {
 		return nil, err
 	}
 	return hash.Sum(nil), nil
+}
+
+// Follow symlinks
+func IsDir(path string) bool {
+	info, _ := os.Stat(path)
+	filemode := info.Mode()
+
+	switch {
+	case filemode&fs.ModeDir != 0:
+		return true
+	case filemode&fs.ModeSymlink != 0:
+		p, _ := filepath.EvalSymlinks(path) //known valid path & symlink
+		return IsDir(p)
+	default:
+		return false
+	}
 }

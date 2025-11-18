@@ -166,17 +166,7 @@ func Snaggle(path string, root string, opts ...Option) error {
 
 		for _, file := range files {
 			path := filepath.Join(dir, file.Name())
-			filemode := file.Type()
-
-			isDir := filemode&fs.ModeDir != 0
-			if filemode&fs.ModeSymlink != 0 {
-				p, _ := filepath.EvalSymlinks(path) //known valid path & symlink
-				s, err := os.Stat(p)
-				if err != nil {
-					return err
-				}
-				isDir = s.IsDir()
-			}
+			isDir := internal.IsDir(path)
 
 			switch {
 			case isDir && options.recursive:
@@ -193,19 +183,14 @@ func Snaggle(path string, root string, opts ...Option) error {
 		return nil
 	}
 
-	stat, err := os.Stat(path)
-	if err != nil {
-		return err
-	}
-
 	switch {
-	case stat.IsDir():
+	case internal.IsDir(path):
 		if err := snagdir(path); err != nil {
 			return &SnaggleError{Src: path, Dst: root, err: err}
 		}
 		return snaggerrs.Wait()
 	case options.recursive:
-		err = &fs.PathError{Op: "--recursive", Path: path, Err: syscall.ENOTDIR}
+		err := &fs.PathError{Op: "--recursive", Path: path, Err: syscall.ENOTDIR}
 		return &InvocationError{Path: path, Target: root, err: err}
 	default:
 		return snaggle(path, root, options, checker)
