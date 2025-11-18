@@ -157,13 +157,17 @@ func Snaggle(path string, root string, opts ...Option) error {
 		}
 	}
 
-	snagdir := func(dir string) error {
+	var snagdir func(dir string) error //see https://github.com/golang/go/issues/226 :-x FFS!
+	snagdir = func(dir string) error {
 		files, err := os.ReadDir(dir)
 		if err != nil {
 			return err
 		}
 		for _, file := range files {
 			switch {
+			case file.IsDir() && options.recursive:
+				path := filepath.Join(dir, file.Name())
+				snagdir(path)
 			case file.IsDir():
 				continue // skip Directory entries
 			default:
@@ -180,17 +184,6 @@ func Snaggle(path string, root string, opts ...Option) error {
 	}
 
 	switch {
-	case stat.IsDir() && options.recursive:
-		_ = filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
-			switch {
-			case d.IsDir():
-				return nil // skip Directory entries
-			default:
-				snaggerrs.Go(func() error { return snagfile(path) })
-				return nil
-			}
-		})
-		return snaggerrs.Wait()
 	case stat.IsDir():
 		snagdir(path)
 		return snaggerrs.Wait()
