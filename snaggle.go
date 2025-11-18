@@ -144,7 +144,7 @@ func Snaggle(path string, root string, opts ...Option) error {
 		snaggerrs.SetLimit(1)
 	}
 
-	snagit := func(path string) error {
+	snagfile := func(path string) error {
 		var badelf *debug_elf.FormatError
 		err := snaggle(path, root, options, checker)
 		switch {
@@ -155,6 +155,23 @@ func Snaggle(path string, root string, opts ...Option) error {
 		default:
 			return err
 		}
+	}
+
+	snagdir := func(dir string) error {
+		files, err := os.ReadDir(dir)
+		if err != nil {
+			return err
+		}
+		for _, file := range files {
+			switch {
+			case file.IsDir():
+				continue // skip Directory entries
+			default:
+				path := filepath.Join(dir, file.Name())
+				snaggerrs.Go(func() error { return snagfile(path) })
+			}
+		}
+		return nil
 	}
 
 	stat, err := os.Stat(path)
@@ -169,25 +186,13 @@ func Snaggle(path string, root string, opts ...Option) error {
 			case d.IsDir():
 				return nil // skip Directory entries
 			default:
-				snaggerrs.Go(func() error { return snagit(path) })
+				snaggerrs.Go(func() error { return snagfile(path) })
 				return nil
 			}
 		})
 		return snaggerrs.Wait()
 	case stat.IsDir():
-		files, err := os.ReadDir(path)
-		if err != nil {
-			return err
-		}
-		for _, file := range files {
-			switch {
-			case file.IsDir():
-				continue // skip Directory entries
-			default:
-				path := filepath.Join(path, file.Name())
-				snaggerrs.Go(func() error { return snagit(path) })
-			}
-		}
+		snagdir(path)
 		return snaggerrs.Wait()
 	case options.recursive:
 		err = &fs.PathError{Op: "--recursive", Path: path, Err: syscall.ENOTDIR}
