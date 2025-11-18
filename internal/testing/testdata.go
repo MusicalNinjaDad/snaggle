@@ -187,6 +187,8 @@ var TestData = testListing{
 		InSubdir: true,
 	},
 	P_symlinked_hello_dynamic: {
+		//Note: if not snagged during directory tests, this will only show in stdout
+		//      the file will be present from directly snagging the underlying target
 		Name:     "symlinked_dir",
 		Path:     P_symlinked_hello_dynamic,
 		SnagTo:   "bin",
