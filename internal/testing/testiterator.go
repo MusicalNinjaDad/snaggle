@@ -22,6 +22,7 @@ type TestCase struct {
 	Src            string            // source path
 	Dest           string            // destination path
 	ExpectedStdout []string          // Split by line, de-(in)dented
+	ExpectedStderr []string          // Split by line, de-(in)dented
 	ExpectedFiles  map[string]string // map[original_path]snagged_path
 	Options        []snaggle.Option
 	Flags          []string
@@ -170,6 +171,7 @@ func generateOutput(tc *TestCase, options testOptions, bins ...TestDetails) {
 			}
 			tc.ExpectedFiles[lib] = snaggedLib
 		}
+		tc.ExpectedStderr = []string{"Error: parsing " + tc.Src + ":", "invalid ELF file: bad magic number '[35 33 47 117]' in record at byte 0x0"}
 	}
 	if options.includes(verbose) {
 		// we want stdout
