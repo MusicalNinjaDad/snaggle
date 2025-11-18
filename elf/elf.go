@@ -170,6 +170,8 @@ func New(path string) (Elf, error) {
 	elffile, err = debug_elf.Open(elf.Path)
 	if err != nil {
 		if errors.Is(err, io.EOF) {
+			// stdlib doesn't correctly return a FormatError if the file is empty, instead we get a naked `io.EOF`
+			// See: Issue-TBD
 			err = fmt.Errorf("no data %w", &debug_elf.FormatError{})
 		}
 		var formaterr *debug_elf.FormatError
