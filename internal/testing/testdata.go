@@ -70,7 +70,7 @@ var TestData = testListing{
 		Path:   P_empty,
 		NonElf: true,
 		Elf: elf.Elf{
-			Name:         "empyty",
+			Name:         "empty",
 			Path:         P_empty,
 			Class:        elf.EI_CLASS(elf.UNDEF),
 			Type:         elf.Type(elf.ELFNONE),
