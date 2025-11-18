@@ -12,6 +12,7 @@ import (
 // Paths to our test binaries
 var (
 	P_ctypes_so    = TestdataPath("_ctypes_test.cpython-314-x86_64-linux-gnu.so")
+	P_empty        = TestdataPath("empty")
 	P_hello_pie    = TestdataPath("hello_pie")
 	P_hello_static = TestdataPath("hello_static")
 	P_id           = TestdataPath("id")
