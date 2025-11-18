@@ -50,7 +50,11 @@ func (a *Asserter) DirectoryContents(ExpectedContents map[string]string, dir str
 	}
 
 	// expected is coming from a map, so has non-deterministic ordering
-	a.Testify.ElementsMatch(slices.Collect(maps.Values(ExpectedContents)), contents)
+	uniqueFiles := make(map[string]string, 0)
+	for _, copy := range ExpectedContents {
+		uniqueFiles[copy] = ""
+	}
+	a.Testify.ElementsMatch(slices.Collect(maps.Keys(uniqueFiles)), contents)
 
 	for original, copy := range ExpectedContents {
 		a.Testify.Truef(SameFile(original, copy), "%s & %s are different files", original, copy)
