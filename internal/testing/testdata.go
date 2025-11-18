@@ -182,6 +182,7 @@ var TestData = testListing{
 	},
 	P_symlinked_build_sh: {
 		Path:     P_symlinked_build_sh,
+		Elf:      elf.Elf{Path: P_build_sh},
 		NonElf:   true,
 		Symlink:  true,
 		InSubdir: true,
@@ -210,6 +211,7 @@ var TestData = testListing{
 	},
 	P_symlinked_hello_go: {
 		Path:     P_symlinked_hello_go,
+		Elf:      elf.Elf{Path: P_hello_go},
 		NonElf:   true,
 		Symlink:  true,
 		InSubdir: true,
