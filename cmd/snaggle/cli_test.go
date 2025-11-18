@@ -127,12 +127,11 @@ func TestCopyInplace(t *testing.T) {
 }
 
 func TestNotAnELF(t *testing.T) {
-	tests := []TestDetails{TestData[P_ldd]}
+	tests := []TestDetails{TestData[P_empty], TestData[P_ldd]}
 	for t, tc := range TestLoop(t, tests...) {
 		Assert := Assert(t)
 
-		expectedErr := "Error: parsing " + tc.Src + ":\n"
-		expectedErr += "invalid ELF file: bad magic number '[35 33 47 117]' in record at byte 0x0\n"
+		expectedErr := tc.ExpectedStderr
 
 		snaggle := exec.Command(snaggleBin, tc.Flags...)
 		snaggle.Args = append(snaggle.Args, tc.Src, tc.Dest)
@@ -148,7 +147,7 @@ func TestNotAnELF(t *testing.T) {
 			var exitError *exec.ExitError
 			if Assert.Testify.ErrorAs(err, &exitError) {
 				Assert.Testify.Equal(1, exitError.ExitCode())
-				Assert.Testify.Equal(expectedErr, string(exitError.Stderr))
+				Assert.Testify.Equal(expectedErr, StripLines(string(exitError.Stderr)))
 			}
 			t.Logf("Stderr:\n%s", exitError.Stderr)
 		}

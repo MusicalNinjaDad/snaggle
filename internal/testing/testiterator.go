@@ -22,6 +22,7 @@ type TestCase struct {
 	Src            string            // source path
 	Dest           string            // destination path
 	ExpectedStdout []string          // Split by line, de-(in)dented
+	ExpectedStderr []string          // Split by line, de-(in)dented
 	ExpectedFiles  map[string]string // map[original_path]snagged_path
 	Options        []snaggle.Option
 	Flags          []string
@@ -169,6 +170,9 @@ func generateOutput(tc *TestCase, options testOptions, bins ...TestDetails) {
 				)
 			}
 			tc.ExpectedFiles[lib] = snaggedLib
+		}
+		if bin.StdErr != "" {
+			tc.ExpectedStderr = []string{"Error: parsing " + tc.Src + ":", bin.StdErr}
 		}
 	}
 	if options.includes(verbose) {
