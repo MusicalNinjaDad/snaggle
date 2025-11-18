@@ -169,6 +169,9 @@ func New(path string) (Elf, error) {
 
 	elffile, err = debug_elf.Open(elf.Path)
 	if err != nil {
+		if errors.Is(err, io.EOF) {
+			err = fmt.Errorf("%w invalid ELF file", &debug_elf.FormatError{})
+		}
 		var formaterr *debug_elf.FormatError
 		if errors.As(err, &formaterr) {
 			err = fmt.Errorf("%w: %w", ErrInvalidElf, err)
