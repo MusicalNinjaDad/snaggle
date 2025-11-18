@@ -164,14 +164,20 @@ func Snaggle(path string, root string, opts ...Option) error {
 			return err
 		}
 		for _, file := range files {
+			path := filepath.Join(dir, file.Name())
+			filemode := file.Type()
+			isDir := filemode&fs.ModeDir != 0
+			if filemode&fs.ModeSymlink != 0 {
+				p, _ := filepath.EvalSymlinks(path)
+				s, _ := os.Stat(p)
+				isDir = s.IsDir()
+			}
 			switch {
-			case file.IsDir() && options.recursive:
-				path := filepath.Join(dir, file.Name())
+			case isDir && options.recursive:
 				snagdir(path)
-			case file.IsDir():
+			case isDir:
 				continue // skip Directory entries
 			default:
-				path := filepath.Join(dir, file.Name())
 				snaggerrs.Go(func() error { return snagfile(path) })
 			}
 		}
