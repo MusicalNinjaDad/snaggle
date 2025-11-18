@@ -1,6 +1,7 @@
 package elf
 
 import (
+	debug_elf "debug/elf"
 	"errors"
 	"io/fs"
 	"testing"
@@ -68,12 +69,16 @@ func TestInvalidElf(t *testing.T) {
 			filename: "ldd",
 			path:     P_ldd,
 		},
+		{
+			name:     "empty file",
+			filename: "empty",
+			path:     P_empty,
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			Assert := assert.New(t)
-			var errelf *ErrElf
 
 			parsed, err := New(tc.path)
 
@@ -81,12 +86,18 @@ func TestInvalidElf(t *testing.T) {
 			Assert.Equal(parsed.Name, tc.filename)
 			Assert.Equal(parsed.Path, tc.path)
 
-			Assert.ErrorIs(err, ErrInvalidElf)
-			Assert.ErrorContains(err, "invalid ELF file")
+			if Assert.ErrorIs(err, ErrInvalidElf) {
+				Assert.ErrorContains(err, "invalid ELF file")
+			}
 
-			Assert.ErrorAs(err, &errelf)
-			Assert.Equal(tc.path, errelf.Path())
-			Assert.ErrorContains(err, "parsing "+tc.path+":")
+			var errelf *ErrElf
+			if Assert.ErrorAs(err, &errelf) {
+				Assert.Equal(tc.path, errelf.Path())
+				Assert.ErrorContains(err, "parsing "+tc.path+":")
+			}
+
+			var formatErr *debug_elf.FormatError
+			Assert.ErrorAs(err, &formatErr)
 
 		})
 	}
