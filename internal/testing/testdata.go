@@ -64,6 +64,19 @@ var TestData = testListing{
 			Dependencies: []string{P_libc, P_libm, P_libpthread},
 		},
 	},
+	P_empty: {
+		Name:   "empty_file",
+		Path:   P_empty,
+		NonElf: true,
+		Elf: elf.Elf{
+			Name:         "empyty",
+			Path:         P_empty,
+			Class:        elf.EI_CLASS(elf.UNDEF),
+			Type:         elf.Type(elf.ELFNONE),
+			Interpreter:  "",
+			Dependencies: nil,
+		},
+	},
 	P_build_sh: {
 		Path:     P_build_sh,
 		InSubdir: true,

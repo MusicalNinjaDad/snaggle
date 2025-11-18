@@ -127,7 +127,7 @@ func TestCopyInplace(t *testing.T) {
 }
 
 func TestNotAnELF(t *testing.T) {
-	tests := []TestDetails{TestData[P_ldd]}
+	tests := []TestDetails{TestData[P_empty], TestData[P_ldd]}
 	for t, tc := range TestLoop(t, tests...) {
 		Assert := Assert(t)
 

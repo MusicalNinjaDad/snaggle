@@ -62,7 +62,7 @@ func TestNotAnELF(t *testing.T) {
 	log.SetOutput(&stdout)
 	t.Cleanup(func() { log.SetOutput(os.Stdout) })
 
-	tests := []TestDetails{TestData[P_ldd]}
+	tests := []TestDetails{TestData[P_empty], TestData[P_ldd]}
 	for t, tc := range TestLoop(t, tests...) {
 		t.Cleanup(func() { stdout.Reset() })
 		Assert := Assert(t)
