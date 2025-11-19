@@ -1,5 +1,11 @@
 # Changelog snaggle
 
+## [v1.2.1] - Handle dynamically linked ET_EXECs
+
+### Fixes
+
+- Handle dynamically linked ET_EXECs
+
 ## [v1.2.0] - Follow Symlinks
 
 ### Features
