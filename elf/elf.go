@@ -120,7 +120,7 @@ const (
 
 // # Meaningful combination values for [Type]
 const (
-	DYNEXE = 3 // EXE + DYN (PIE or ET_EXEC with Dynamic table)
+	DYNEXE = 3 // EXEC + DYN (PIE or ET_EXEC with Dynamic table)
 )
 
 // Is this ELF **primarily** an executable.
