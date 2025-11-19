@@ -11,13 +11,14 @@ import (
 
 // Paths to our test binaries
 var (
-	P_ctypes_so    = TestdataPath("_ctypes_test.cpython-314-x86_64-linux-gnu.so")
-	P_empty        = TestdataPath("empty")
-	P_hello_pie    = TestdataPath("hello_pie")
-	P_hello_static = TestdataPath("hello_static")
-	P_id           = TestdataPath("id")
-	P_ldd          = TestdataPath("ldd")
-	P_which        = TestdataPath("which")
+	P_ctypes_so     = TestdataPath("_ctypes_test.cpython-314-x86_64-linux-gnu.so")
+	P_empty         = TestdataPath("empty")
+	P_hello_dynamic = TestdataPath("hello_dynamic")
+	P_hello_pie     = TestdataPath("hello_pie")
+	P_hello_static  = TestdataPath("hello_static")
+	P_id            = TestdataPath("id")
+	P_ldd           = TestdataPath("ldd")
+	P_which         = TestdataPath("which")
 
 	P_build_sh      = TestdataPath("hello/build.sh")
 	P_hello_pie_cgo = TestdataPath("hello/hello")
