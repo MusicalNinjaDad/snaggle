@@ -114,13 +114,13 @@ type Type byte
 // Think carefully before directly comparing to bitmask (2^n) values. See value descriptions for individual hints.
 const (
 	UNDEF = 0 // Undefined
-	EXE   = 1 // Executable: Use Elf.IsExe() to catch _any_ type of executable
-	DYN   = 2 // Dynamic: Use Elf.IsDyn() to catch _any_ type of dynamically linked binary
+	EXEC  = 1 // Executable: Use Elf.IsExe() to catch _any_ type of executable (including PIE)
+	DYN   = 2 // Dynamic: Use Elf.IsDyn() to catch _any_ type of dynamically linked binary (including ET_EXEC with Dyn table)
 )
 
 // # Meaningful combination values for [Type]
 const (
-	PIE = 3 // EXE + DYN
+	DYNEXE = 3 // EXE + DYN (PIE or ET_EXEC with Dynamic table)
 )
 
 // Is this ELF **primarily** an executable.
@@ -128,14 +128,14 @@ const (
 //   - This will return `false` in cases such as `/lib64/ld-linux-x86-64.so.2` which has an entry point
 //     and _may_ be `exec()`'ed but is primarily designed as a library and therefore not `ET_EXEC` or `PIE`
 func (e *Elf) IsExe() bool {
-	return e.Type&Type(EXE) != 0
+	return e.Type&Type(EXEC) != 0
 }
 
 // Is this ELF **primarily** a library?
 //
 //   - If it's not **primarily** an executable, then it's a library (Slightly simplified but good enough for our case)
 func (e *Elf) IsLib() bool {
-	return e.Type&Type(EXE) == 0
+	return e.Type&Type(EXEC) == 0
 }
 
 // Is this ELF dynamically linked?
@@ -198,7 +198,7 @@ func New(path string) (Elf, error) {
 	if err != nil {
 		reterr.Join(err)
 	}
-	if elf.Type == Type(PIE) && elf.Interpreter == "" {
+	if elf.Type == Type(DYNEXE) && elf.Interpreter == "" {
 		err = fmt.Errorf("%w (PIE without interpreter)", ErrBadInterpreter)
 		reterr.Join(err)
 	}
@@ -237,9 +237,9 @@ func elftype(elffile *debug_elf.File) (Type, error) {
 
 	case debug_elf.ET_EXEC:
 		if dyn_table, _ := elffile.DynamicSymbols(); len(dyn_table) > 0 {
-			return Type(PIE), nil
+			return Type(DYNEXE), nil
 		} else {
-			return Type(EXE), nil
+			return Type(EXEC), nil
 		}
 
 	case debug_elf.ET_DYN:
@@ -248,7 +248,7 @@ func elftype(elffile *debug_elf.File) (Type, error) {
 			return Type(DYN), err
 		}
 		if pie {
-			return Type(PIE), nil
+			return Type(DYNEXE), nil
 		} else {
 			return Type(DYN), nil
 		}
