@@ -236,7 +236,11 @@ func elftype(elffile *debug_elf.File) (Type, error) {
 	switch claimedtype := elffile.Type; claimedtype {
 
 	case debug_elf.ET_EXEC:
-		return Type(EXE), nil
+		if dyn_table, _ := elffile.DynamicSymbols(); len(dyn_table) > 0 {
+			return Type(PIE), nil
+		} else {
+			return Type(EXE), nil
+		}
 
 	case debug_elf.ET_DYN:
 		pie, err := hasDT_FLAGS_1_Flag(elffile, debug_elf.DF_1_PIE)
