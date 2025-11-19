@@ -84,15 +84,15 @@ var TestData = testListing{
 		InSubdir: true,
 		NonElf:   true,
 	},
-	P_hello_dynamic: {
+	P_hello_pie_cgo: {
 		Name:     "subdir",
-		Path:     P_hello_dynamic,
+		Path:     P_hello_pie_cgo,
 		SnagTo:   "bin",
 		SnagAs:   "hello",
 		InSubdir: true,
 		Elf: elf.Elf{
 			Name:         "hello",
-			Path:         P_hello_dynamic,
+			Path:         P_hello_pie_cgo,
 			Class:        elf.EI_CLASS(elf.ELF64),
 			Type:         elf.PIE,
 			Interpreter:  P_ld_linux,
@@ -198,7 +198,7 @@ var TestData = testListing{
 		InSubdir: true,
 		Elf: elf.Elf{
 			Name:         "hello",
-			Path:         P_hello_dynamic,
+			Path:         P_hello_pie_cgo,
 			Class:        elf.EI_CLASS(elf.ELF64),
 			Type:         elf.PIE,
 			Interpreter:  P_ld_linux,

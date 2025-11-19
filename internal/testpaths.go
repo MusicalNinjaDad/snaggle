@@ -20,7 +20,7 @@ var (
 	P_which        = TestdataPath("which")
 
 	P_build_sh      = TestdataPath("hello/build.sh")
-	P_hello_dynamic = TestdataPath("hello/hello")
+	P_hello_pie_cgo = TestdataPath("hello/hello")
 	P_hello_go      = TestdataPath("hello/hello.go")
 
 	P_symlinked_id            = TestdataPath("symlink/id2")
