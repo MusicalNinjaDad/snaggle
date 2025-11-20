@@ -52,3 +52,14 @@ jobs:
 
       - name: Test run nginx example
         run: docker run -d -p8000:8000 ng && curl 127.0.0.1:8000
+
+      - name: Test build the hello world example
+        uses: docker/build-push-action@9e436ba9f2d7bcd1d038c8e55d039d37896ddc5d
+        with:
+          context: ./examples/nginx/
+          push: false
+          load: true
+          tags: hello
+
+      - name: Test run hello world example
+        run: docker run -d hello | grep ^hello$
