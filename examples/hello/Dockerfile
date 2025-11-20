@@ -1,3 +1,5 @@
+# To simplify dependency management for your own apps / custom builds
+
 # 1. Set up a suitable build environment
 FROM snaggle_devcontainer AS builder
 USER root
