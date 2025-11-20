@@ -51,4 +51,4 @@ jobs:
           tags: hello
 
       - name: Test run hello world example
-        run: docker run -d hello | grep ^hello$
+        run: docker run hello | grep ^hello$
