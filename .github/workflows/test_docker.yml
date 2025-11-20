@@ -2,7 +2,9 @@ name: Test example usage in docker build
 
 on:
   push:
-    paths: .github/workflows/test_docker.yml
+    paths:
+      - .github/workflows/test_docker.yml
+      - examples/**/Dockerfile
   pull_request:
   workflow_dispatch:
 
