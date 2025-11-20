@@ -1,4 +1,4 @@
-name: Test usage in docker build
+name: Test example usage in docker build
 
 on:
   push:
