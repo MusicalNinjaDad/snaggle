@@ -1,6 +1,10 @@
-name: Test usage in docker build
+name: Test example usage in docker build
 
 on:
+  push:
+    paths:
+      - .github/workflows/test_docker.yml
+      - examples/**/Dockerfile
   pull_request:
   workflow_dispatch:
 
@@ -27,20 +31,7 @@ jobs:
           context: .
           push: false
           load: true
-          tags: snaggle,ghcr.io/musicalninjadad/snaggle:latest
-
-      - name: Build test docker image
-        id: test_image
-        uses: docker/build-push-action@9e436ba9f2d7bcd1d038c8e55d039d37896ddc5d
-        with:
-          context: .
-          file: test.Dockerfile
-          push: false
-          load: true
-          tags: test
-
-      - name: Test
-        run: docker run test | grep ^/bin/which$
+          tags: ghcr.io/musicalninjadad/snaggle:latest
 
       - name: Test build the nginx example
         uses: docker/build-push-action@9e436ba9f2d7bcd1d038c8e55d039d37896ddc5d
@@ -52,3 +43,14 @@ jobs:
 
       - name: Test run nginx example
         run: docker run -d -p8000:8000 ng && curl 127.0.0.1:8000
+
+      - name: Test build the hello world example
+        uses: docker/build-push-action@9e436ba9f2d7bcd1d038c8e55d039d37896ddc5d
+        with:
+          context: ./examples/hello/
+          push: false
+          load: true
+          tags: hello
+
+      - name: Test run hello world example
+        run: docker run hello | grep ^hello$
