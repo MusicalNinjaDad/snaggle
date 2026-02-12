@@ -17,7 +17,7 @@ jobs:
 
       - name: Build devcontainer image to use as base
         id: devcontainer
-        uses: docker/build-push-action@ee4ca427a2f43b6a16632044ca514c076267da23
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
         with:
           context: ./.devcontainer
           push: false
@@ -26,7 +26,7 @@ jobs:
 
       - name: Build snaggle docker image
         id: snaggle
-        uses: docker/build-push-action@ee4ca427a2f43b6a16632044ca514c076267da23
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
         with:
           context: .
           push: false
@@ -34,7 +34,7 @@ jobs:
           tags: ghcr.io/musicalninjadad/snaggle:latest
 
       - name: Test build the nginx example
-        uses: docker/build-push-action@ee4ca427a2f43b6a16632044ca514c076267da23
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
         with:
           context: ./examples/nginx/
           push: false
@@ -45,7 +45,7 @@ jobs:
         run: docker run -d -p8000:8000 ng && curl 127.0.0.1:8000
 
       - name: Test build the hello world example
-        uses: docker/build-push-action@ee4ca427a2f43b6a16632044ca514c076267da23
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
         with:
           context: ./examples/hello/
           push: false
