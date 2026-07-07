@@ -99,6 +99,8 @@ func HashFile(path string) ([]byte, error) {
 func IsDir(path string) bool {
 	info, err := os.Stat(path)
 	if err != nil {
+		// OK to simply return false.
+		// Any future attempts to read path as a file will provide a handleable error
 		return false
 	}
 	filemode := info.Mode()
