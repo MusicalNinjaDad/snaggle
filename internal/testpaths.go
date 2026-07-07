@@ -19,10 +19,13 @@ var (
 	P_id            = TestdataPath("id")
 	P_ldd           = TestdataPath("ldd")
 	P_which         = TestdataPath("which")
+	P_rpath_test    = TestdataPath("rpath_test")
 
 	P_build_sh      = TestdataPath("hello/build.sh")
 	P_hello_pie_cgo = TestdataPath("hello/hello")
 	P_hello_go      = TestdataPath("hello/hello.go")
+
+	P_rpath_c = TestdataPath("rpath/rpath_test.c")
 
 	P_symlinked_id            = TestdataPath("symlink/id2")
 	P_symlinked_build_sh      = TestdataPath("symlink/hello/build.sh")

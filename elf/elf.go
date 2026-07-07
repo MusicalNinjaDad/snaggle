@@ -18,11 +18,15 @@
 //		Type: EXE, BIN, PIE, ...
 //		Interpreter: path to requested interpeter
 //		Dependencies: slice of paths to dependencies as identified and found by the interpreter
+//		Rpath: library search paths from DT_RPATH (if present)
+//		Runpath: library search paths from DT_RUNPATH (if present)
 //	}
 //
 // # Note:
 //
-// Only accepts static binaries or dynamic binaries which use ld-linux*.so as the interpreter
+// Only accepts static binaries or dynamic binaries which use ld-linux*.so as the interpreter.
+// Binaries with RPATH or RUNPATH set will return an error as these are incompatible with
+// minimal container layouts.
 package elf
 
 import (
@@ -73,6 +77,8 @@ var (
 	ErrUnsupportedElfType = fmt.Errorf("%w: %w (unsupported ELF Type)", ErrInvalidElf, errors.ErrUnsupported)
 	// Error returned if the interpreter is not `ld-linux*.so`
 	ErrUnsupportedInterpreter = fmt.Errorf("%w: %w (unsupported interpreter)", ErrInvalidElf, errors.ErrUnsupported)
+	// Error returned if the ELF has RPATH or RUNPATH set
+	ErrRPathOrRunPath = errors.New("binary uses RPATH or RUNPATH (not supported in minimal containers)")
 )
 
 // A parsed Elf binary
@@ -91,6 +97,12 @@ type Elf struct {
 	Interpreter string
 	// All requested libraries
 	Dependencies []string
+	// RPATH: runtime library search paths (legacy, superseded by RUNPATH)
+	//  - See https://man7.org/linux/man-pages/man8/ld.so.8.html#RPATH-versus-RUNPATH
+	Rpath []string
+	// RUNPATH: runtime library search paths (preferred over RPATH)
+	//  - See https://man7.org/linux/man-pages/man8/ld.so.8.html#RPATH-versus-RUNPATH
+	Runpath []string
 }
 
 // 32 or 64 bit?
@@ -204,6 +216,11 @@ func New(path string) (Elf, error) {
 	}
 
 	if elf.IsDyn() {
+		elf.Rpath, elf.Runpath, err = getRPathRunPath(elffile)
+		if err != nil {
+			reterr.Join(err)
+		}
+
 		elf.Dependencies, err = ldd(elf.Path, elf.Interpreter)
 		if err != nil {
 			reterr.Join(err)
@@ -344,6 +361,31 @@ func hasDT_FLAGS_1_Flag(elffile *debug_elf.File, flag debug_elf.DynFlag1) (bool,
 	return false, nil
 }
 
+// Extract RPATH and RUNPATH from the dynamic section, if present.
+// Returns parsed paths as colon-separated components (empty slices if not set).
+// Returns an error if RPATH or RUNPATH are found, as these are incompatible with
+// minimal container layouts where the original search paths would not exist.
+func getRPathRunPath(elffile *debug_elf.File) (rpath []string, runpath []string, err error) {
+	// Try to read RPATH (DT_RPATH = 15)
+	if rpathStrs, err := elffile.DynString(debug_elf.DynTag(debug_elf.DT_RPATH)); err == nil && len(rpathStrs) > 0 {
+		// DT_RPATH contains a colon-separated list of paths
+		rpath = strings.Split(rpathStrs[0], ":")
+	}
+
+	// Try to read RUNPATH (DT_RUNPATH = 29)
+	if runpathStrs, err := elffile.DynString(debug_elf.DynTag(debug_elf.DT_RUNPATH)); err == nil && len(runpathStrs) > 0 {
+		// DT_RUNPATH contains a colon-separated list of paths
+		runpath = strings.Split(runpathStrs[0], ":")
+	}
+
+	// Return an error if either is present
+	if len(rpath) > 0 || len(runpath) > 0 {
+		return rpath, runpath, ErrRPathOrRunPath
+	}
+
+	return rpath, runpath, nil
+}
+
 // Deeply check for diffs between two `Elf`s. Ignores differences in the Path, as long as:
 //  1. Both `Path`s are absolute
 //  2. Both `Path`s end in the same filename
@@ -372,6 +414,20 @@ func (e Elf) Diff(o Elf) []string {
 					otherDep := otherDeps[idx]
 					if libpathcmp(selfDep, otherDep) != 0 {
 						diffs = append(diffs, fmt.Sprintf("dependency %v differs for %s: %s != %s", idx, self.FieldByName("Name"), selfDep, otherDep))
+					}
+				}
+			}
+		case "Rpath", "Runpath":
+			// Compare Rpath and Runpath as string slices
+			selfPaths := self.FieldByIndex(field.Index).Interface().([]string)
+			otherPaths := other.FieldByIndex(field.Index).Interface().([]string)
+			if len(selfPaths) != len(otherPaths) {
+				diffs = append(diffs, fmt.Sprintf("%s has %v entries in left, %v entries in right", field.Name, len(selfPaths), len(otherPaths)))
+			} else {
+				for idx, selfPath := range selfPaths {
+					otherPath := otherPaths[idx]
+					if selfPath != otherPath {
+						diffs = append(diffs, fmt.Sprintf("%s[%v] differs for %s: %s != %s", field.Name, idx, self.FieldByName("Name"), selfPath, otherPath))
 					}
 				}
 			}

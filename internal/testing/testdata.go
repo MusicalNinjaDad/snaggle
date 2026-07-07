@@ -13,11 +13,11 @@ import (
 )
 
 func AllElfs() []TestDetails {
-	return filterTests(TestData, func(td TestDetails) bool { return !td.NonElf })
+	return filterTests(TestData, func(td TestDetails) bool { return !td.NonElf && td.Valid })
 }
 
 func noSubDirs() []TestDetails {
-	return filterTests(TestData, func(td TestDetails) bool { return !td.InSubdir && !td.NonElf })
+	return filterTests(TestData, func(td TestDetails) bool { return !td.InSubdir && !td.NonElf && td.Valid })
 }
 
 func allFiles() []TestDetails {
@@ -36,6 +36,7 @@ type TestDetails struct {
 	InSubdir       bool
 	Symlink        bool
 	NonElf         bool
+	Valid          bool // Valid indicates whether this is a valid, processable ELF (not set for error cases like RPATH/RUNPATH)
 	Dynamic        bool
 	Exe            bool
 	Lib            bool
@@ -52,6 +53,7 @@ var TestData = testListing{
 		Path:           P_ctypes_so,
 		SnagTo:         "lib64",
 		SnagAs:         "_ctypes_test.cpython-314-x86_64-linux-gnu.so",
+		Valid:          true,
 		Dynamic:        true,
 		Exe:            false,
 		Lib:            true,
@@ -90,6 +92,7 @@ var TestData = testListing{
 		SnagTo:   "bin",
 		SnagAs:   "hello",
 		InSubdir: true,
+		Valid:    true,
 		Elf: elf.Elf{
 			Name:         "hello",
 			Path:         P_hello_pie_cgo,
@@ -113,6 +116,7 @@ var TestData = testListing{
 		Path:   P_hello_dynamic,
 		SnagTo: "bin",
 		SnagAs: "hello_dynamic",
+		Valid:  true,
 		Elf: elf.Elf{
 			Name:         "hello_dynamic",
 			Path:         P_hello_dynamic,
@@ -131,6 +135,7 @@ var TestData = testListing{
 		Path:   P_hello_pie,
 		SnagTo: "bin",
 		SnagAs: "hello_pie",
+		Valid:  true,
 		Elf: elf.Elf{
 			Name:         "hello_pie",
 			Path:         P_hello_pie,
@@ -149,6 +154,7 @@ var TestData = testListing{
 		Path:   P_hello_static,
 		SnagTo: "bin",
 		SnagAs: "hello_static",
+		Valid:  true,
 		Elf: elf.Elf{
 			Name:         "hello_static",
 			Path:         P_hello_static,
@@ -167,6 +173,7 @@ var TestData = testListing{
 		Path:   P_id,
 		SnagTo: "bin",
 		SnagAs: "id",
+		Valid:  true,
 		Elf: elf.Elf{
 			Name:         "id",
 			Path:         P_id,
@@ -198,6 +205,30 @@ var TestData = testListing{
 		HasInterpreter: false,
 		StdErr:         "invalid ELF file: bad magic number '[35 33 47 117]' in record at byte 0x0",
 	},
+	P_rpath_test: {
+		Name:     "RPATH_test",
+		Path:     P_rpath_test,
+		Valid:    false, // Valid ELF but with RPATH/RUNPATH which we cannot process
+		InSubdir: true,  // In rpath subdirectory
+		Elf: elf.Elf{
+			Name:         "rpath_test",
+			Path:         P_rpath_test,
+			Class:        elf.EI_CLASS(elf.UNDEF),
+			Type:         elf.Type(elf.ELFNONE),
+			Interpreter:  "",
+			Dependencies: nil,
+		},
+		Dynamic:        false,
+		Exe:            false,
+		Lib:            false,
+		HasInterpreter: false,
+		StdErr:         "binary uses RPATH or RUNPATH",
+	},
+	P_hello_go: {
+		Path:     P_rpath_c,
+		InSubdir: true,
+		NonElf:   true,
+	},
 	P_symlinked_build_sh: {
 		Path:     P_symlinked_build_sh,
 		Elf:      elf.Elf{Path: P_build_sh},
@@ -214,6 +245,7 @@ var TestData = testListing{
 		SnagAs:   "hello",
 		Symlink:  true,
 		InSubdir: true,
+		Valid:    true,
 		Elf: elf.Elf{
 			Name:         "hello",
 			Path:         P_hello_pie_cgo,
@@ -241,6 +273,7 @@ var TestData = testListing{
 		SnagAs:   "id2",
 		InSubdir: true,
 		Symlink:  true,
+		Valid:    true,
 		Elf: elf.Elf{
 			Name:         "id",
 			Path:         P_id,
@@ -259,6 +292,7 @@ var TestData = testListing{
 		Path:   P_which,
 		SnagTo: "bin",
 		SnagAs: "which",
+		Valid:  true,
 		Elf: elf.Elf{
 			Name:         "which",
 			Path:         P_which,

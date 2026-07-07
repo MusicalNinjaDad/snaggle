@@ -152,6 +152,8 @@ func Snaggle(path string, root string, opts ...Option) error {
 			return nil // snagged
 		case errors.As(err, &badelf):
 			return nil // not an ELF
+		case errors.Is(err, elf.ErrRPathOrRunPath):
+			return nil // RPATH/RUNPATH not supported in minimal containers
 		default:
 			return err
 		}
