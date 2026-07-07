@@ -125,6 +125,18 @@ func TestRecurseFile(t *testing.T) {
 	}
 }
 
+func TestFileNotExist(t *testing.T) {
+	Assert := assert.New(t)
+	tmp := WorkspaceTempDir(t)
+	nonExistentPath := filepath.Join(tmp, "does_not_exist")
+
+	// Should return an error, not panic
+	err := snaggle.Snaggle(nonExistentPath, tmp)
+
+	Assert.Error(err)
+	Assert.ErrorIs(err, fs.ErrNotExist)
+}
+
 func TestCopyInplace(t *testing.T) {
 	var stdout strings.Builder
 	log.SetOutput(&stdout)

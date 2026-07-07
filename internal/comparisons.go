@@ -97,7 +97,10 @@ func HashFile(path string) ([]byte, error) {
 
 // Follow symlinks
 func IsDir(path string) bool {
-	info, _ := os.Stat(path)
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
 	filemode := info.Mode()
 
 	switch {
