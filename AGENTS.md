@@ -42,14 +42,17 @@ This repository is a small Go CLI and library for copying ELF binaries and their
 - Keep functions focused and easy to read. A short function with a single responsibility is preferred where complex logic is involved.
 - A longer function is preferred for orchestration paths to provide obvious structure, reading as a sequence of named steps.
 - If a function is doing multiple complex tasks, split it into orchestration & helpers with clear names rather than a dense block of branching logic.
+- When a change introduces non-obvious behavior, an intentional fallback, or a subtle error-handling branch, add a brief code comment explaining the rationale. Agents should not leave such logic unexplained.
 
 ## Change process
 
 - If a requirement is unclear, ask. Prefer a short clarification with options or ideas rather than guessing; always ask when uncertain.
-- Update tests first. Make the tests describe the intended behavior, and confirm that they fail for the expected reason before implementing the change.
-- Do not mix code and test updates in the same commit. Keep them separate.
+- For bug fixes, start by reproducing the issue from the command line or the relevant test harness and capture the current behavior before changing code.
+- Investigate the root cause before implementing a fix. Prefer a small, explicit change over speculative edits.
+- Update tests first whenever behavior changes. Add or adjust a regression test that describes the intended behavior, and verify that it fails for the expected reason before implementing the fix.
 - Changes to tests should directly reflect the intended behavior change.
 - Prefer the most suitable level of test. API-boundary tests are often the clearest and most robust choice.
+- After the fix, rerun the relevant tests and any repository checks or hooks before considering the task complete. For this repository, that includes the relevant Go tests and any available pre-commit hooks.
 - Update documentation when behavior, CLI usage, or public semantics change.
 - Ensure the tests, code, and docs are aligned with the original request.
 
