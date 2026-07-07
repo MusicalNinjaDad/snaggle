@@ -47,6 +47,9 @@ This repository is a small Go CLI and library for copying ELF binaries and their
 ## Change process
 
 - If a requirement is unclear, ask. Prefer a short clarification with options or ideas rather than guessing; always ask when uncertain.
+- For issues that involve ambiguous behavior, conflicting expectations, or edge cases (for example: whether a specific input should be skipped, fail the batch, or stop processing), ask a short clarifying question before implementing. Do not guess and do not burn extra turns on manual follow-up loops.
+- When the intended behavior is not obvious from the issue text, state the likely interpretations and recommend the option that best matches existing conventions, then wait for confirmation.
+- If tests or fixtures depend on a special-case file type (for example: ELF with RPATH/RUNPATH, malformed ELF, or non-ELF files), clarify the intended behavior before changing the code or tests.
 - For bug fixes, start by reproducing the issue from the command line or the relevant test harness and capture the current behavior before changing code.
 - Investigate the root cause before implementing a fix. Prefer a small, explicit change over speculative edits.
 - Update tests first whenever behavior changes. Add or adjust a regression test that describes the intended behavior, and verify that it fails for the expected reason before implementing the fix.
